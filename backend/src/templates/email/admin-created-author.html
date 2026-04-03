@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your POVITAL Account Credentials</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 32px;
+            font-weight: 700;
+        }
+        .header p {
+            margin: 15px 0 0 0;
+            font-size: 18px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .content p {
+            font-size: 16px;
+            color: #333333;
+            line-height: 1.6;
+            margin: 0 0 20px 0;
+        }
+        .credentials-box {
+            background-color: #f8f9fa;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+        .credentials-box h3 {
+            margin: 0 0 20px 0;
+            color: #667eea;
+            font-size: 20px;
+            text-align: center;
+        }
+        .credential-item {
+            display: flex;
+            margin: 15px 0;
+            padding: 15px;
+            background-color: #ffffff;
+            border-radius: 6px;
+        }
+        .credential-label {
+            font-weight: 600;
+            color: #666666;
+            min-width: 140px;
+        }
+        .credential-value {
+            color: #333333;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            word-break: break-all;
+        }
+        .password-highlight {
+            background-color: #fff3cd;
+            padding: 20px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+        }
+        .password-highlight strong {
+            color: #856404;
+            font-size: 18px;
+        }
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            padding: 14px 30px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .warning {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #721c24;
+        }
+        .steps {
+            background-color: #e7f3ff;
+            padding: 30px;
+            margin: 30px 0;
+            border-radius: 8px;
+        }
+        .steps h3 {
+            margin: 0 0 20px 0;
+            color: #0056b3;
+        }
+        .step-item {
+            display: flex;
+            align-items: start;
+            margin: 15px 0;
+        }
+        .step-number {
+            background-color: #0056b3;
+            color: #ffffff;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+            font-weight: 700;
+        }
+        .step-text {
+            color: #333333;
+            font-size: 15px;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            font-size: 14px;
+            color: #666666;
+        }
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>Welcome to POVITAL! 🎉</h1>
+            <p>Your Account Has Been Created</p>
+        </div>
+
+        <div class="content">
+            <p>Dear <strong>{{authorName}}</strong>,</p>
+
+            <p>Your POVITAL author account has been created by our admin team. Below are your login credentials to access the platform.</p>
+
+            <div class="credentials-box">
+                <h3>🔐 Your Login Credentials</h3>
+
+                <div class="credential-item">
+                    <span class="credential-label">Author ID:</span>
+                    <span class="credential-value">{{authorId}}</span>
+                </div>
+
+                <div class="credential-item">
+                    <span class="credential-label">Email:</span>
+                    <span class="credential-value">{{email}}</span>
+                </div>
+
+                <div class="credential-item">
+                    <span class="credential-label">Temporary Password:</span>
+                    <span class="credential-value">{{password}}</span>
+                </div>
+
+                <div class="credential-item">
+                    <span class="credential-label">Referral Code:</span>
+                    <span class="credential-value">{{referralCode}}</span>
+                </div>
+            </div>
+
+            <div class="password-highlight">
+                <strong>⚠️ Important:</strong> This is a temporary password. Please change it immediately after your first login for security purposes.
+            </div>
+
+            <div style="text-align: center;">
+                <a href="{{loginUrl}}" class="button">Login to Your Account</a>
+            </div>
+
+            <div class="steps">
+                <h3>Next Steps to Get Started:</h3>
+
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <div class="step-text"><strong>Login:</strong> Use the credentials above to access your account.</div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <div class="step-text"><strong>Change Password:</strong> Navigate to Settings and update your password to something secure and memorable.</div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <div class="step-text"><strong>Complete Profile:</strong> Fill in your bio, education details, and contact information.</div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-number">4</div>
+                    <div class="step-text"><strong>Add Bank Details:</strong> Configure your payment information to receive royalties.</div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-number">5</div>
+                    <div class="step-text"><strong>Upload Books:</strong> Start uploading your manuscripts and book details for publishing.</div>
+                </div>
+            </div>
+
+            <div class="warning">
+                <strong>Security Notice:</strong> Never share your password with anyone. POVITAL staff will never ask for your password. If you encounter any issues, contact our support team immediately.
+            </div>
+
+            <p>If you have any questions or need assistance, please don't hesitate to reach out to our support team at <a href="mailto:support@povital.com">support@povital.com</a>.</p>
+
+            <p>We're excited to have you on board and look forward to helping you publish your literary works!</p>
+
+            <p>Best regards,<br>
+            <strong>The POVITAL Team</strong></p>
+        </div>
+
+        <div class="footer">
+            <p>© {{year}} POVITAL. All rights reserved.</p>
+            <p>
+                <a href="mailto:support@povital.com">Contact Support</a> |
+                <a href="https://povital.com/privacy">Privacy Policy</a> |
+                <a href="https://povital.com/terms">Terms of Service</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,113 @@
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { AuthProvider } from './contexts/AuthContext';
+import { ErrorBoundary, SuspenseFallback } from './components/common';
+import { ProtectedRoute } from './routes/ProtectedRoute';
+
+// Lazy load layouts
+const AuthorLayout = lazy(() => import('./components/layout/AuthorLayout'));
+const AdminLayout = lazy(() => import('./components/layout/AdminLayout'));
+const PublicLayout = lazy(() => import('./components/layout/PublicLayout'));
+
+// Lazy load public pages
+const HomePage = lazy(() => import('./pages/public/HomePage'));
+const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
+const AdminLoginPage = lazy(() => import('./pages/auth/AdminLoginPage'));
+const AuthorLoginPage = lazy(() => import('./pages/auth/AuthorLoginPage'));
+const AuthorSignupPage = lazy(() => import('./pages/auth/AuthorSignupPage'));
+const FeaturesPage = lazy(() => import('./pages/public/FeaturesPage'));
+const PricingPage = lazy(() => import('./pages/public/PricingPage'));
+const AboutPage = lazy(() => import('./pages/public/AboutPage'));
+const ContactPage = lazy(() => import('./pages/public/ContactPage'));
+const HelpPage = lazy(() => import('./pages/public/HelpPage'));
+
+// Lazy load author pages (Phase 1 only)
+const AuthorDashboard = lazy(() => import('./pages/author/Dashboard'));
+const AuthorTickets = lazy(() => import('./pages/author/Tickets'));
+const AuthorSettings = lazy(() => import('./pages/author/Settings'));
+
+// Lazy load admin pages (Phase 1 only)
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
+const AdminAuthors = lazy(() => import('./pages/admin/Authors'));
+const AdminSupport = lazy(() => import('./pages/admin/Support'));
+const AdminSettings = lazy(() => import('./pages/admin/Settings'));
+
+// 404 Page
+const NotFoundPage = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="text-center">
+      <h1 className="text-6xl font-bold text-neutral-900 dark:text-dark-900 mb-4">404</h1>
+      <p className="text-lg text-neutral-600 dark:text-dark-600">Page not found</p>
+    </div>
+  </div>
+);
+
+function App() {
+  return (
+    <ErrorBoundary>
+      <ThemeProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <Suspense fallback={<SuspenseFallback fullScreen />}>
+              <Routes>
+                {/* Public Routes */}
+                <Route element={<PublicLayout />}>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/author/register" element={<AuthorSignupPage />} />
+                  <Route path="/author/signup" element={<AuthorSignupPage />} />
+                  <Route path="/author/login" element={<AuthorLoginPage />} />
+                  <Route path="/admin/login" element={<AdminLoginPage />} />
+                  <Route path="/features" element={<FeaturesPage />} />
+                  <Route path="/pricing" element={<PricingPage />} />
+                  <Route path="/about" element={<AboutPage />} />
+                  <Route path="/contact" element={<ContactPage />} />
+                  <Route path="/help" element={<HelpPage />} />
+                </Route>
+
+                {/* Author Routes - Phase 1 */}
+                <Route
+                  path="/author"
+                  element={
+                    <ProtectedRoute allowedRoles={['author']}>
+                      <AuthorLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<Navigate to="/author/dashboard" replace />} />
+                  <Route path="dashboard" element={<AuthorDashboard />} />
+                  <Route path="tickets" element={<AuthorTickets />} />
+                  <Route path="settings" element={<AuthorSettings />} />
+                </Route>
+
+                {/* Admin Routes - Phase 1 */}
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute allowedRoles={['super_admin', 'sub_admin']}>
+                      <AdminLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                  <Route path="dashboard" element={<AdminDashboard />} />
+                  <Route path="authors" element={<AdminAuthors />} />
+                  <Route path="support" element={<AdminSupport />} />
+                  <Route path="settings" element={<AdminSettings />} />
+                </Route>
+
+                {/* 404 Route */}
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </Suspense>
+          </AuthProvider>
+        </BrowserRouter>
+      </ThemeProvider>
+    </ErrorBoundary>
+  );
+}
+
+export default App;

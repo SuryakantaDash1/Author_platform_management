@@ -1,0 +1,390 @@
+/* Import Google Fonts - Must come before @tailwind */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap');
+
+/* Import Tailwind Base, Components, and Utilities */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========================================
+   BASE LAYER - Global Styles
+   ======================================== */
+@layer base {
+  /* Root Variables */
+  :root {
+    /* Light Mode Colors */
+    --color-primary: 59 130 246;
+    --color-secondary: 34 197 94;
+    --color-background: 255 255 255;
+    --color-foreground: 15 23 42;
+    --color-card: 249 250 251;
+    --color-border: 229 231 235;
+    --color-muted: 148 163 184;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Dark Mode Variables */
+  .dark {
+    --color-primary: 96 165 250;
+    --color-secondary: 74 222 128;
+    --color-background: 15 23 42;
+    --color-foreground: 248 250 252;
+    --color-card: 30 41 59;
+    --color-border: 51 65 85;
+    --color-muted: 148 163 184;
+
+    /* Dark Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+  }
+
+  /* HTML & Body Defaults */
+  html {
+    @apply scroll-smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply font-sans text-body bg-white dark:bg-dark-50 text-neutral-900 dark:text-dark-900;
+    @apply transition-colors duration-300;
+  }
+
+  /* Headings - Default Styles */
+  h1, .h1 {
+    @apply font-display text-h1 font-bold text-neutral-900 dark:text-dark-900;
+  }
+
+  h2, .h2 {
+    @apply font-display text-h2 font-semibold text-neutral-900 dark:text-dark-900;
+  }
+
+  h3, .h3 {
+    @apply font-display text-h3 font-semibold text-neutral-800 dark:text-dark-800;
+  }
+
+  h4, .h4 {
+    @apply font-sans text-h4 font-semibold text-neutral-800 dark:text-dark-800;
+  }
+
+  h5, .h5 {
+    @apply font-sans text-h5 font-medium text-neutral-700 dark:text-dark-700;
+  }
+
+  h6, .h6 {
+    @apply font-sans text-h6 font-medium text-neutral-700 dark:text-dark-700;
+  }
+
+  /* Paragraphs */
+  p {
+    @apply text-body text-neutral-700 dark:text-dark-700 leading-relaxed;
+  }
+
+  /* Links */
+  a {
+    @apply text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300;
+    @apply transition-colors duration-200;
+  }
+
+  /* Form Elements */
+  input, textarea, select {
+    @apply bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900;
+    @apply border-neutral-300 dark:border-dark-300;
+    @apply focus:border-primary-500 dark:focus:border-primary-400;
+    @apply focus:ring-primary-500 dark:focus:ring-primary-400;
+  }
+
+  /* Button Reset */
+  button {
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  /* Selection */
+  ::selection {
+    @apply bg-primary-500 text-white;
+  }
+
+  /* Scrollbar - Webkit */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-neutral-100 dark:bg-dark-200;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-neutral-400 dark:bg-dark-400 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-neutral-500 dark:bg-dark-500;
+  }
+}
+
+/* ========================================
+   COMPONENTS LAYER - Reusable Components
+   ======================================== */
+@layer components {
+  /* ==================
+     BUTTONS
+     ================== */
+
+  /* Primary Button */
+  .btn-primary {
+    @apply px-6 py-3 text-body-sm font-medium text-white bg-primary-600 rounded-lg;
+    @apply hover:bg-primary-700 active:bg-primary-800;
+    @apply focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply transition-all duration-200;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply dark:bg-primary-500 dark:hover:bg-primary-600 dark:active:bg-primary-700;
+  }
+
+  /* Secondary Button */
+  .btn-secondary {
+    @apply px-6 py-3 text-body-sm font-medium text-neutral-700 bg-neutral-100;
+    @apply hover:bg-neutral-200 active:bg-neutral-300 rounded-lg;
+    @apply focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2;
+    @apply transition-all duration-200;
+    @apply dark:text-dark-800 dark:bg-dark-200 dark:hover:bg-dark-300;
+  }
+
+  /* Outline Button */
+  .btn-outline {
+    @apply px-6 py-3 text-body-sm font-medium text-primary-600 bg-transparent;
+    @apply border-2 border-primary-600 rounded-lg;
+    @apply hover:bg-primary-50 active:bg-primary-100;
+    @apply focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply transition-all duration-200;
+    @apply dark:text-primary-400 dark:border-primary-400 dark:hover:bg-dark-200;
+  }
+
+  /* Ghost Button */
+  .btn-ghost {
+    @apply px-6 py-3 text-body-sm font-medium text-neutral-700;
+    @apply hover:bg-neutral-100 active:bg-neutral-200 rounded-lg;
+    @apply transition-all duration-200;
+    @apply dark:text-dark-700 dark:hover:bg-dark-200;
+  }
+
+  /* Danger Button */
+  .btn-danger {
+    @apply px-6 py-3 text-body-sm font-medium text-white bg-error;
+    @apply hover:bg-error-dark active:bg-red-700 rounded-lg;
+    @apply focus:ring-2 focus:ring-error focus:ring-offset-2;
+    @apply transition-all duration-200;
+  }
+
+  /* Success Button */
+  .btn-success {
+    @apply px-6 py-3 text-body-sm font-medium text-white bg-success;
+    @apply hover:bg-success-dark active:bg-green-700 rounded-lg;
+    @apply focus:ring-2 focus:ring-success focus:ring-offset-2;
+    @apply transition-all duration-200;
+  }
+
+  /* Button Sizes */
+  .btn-sm {
+    @apply px-4 py-2 text-body-xs;
+  }
+
+  .btn-lg {
+    @apply px-8 py-4 text-body-lg;
+  }
+
+  /* ==================
+     CARDS
+     ================== */
+  .card {
+    @apply bg-white dark:bg-dark-100 rounded-xl shadow-md;
+    @apply border border-neutral-200 dark:border-dark-300;
+    @apply transition-all duration-300;
+  }
+
+  .card-hover {
+    @apply hover:shadow-lg hover:-translate-y-1;
+  }
+
+  .card-glass {
+    @apply glass dark:glass-dark;
+  }
+
+  /* ==================
+     INPUTS
+     ================== */
+  .input-primary {
+    @apply w-full px-4 py-3 text-body rounded-lg;
+    @apply bg-white dark:bg-dark-100;
+    @apply border border-neutral-300 dark:border-dark-300;
+    @apply focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+    @apply placeholder:text-neutral-400 dark:placeholder:text-dark-400;
+    @apply transition-all duration-200;
+  }
+
+  .input-error {
+    @apply border-error focus:ring-error;
+  }
+
+  /* ==================
+     BADGES
+     ================== */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 text-body-xs font-medium rounded-full;
+  }
+
+  .badge-primary {
+    @apply bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300;
+  }
+
+  .badge-success {
+    @apply bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300;
+  }
+
+  .badge-warning {
+    @apply bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300;
+  }
+
+  .badge-error {
+    @apply bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300;
+  }
+
+  /* ==================
+     CONTAINER
+     ================== */
+  .container-custom {
+    @apply w-full mx-auto px-4 sm:px-6 lg:px-8;
+    @apply max-w-7xl 3xl:max-w-[1920px] 4xl:max-w-[2400px];
+  }
+
+  /* ==================
+     SECTION SPACING
+     ================== */
+  .section-padding {
+    @apply py-12 md:py-16 lg:py-20 xl:py-24 4xl:py-32;
+  }
+
+  /* ==================
+     TEXT UTILITIES
+     ================== */
+  .text-gradient-primary {
+    @apply text-gradient bg-gradient-to-r from-primary-600 to-secondary-500;
+  }
+
+  .text-muted {
+    @apply text-neutral-600 dark:text-dark-600;
+  }
+
+  /* ==================
+     LOADING SPINNER
+     ================== */
+  .spinner {
+    @apply inline-block w-6 h-6 border-4 border-neutral-200 border-t-primary-600;
+    @apply rounded-full animate-spin;
+  }
+
+  /* ==================
+     SKELETON LOADER
+     ================== */
+  .skeleton {
+    @apply bg-neutral-200 dark:bg-dark-200 animate-pulse rounded;
+  }
+}
+
+/* ========================================
+   UTILITIES LAYER - Custom Utilities
+   ======================================== */
+@layer utilities {
+  /* Responsive Text Sizes */
+  .text-responsive-xl {
+    @apply text-h3 md:text-h2 lg:text-h1 xl:text-display-3 4xl:text-display-2;
+  }
+
+  .text-responsive-lg {
+    @apply text-h4 md:text-h3 lg:text-h2 xl:text-h1;
+  }
+
+  .text-responsive-md {
+    @apply text-body-lg md:text-h5 lg:text-h4;
+  }
+
+  /* Truncate Text */
+  .truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .truncate-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Aspect Ratios */
+  .aspect-4-3 {
+    aspect-ratio: 4 / 3;
+  }
+
+  .aspect-16-10 {
+    aspect-ratio: 16 / 10;
+  }
+
+  /* Safe Area Padding (for mobile notches) */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+
+/* Fade In */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Slide In Animations */
+@keyframes slideInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slideInUp {
+  animation: slideInUp 0.3s ease-out;
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
