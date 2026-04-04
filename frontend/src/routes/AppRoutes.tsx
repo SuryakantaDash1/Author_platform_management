@@ -11,6 +11,8 @@ const PricingPage = lazy(() => import('../pages/public/PricingPage'));
 const AboutPage = lazy(() => import('../pages/public/AboutPage'));
 const ContactPage = lazy(() => import('../pages/public/ContactPage'));
 const HelpPage = lazy(() => import('../pages/public/HelpPage'));
+const AuthorsPage = lazy(() => import('../pages/public/AuthorsPage'));
+const BooksPage = lazy(() => import('../pages/public/BooksPage'));
 
 const LoginPage = lazy(() => import('../pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('../pages/auth/RegisterPage'));
@@ -84,6 +86,22 @@ export const AppRoutes: React.FC = () => {
           element={
             <PublicRoute>
               <HelpPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/authors"
+          element={
+            <PublicRoute>
+              <AuthorsPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/books"
+          element={
+            <PublicRoute>
+              <BooksPage />
             </PublicRoute>
           }
         />

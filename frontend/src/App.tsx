@@ -22,6 +22,8 @@ const PricingPage = lazy(() => import('./pages/public/PricingPage'));
 const AboutPage = lazy(() => import('./pages/public/AboutPage'));
 const ContactPage = lazy(() => import('./pages/public/ContactPage'));
 const HelpPage = lazy(() => import('./pages/public/HelpPage'));
+const AuthorsPage = lazy(() => import('./pages/public/AuthorsPage'));
+const BooksPage = lazy(() => import('./pages/public/BooksPage'));
 
 // Lazy load author pages
 const AuthorDashboard = lazy(() => import('./pages/author/Dashboard'));
@@ -69,6 +71,8 @@ function App() {
                   <Route path="/about" element={<AboutPage />} />
                   <Route path="/contact" element={<ContactPage />} />
                   <Route path="/help" element={<HelpPage />} />
+                  <Route path="/authors" element={<AuthorsPage />} />
+                  <Route path="/books" element={<BooksPage />} />
                 </Route>
 
                 {/* Author Routes */}
