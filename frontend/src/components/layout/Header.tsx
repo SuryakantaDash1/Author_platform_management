@@ -16,7 +16,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, showMenuButton = true }) =
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  // const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -45,19 +45,19 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, showMenuButton = true }) =
     return () => window.removeEventListener('profile-updated', handler);
   }, [isAuthenticated, isAuthor]);
 
-  // Close dropdowns on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
-        setIsProfileOpen(false);
-      }
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
-        setIsNotificationsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  // // Close dropdowns on outside click
+  // useEffect(() => {
+  //   const handleClickOutside = (e: MouseEvent) => {
+  //     if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+  //       setIsProfileOpen(false);
+  //     }
+  //     if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+  //       setIsNotificationsOpen(false);
+  //     }
+  //   };
+  //   document.addEventListener('mousedown', handleClickOutside);
+  //   return () => document.removeEventListener('mousedown', handleClickOutside);
+  // }, []);
 
   // Role-based routes
   const profileRoute = isAuthor ? '/author/dashboard' : isAdmin ? '/admin/dashboard' : '/';
@@ -69,7 +69,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, showMenuButton = true }) =
     { id: 2, message: 'Book "My Novel" is now published', time: '1 hour ago', read: false },
     { id: 3, message: 'Profile updated successfully', time: '2 hours ago', read: true },
   ];
-  const unreadCount = notifications.filter(n => !n.read).length;
+  // const unreadCount = notifications.filter(n => !n.read).length;
 
   const handleLogout = () => {
     setIsProfileOpen(false);
