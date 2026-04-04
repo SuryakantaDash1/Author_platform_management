@@ -378,9 +378,8 @@ const Dashboard: React.FC = () => {
                 Help Chart
               </button>
               <button
-                disabled
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-body-sm font-medium rounded-lg shadow-sm opacity-50 cursor-not-allowed"
-                title="Coming soon in next phase"
+                onClick={() => navigate('/author/books')}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-body-sm font-medium rounded-lg shadow-sm transition-colors"
               >
                 <PlusCircle className="w-4 h-4" />
                 New Book

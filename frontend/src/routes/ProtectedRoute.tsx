@@ -43,11 +43,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Check if restricted author trying to access forbidden pages
   if (user?.role === 'author' && user?.isRestricted) {
-    const restrictedPaths = ['/author/books', '/author/analytics', '/author/earnings'];
+    const restrictedPaths = ['/author/analytics', '/author/earnings'];
     const currentPath = window.location.pathname;
 
     if (restrictedPaths.some(path => currentPath.startsWith(path))) {
-      return <Navigate to="/author/profile" replace />;
+      return <Navigate to="/author/dashboard" replace />;
     }
   }
 

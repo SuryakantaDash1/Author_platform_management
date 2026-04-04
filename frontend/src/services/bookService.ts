@@ -69,9 +69,9 @@ export const bookService = {
     return response.data;
   },
 
-  getPricingSuggestions: async (language: string, bookType: string): Promise<ApiResponse> => {
-    const response = await axiosInstance.get(API_ENDPOINTS.BOOKS.GET_PRICING_SUGGESTIONS, {
-      params: { language, bookType },
+  getPricingSuggestions: async (language: string): Promise<ApiResponse> => {
+    const response = await axiosInstance.get('/books/pricing-suggestions', {
+      params: { language },
     });
     return response.data;
   },

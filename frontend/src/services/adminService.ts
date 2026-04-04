@@ -70,7 +70,7 @@ export const adminService = {
 
   // Pricing Configuration
   updatePricing: async (data: any): Promise<ApiResponse> => {
-    const response = await axiosInstance.put(API_ENDPOINTS.ADMIN.UPDATE_PRICING, data);
+    const response = await axiosInstance.put(API_ENDPOINTS.ADMIN.GET_PAYMENT_CONFIG, data);
     return response.data;
   },
 

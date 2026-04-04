@@ -23,12 +23,26 @@ export const API_ENDPOINTS = {
     GET_AUTHOR_DETAILS: (authorId: string) => `/admin/authors/${authorId}`,
     UPDATE_AUTHOR_TIER: (authorId: string) => `/admin/authors/${authorId}/tier`,
     RESTRICT_AUTHOR: (authorId: string) => `/admin/authors/${authorId}/restrict`,
+    // Books
     GET_ALL_BOOKS: '/admin/books',
+    CREATE_BOOK: '/admin/books',
+    GET_BOOK_DETAIL: (bookId: string) => `/admin/books/${bookId}`,
+    UPDATE_BOOK: (bookId: string) => `/admin/books/${bookId}`,
     UPDATE_BOOK_STATUS: (bookId: string) => `/admin/books/${bookId}/status`,
+    // Payment Config
+    GET_PAYMENT_CONFIG: '/admin/payment-config',
+    CREATE_PAYMENT_CONFIG: '/admin/payment-config',
+    UPDATE_PAYMENT_CONFIG: (id: string) => `/admin/payment-config/${id}`,
+    DELETE_PAYMENT_CONFIG: (id: string) => `/admin/payment-config/${id}`,
+    // Support & misc
     GET_ALL_TICKETS: '/admin/tickets',
     GET_PLATFORM_STATS: '/admin/stats',
-    UPDATE_PRICING: '/admin/pricing',
     GET_AUDIT_LOGS: '/admin/audit-logs',
+  },
+
+  // Public pricing (no auth required — used in book form)
+  PAYMENT_CONFIG: {
+    GET_PUBLIC: '/payment-config/public',
   },
 
   // Author endpoints
@@ -38,6 +52,7 @@ export const API_ENDPOINTS = {
     UPLOAD_PROFILE_PICTURE: '/author/profile/picture',
     GET_DASHBOARD: '/author/dashboard',
     GET_MY_BOOKS: '/author/books',
+    GET_BOOK_DETAIL: (bookId: string) => `/author/books/${bookId}`,
     GET_TRANSACTIONS: '/author/transactions',
     ADD_BANK_ACCOUNT: '/author/bank-accounts',
     GET_BANK_ACCOUNTS: '/author/bank-accounts',
@@ -56,7 +71,6 @@ export const API_ENDPOINTS = {
     DELETE_FILE: (bookId: string) => `/books/${bookId}/files`,
     SUBMIT_FOR_REVIEW: (bookId: string) => `/books/${bookId}/submit`,
     DELETE_BOOK: (bookId: string) => `/books/${bookId}`,
-    GET_PRICING_SUGGESTIONS: '/books/pricing-suggestions',
     UPDATE_SALES_DATA: (bookId: string) => `/books/${bookId}/sales`,
   },
 

@@ -2,37 +2,33 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IPricingConfig extends Document {
   language: string;
-  publishingPrice: {
-    main: number;
-    discount: number;
+  languagePrice: { main: number; discount: number };
+  publishingPrice: { main: number; discount: number };
+  coverDesignPrice: { main: number; discount: number };
+  distributionPrice: { main: number; discount: number };
+  copyrightPrice: { main: number; discount: number };
+  formattingPrice: { main: number; discount: number };
+  perBookCopyPrice: { main: number; discount: number };
+  installmentOptions: {
+    label: string;
+    splits: number[];
+  }[];
+  referralConfig: {
+    firstBookBonus: number;
+    perReferralBonus: number;
   };
-  coverDesignPrice: {
-    main: number;
-    discount: number;
-  };
-  distributionPrice: {
-    main: number;
-    discount: number;
-  };
-  copyrightPrice: {
-    main: number;
-    discount: number;
-  };
-  formattingPrice: {
-    main: number;
-    discount: number;
-  };
-  perBookCopyPrice: {
-    main: number;
-    discount: number;
-  };
-  installmentOptions: number[];
+  platforms: string[];
   benefits: string[];
   isActive: boolean;
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
 }
+
+const priceField = {
+  main: { type: Number, required: true, min: 0 },
+  discount: { type: Number, default: 0, min: 0, max: 100 },
+};
 
 const PricingConfigSchema: Schema = new Schema(
   {
@@ -43,37 +39,28 @@ const PricingConfigSchema: Schema = new Schema(
       trim: true,
       index: true,
     },
-    publishingPrice: {
-      main: { type: Number, required: true },
-      discount: { type: Number, default: 0 },
-    },
-    coverDesignPrice: {
-      main: { type: Number, required: true },
-      discount: { type: Number, default: 0 },
-    },
-    distributionPrice: {
-      main: { type: Number, required: true },
-      discount: { type: Number, default: 0 },
-    },
-    copyrightPrice: {
-      main: { type: Number, required: true },
-      discount: { type: Number, default: 0 },
-    },
-    formattingPrice: {
-      main: { type: Number, required: true },
-      discount: { type: Number, default: 0 },
-    },
-    perBookCopyPrice: {
-      main: { type: Number, required: true },
-      discount: { type: Number, default: 0 },
-    },
+    languagePrice: priceField,
+    publishingPrice: priceField,
+    coverDesignPrice: priceField,
+    distributionPrice: priceField,
+    copyrightPrice: priceField,
+    formattingPrice: priceField,
+    perBookCopyPrice: priceField,
     installmentOptions: [{
-      type: Number,
-      min: 1,
-      max: 4,
+      label: { type: String, required: true },
+      splits: [{ type: Number, required: true }],
+    }],
+    referralConfig: {
+      firstBookBonus: { type: Number, default: 0, min: 0 },
+      perReferralBonus: { type: Number, default: 0, min: 0 },
+    },
+    platforms: [{
+      type: String,
+      trim: true,
     }],
     benefits: [{
       type: String,
+      trim: true,
     }],
     isActive: {
       type: Boolean,
@@ -82,7 +69,6 @@ const PricingConfigSchema: Schema = new Schema(
     createdBy: {
       type: String,
       required: true,
-      ref: 'User',
     },
   },
   {

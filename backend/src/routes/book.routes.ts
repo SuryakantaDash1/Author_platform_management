@@ -18,9 +18,9 @@ router.get('/pricing-suggestions', BookController.getPricingSuggestions);
 router.post('/', checkRole('author'), validate(bookValidation.createBook), BookController.createBook);
 router.get('/:bookId', BookController.getBookById);
 router.put('/:bookId', checkRole('author'), validate(bookValidation.updateBook), BookController.updateBook);
-router.post('/:bookId/cover', checkRole('author'), uploadSingle('coverPage'), BookController.uploadCoverPage);
-router.post('/:bookId/files', checkRole('author'), uploadMultiple('bookFiles', 5), BookController.uploadBookFiles);
-router.delete('/:bookId/files', checkRole('author'), BookController.deleteBookFile);
+router.post('/:bookId/cover', checkRole('author', 'super_admin', 'sub_admin'), uploadSingle('coverPage'), BookController.uploadCoverPage);
+router.post('/:bookId/files', checkRole('author', 'super_admin', 'sub_admin'), uploadMultiple('bookFiles', 5), BookController.uploadBookFiles);
+router.delete('/:bookId/files', checkRole('author', 'super_admin', 'sub_admin'), BookController.deleteBookFile);
 router.post('/:bookId/submit', checkRole('author'), BookController.submitForReview);
 router.delete('/:bookId', checkRole('author'), BookController.deleteBook);
 

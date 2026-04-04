@@ -415,14 +415,34 @@ export class AdminController {
       const sort: any = { [sortBy as string]: sortOrder === 'asc' ? 1 : -1 };
 
       const [books, total] = await Promise.all([
-        Book.find(filter).sort(sort).skip(skip).limit(Number(limit)),
+        Book.find(filter).sort(sort).skip(skip).limit(Number(limit)).lean(),
         Book.countDocuments(filter),
       ]);
+
+      // Join author + user data
+      const authorIds = [...new Set(books.map(b => b.authorId))];
+      const authors = await Author.find({ authorId: { $in: authorIds } }).lean();
+      const userIds = authors.map(a => a.userId);
+      const users = await User.find({ userId: { $in: userIds } })
+        .select('userId firstName lastName email')
+        .lean();
+      const userMap = new Map(users.map(u => [u.userId, u]));
+      const authorMap = new Map(authors.map(a => [a.authorId, { ...a, user: userMap.get(a.userId) || null }]));
+
+      const booksWithAuthors = books.map(book => ({
+        ...book,
+        author: authorMap.get(book.authorId) || null,
+        authorName: (() => {
+          const a = authorMap.get(book.authorId);
+          const u = a ? userMap.get(a.userId) : null;
+          return u ? `${u.firstName} ${u.lastName}`.trim() : book.authorId;
+        })(),
+      }));
 
       res.status(200).json({
         success: true,
         data: {
-          books,
+          books: booksWithAuthors,
           pagination: {
             total,
             page: Number(page),
@@ -662,6 +682,111 @@ export class AdminController {
             pages: Math.ceil(total / Number(limit)),
           },
         },
+      });
+    }
+  );
+
+  // Admin creates book for author
+  static createBookForAuthor = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const {
+        authorId, bookName, subtitle, language, bookType, targetAudience,
+        needFormatting, needCopyright, needDesigning, physicalCopies,
+        royaltyPercentage, expectedLaunchDate, marketplaces, paymentPlan,
+      } = req.body;
+
+      if (!authorId || !bookName || !bookType || !expectedLaunchDate) {
+        throw new ApiError(400, 'Author ID, book name, type, and launch date are required');
+      }
+
+      const author = await Author.findOne({ authorId });
+      if (!author) throw new ApiError(404, 'Author not found');
+
+      const user = await User.findOne({ userId: author.userId });
+      if (!user) throw new ApiError(404, 'User not found');
+
+      // Fetch pricing config
+      const bookLang = language || 'English';
+      const pricingConfig = await PricingConfig.findOne({ language: bookLang, isActive: true });
+
+      let priceBreakdown;
+      if (pricingConfig) {
+        const calc = (p: { main: number; discount: number }) => ({
+          original: p.main,
+          discounted: Math.round(p.main - (p.main * p.discount / 100)),
+        });
+        const publishing = calc(pricingConfig.publishingPrice);
+        const coverDesign = calc(pricingConfig.coverDesignPrice);
+        const formatting = needFormatting ? calc(pricingConfig.formattingPrice) : { original: 0, discounted: 0 };
+        const copyright = needCopyright ? calc(pricingConfig.copyrightPrice) : { original: 0, discounted: 0 };
+        const distribution = calc(pricingConfig.distributionPrice);
+        const freeCopies = 2;
+        const extraCopies = Math.max(0, (physicalCopies || 2) - freeCopies);
+        const physicalCopiesPrice = {
+          original: extraCopies * pricingConfig.perBookCopyPrice.main,
+          discounted: Math.round(extraCopies * (pricingConfig.perBookCopyPrice.main - (pricingConfig.perBookCopyPrice.main * pricingConfig.perBookCopyPrice.discount / 100))),
+          quantity: physicalCopies || 2,
+        };
+        const netAmount = publishing.discounted + coverDesign.discounted + formatting.discounted +
+          copyright.discounted + distribution.discounted + physicalCopiesPrice.discounted;
+        const totalOriginal = publishing.original + coverDesign.original + formatting.original +
+          copyright.original + distribution.original + physicalCopiesPrice.original;
+        priceBreakdown = {
+          publishing, coverDesign, formatting, copyright, distribution,
+          physicalCopies: physicalCopiesPrice,
+          netAmount, totalDiscount: totalOriginal - netAmount, referralDiscount: 0,
+          finalAmount: netAmount,
+        };
+      }
+
+      const bookCount = await Book.countDocuments();
+      const bookId = `BK${(bookCount + 1).toString().padStart(5, '0')}`;
+      const finalAmount = priceBreakdown?.finalAmount || 0;
+
+      const book = await Book.create({
+        bookId, authorId,
+        bookName, subtitle,
+        language: bookLang, bookType, targetAudience,
+        needFormatting: needFormatting || false,
+        needCopyright: needCopyright || false,
+        needDesigning: needDesigning || false,
+        physicalCopies: physicalCopies || 2,
+        royaltyPercentage: royaltyPercentage || 70,
+        expectedLaunchDate,
+        marketplaces: marketplaces || [],
+        priceBreakdown: priceBreakdown || {},
+        paymentPlan: paymentPlan || 'full',
+        paymentStatus: {
+          totalAmount: finalAmount,
+          paidAmount: 0,
+          pendingAmount: finalAmount,
+          paymentCompletionPercentage: 0,
+          installments: finalAmount > 0 ? [{ amount: finalAmount, status: 'pending' }] : [],
+        },
+        status: 'payment_pending',
+        createdBy: req.user?.userId,
+      });
+
+      // Update author total books
+      author.totalBooks = (author.totalBooks || 0) + 1;
+      await author.save();
+
+      // Send email to author about new book
+      try {
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        await EmailService.sendPaymentRequestEmail(
+          user.email!,
+          user.firstName,
+          bookName,
+          finalAmount,
+          `${frontendUrl}/author/books`
+        );
+      } catch { /* non-critical */ }
+
+      res.status(201).json({
+        success: true,
+        message: 'Book created for author successfully',
+        data: { book },
       });
     }
   );

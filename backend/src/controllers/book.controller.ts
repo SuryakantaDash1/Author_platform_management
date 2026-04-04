@@ -7,66 +7,168 @@ import Author from '../models/Author.model';
 import PricingConfig from '../models/PricingConfig.model';
 
 export class BookController {
-  // Create a new book (draft)
+  // Helper: Check if user is admin
+  static isAdmin(req: Request): boolean {
+    return req.user?.role === 'super_admin' || req.user?.role === 'sub_admin';
+  }
+
+  // Helper: Calculate price breakdown from config and selected services
+  static calculatePriceBreakdown(
+    config: any,
+    options: {
+      needFormatting: boolean;
+      needCopyright: boolean;
+      needDesigning: boolean;
+      physicalCopies: number;
+      hasCover: boolean;
+      referralDiscount?: number;
+    }
+  ) {
+    const calc = (p: { main: number; discount: number }) => ({
+      original: p.main,
+      discounted: Math.round(p.main - (p.main * p.discount / 100)),
+    });
+
+    const publishing = calc(config.publishingPrice);
+    const coverDesign = options.hasCover ? calc(config.coverDesignPrice) : { original: 0, discounted: 0 };
+    const formatting = options.needFormatting ? calc(config.formattingPrice) : { original: 0, discounted: 0 };
+    const copyright = options.needCopyright ? calc(config.copyrightPrice) : { original: 0, discounted: 0 };
+    const distribution = calc(config.distributionPrice);
+
+    const freeCopies = 2;
+    const extraCopies = Math.max(0, options.physicalCopies - freeCopies);
+    const physicalCopiesPrice = {
+      original: extraCopies * config.perBookCopyPrice.main,
+      discounted: Math.round(extraCopies * (config.perBookCopyPrice.main - (config.perBookCopyPrice.main * config.perBookCopyPrice.discount / 100))),
+      quantity: options.physicalCopies,
+    };
+
+    const netAmount = publishing.discounted + coverDesign.discounted + formatting.discounted +
+      copyright.discounted + distribution.discounted + physicalCopiesPrice.discounted;
+    const totalOriginal = publishing.original + coverDesign.original + formatting.original +
+      copyright.original + distribution.original + physicalCopiesPrice.original;
+    const totalDiscount = totalOriginal - netAmount;
+    const referralDiscount = options.referralDiscount || 0;
+    const finalAmount = Math.max(0, netAmount - referralDiscount);
+
+    return {
+      publishing, coverDesign, formatting, copyright, distribution,
+      physicalCopies: physicalCopiesPrice,
+      netAmount, totalDiscount, referralDiscount, finalAmount,
+    };
+  }
+
+  // Create a new book (author)
   static createBook = asyncHandler(
     async (req: Request, res: Response, _next: NextFunction) => {
       const {
-        bookName,
-        subtitle,
-        bookType,
-        targetAudience,
-        needFormatting,
-        needCopyright,
-        physicalCopies,
-        royaltyPercentage,
-        expectedLaunchDate,
-        marketplaces,
+        bookName, subtitle, language, bookType, targetAudience,
+        needFormatting, needCopyright, needDesigning, physicalCopies,
+        royaltyPercentage, expectedLaunchDate, marketplaces,
+        paymentPlan, hasCover,
       } = req.body;
 
-      if (!bookName || !bookType || !royaltyPercentage || !expectedLaunchDate) {
-        throw new ApiError(
-          400,
-          'Book name, type, royalty percentage, and expected launch date are required'
-        );
+      if (!bookName || !bookType || !expectedLaunchDate) {
+        throw new ApiError(400, 'Book name, type, and expected launch date are required');
       }
 
       const userId = req.user?.userId;
-      if (!userId) {
-        throw new ApiError(401, 'Unauthorized');
-      }
-      const author = await Author.findOne({ userId: userId });
+      if (!userId) throw new ApiError(401, 'Unauthorized');
 
-      if (!author) {
-        throw new ApiError(404, 'Author profile not found');
-      }
-
-      // Check if author is restricted
+      const author = await Author.findOne({ userId });
+      if (!author) throw new ApiError(404, 'Author profile not found');
       if (author.isRestricted) {
-        throw new ApiError(
-          403,
-          `Account restricted: ${author.restrictionReason || 'Contact support'}`
-        );
+        throw new ApiError(403, `Account restricted: ${author.restrictionReason || 'Contact support'}`);
+      }
+
+      // Fetch pricing config for selected language
+      const bookLang = language || 'English';
+      const pricingConfig = await PricingConfig.findOne({ language: bookLang, isActive: true });
+
+      let priceBreakdown;
+      if (pricingConfig) {
+        priceBreakdown = BookController.calculatePriceBreakdown(pricingConfig, {
+          needFormatting: needFormatting || false,
+          needCopyright: needCopyright || false,
+          needDesigning: needDesigning || false,
+          physicalCopies: physicalCopies || 2,
+          hasCover: hasCover !== false,
+        });
       }
 
       // Generate unique book ID
       const bookCount = await Book.countDocuments();
       const bookId = `BK${(bookCount + 1).toString().padStart(5, '0')}`;
 
+      const finalAmount = priceBreakdown?.finalAmount || 0;
+      const plan = paymentPlan || 'full';
+
+      // Build installments based on payment plan
+      let installments: { amount: number; status: string }[] = [];
+      if (finalAmount > 0) {
+        switch (plan) {
+          case '2_installments':
+            installments = [
+              { amount: Math.ceil(finalAmount * 0.5), status: 'pending' },
+              { amount: Math.floor(finalAmount * 0.5), status: 'pending' },
+            ];
+            break;
+          case '3_installments':
+            installments = [
+              { amount: Math.ceil(finalAmount * 0.25), status: 'pending' },
+              { amount: Math.ceil(finalAmount * 0.50), status: 'pending' },
+              { amount: Math.floor(finalAmount * 0.25), status: 'pending' },
+            ];
+            break;
+          case '4_installments':
+            installments = [
+              { amount: Math.ceil(finalAmount * 0.25), status: 'pending' },
+              { amount: Math.ceil(finalAmount * 0.50), status: 'pending' },
+              { amount: Math.floor(finalAmount * 0.25), status: 'pending' },
+              { amount: 0, status: 'pending' },
+            ];
+            break;
+          case 'pay_later':
+            installments = [{ amount: finalAmount, status: 'pending' }];
+            break;
+          default: // full
+            installments = [{ amount: finalAmount, status: 'pending' }];
+        }
+      }
+
+      const dueDate = plan === 'pay_later'
+        ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        : undefined;
+
       const book = await Book.create({
         bookId,
         authorId: author.authorId,
-        bookName,
-        subtitle,
-        bookType,
-        targetAudience,
+        bookName, subtitle,
+        language: bookLang,
+        bookType, targetAudience,
         needFormatting: needFormatting || false,
         needCopyright: needCopyright || false,
+        needDesigning: needDesigning || false,
         physicalCopies: physicalCopies || 2,
-        royaltyPercentage,
+        royaltyPercentage: royaltyPercentage || 70,
         expectedLaunchDate,
         marketplaces: marketplaces || [],
-        status: 'draft',
+        priceBreakdown: priceBreakdown || {},
+        paymentPlan: plan,
+        paymentStatus: {
+          totalAmount: finalAmount,
+          paidAmount: 0,
+          pendingAmount: finalAmount,
+          paymentCompletionPercentage: 0,
+          dueDate,
+          installments,
+        },
+        status: finalAmount > 0 ? 'payment_pending' : 'pending',
       });
+
+      // Update author's total books
+      author.totalBooks = (author.totalBooks || 0) + 1;
+      await author.save();
 
       res.status(201).json({
         success: true,
@@ -138,15 +240,9 @@ export class BookController {
 
       // Update allowed fields
       const allowedUpdates = [
-        'bookName',
-        'subtitle',
-        'bookType',
-        'targetAudience',
-        'needFormatting',
-        'needCopyright',
-        'physicalCopies',
-        'expectedLaunchDate',
-        'marketplaces',
+        'bookName', 'subtitle', 'language', 'bookType', 'targetAudience',
+        'needFormatting', 'needCopyright', 'needDesigning',
+        'physicalCopies', 'expectedLaunchDate', 'marketplaces',
       ];
 
       allowedUpdates.forEach((field) => {
@@ -180,14 +276,12 @@ export class BookController {
         throw new ApiError(404, 'Book not found');
       }
 
-      // Check if user is the author
-      const userId = req.user?.userId;
-      if (!userId) {
-        throw new ApiError(401, 'Unauthorized');
-      }
-      const author = await Author.findOne({ userId: userId });
-      if (!author || book.authorId !== author.authorId) {
-        throw new ApiError(403, 'Access denied');
+      // Check ownership (admin can bypass)
+      if (!BookController.isAdmin(req)) {
+        const userId = req.user?.userId;
+        if (!userId) throw new ApiError(401, 'Unauthorized');
+        const author = await Author.findOne({ userId });
+        if (!author || book.authorId !== author.authorId) throw new ApiError(403, 'Access denied');
       }
 
       // Upload to Cloudinary
@@ -228,14 +322,12 @@ export class BookController {
         throw new ApiError(404, 'Book not found');
       }
 
-      // Check if user is the author
-      const userId = req.user?.userId;
-      if (!userId) {
-        throw new ApiError(401, 'Unauthorized');
-      }
-      const author = await Author.findOne({ userId: userId });
-      if (!author || book.authorId !== author.authorId) {
-        throw new ApiError(403, 'Access denied');
+      // Check ownership (admin can bypass)
+      if (!BookController.isAdmin(req)) {
+        const userId = req.user?.userId;
+        if (!userId) throw new ApiError(401, 'Unauthorized');
+        const author = await Author.findOne({ userId });
+        if (!author || book.authorId !== author.authorId) throw new ApiError(403, 'Access denied');
       }
 
       const files = req.files as Express.Multer.File[];
@@ -274,14 +366,12 @@ export class BookController {
         throw new ApiError(404, 'Book not found');
       }
 
-      // Check if user is the author
-      const userId = req.user?.userId;
-      if (!userId) {
-        throw new ApiError(401, 'Unauthorized');
-      }
-      const author = await Author.findOne({ userId: userId });
-      if (!author || book.authorId !== author.authorId) {
-        throw new ApiError(403, 'Access denied');
+      // Check ownership (admin can bypass)
+      if (!BookController.isAdmin(req)) {
+        const userId = req.user?.userId;
+        if (!userId) throw new ApiError(401, 'Unauthorized');
+        const author = await Author.findOne({ userId });
+        if (!author || book.authorId !== author.authorId) throw new ApiError(403, 'Access denied');
       }
 
       // Check if file exists in book
@@ -397,36 +487,29 @@ export class BookController {
     }
   );
 
-  // Get pricing suggestions based on language and book type
+  // Get pricing for a language (used by book form)
   static getPricingSuggestions = asyncHandler(
     async (req: Request, res: Response, _next: NextFunction) => {
-      const { language, bookType } = req.query;
+      const { language } = req.query;
 
-      if (!language || !bookType) {
-        throw new ApiError(400, 'Language and book type are required');
+      if (!language) {
+        throw new ApiError(400, 'Language is required');
       }
 
-      const pricingConfig = await PricingConfig.findOne({
-        language,
-        bookType,
-      });
+      const config = await PricingConfig.findOne({ language, isActive: true });
 
-      if (!pricingConfig) {
+      if (!config) {
         res.status(200).json({
           success: true,
-          message: 'No pricing configuration found for this combination',
-          data: { priceRange: null },
+          message: 'No pricing configuration found for this language',
+          data: { config: null },
         });
         return;
       }
 
       res.status(200).json({
         success: true,
-        data: {
-          language,
-          bookType,
-          priceRange: (pricingConfig as any).priceRange,
-        },
+        data: { config },
       });
     }
   );

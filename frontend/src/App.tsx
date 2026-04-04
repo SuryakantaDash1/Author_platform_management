@@ -23,14 +23,17 @@ const AboutPage = lazy(() => import('./pages/public/AboutPage'));
 const ContactPage = lazy(() => import('./pages/public/ContactPage'));
 const HelpPage = lazy(() => import('./pages/public/HelpPage'));
 
-// Lazy load author pages (Phase 1 only)
+// Lazy load author pages
 const AuthorDashboard = lazy(() => import('./pages/author/Dashboard'));
+const AuthorBooks = lazy(() => import('./pages/author/Books'));
 const AuthorTickets = lazy(() => import('./pages/author/Tickets'));
 const AuthorSettings = lazy(() => import('./pages/author/Settings'));
 
-// Lazy load admin pages (Phase 1 only)
+// Lazy load admin pages
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
 const AdminAuthors = lazy(() => import('./pages/admin/Authors'));
+const AdminBooks = lazy(() => import('./pages/admin/Books'));
+const AdminPaymentConfig = lazy(() => import('./pages/admin/PaymentConfig'));
 const AdminSupport = lazy(() => import('./pages/admin/Support'));
 const AdminSettings = lazy(() => import('./pages/admin/Settings'));
 
@@ -68,7 +71,7 @@ function App() {
                   <Route path="/help" element={<HelpPage />} />
                 </Route>
 
-                {/* Author Routes - Phase 1 */}
+                {/* Author Routes */}
                 <Route
                   path="/author"
                   element={
@@ -79,11 +82,12 @@ function App() {
                 >
                   <Route index element={<Navigate to="/author/dashboard" replace />} />
                   <Route path="dashboard" element={<AuthorDashboard />} />
+                  <Route path="books" element={<AuthorBooks />} />
                   <Route path="tickets" element={<AuthorTickets />} />
                   <Route path="settings" element={<AuthorSettings />} />
                 </Route>
 
-                {/* Admin Routes - Phase 1 */}
+                {/* Admin Routes */}
                 <Route
                   path="/admin"
                   element={
@@ -95,6 +99,8 @@ function App() {
                   <Route index element={<Navigate to="/admin/dashboard" replace />} />
                   <Route path="dashboard" element={<AdminDashboard />} />
                   <Route path="authors" element={<AdminAuthors />} />
+                  <Route path="books" element={<AdminBooks />} />
+                  <Route path="payment-config" element={<AdminPaymentConfig />} />
                   <Route path="support" element={<AdminSupport />} />
                   <Route path="settings" element={<AdminSettings />} />
                 </Route>

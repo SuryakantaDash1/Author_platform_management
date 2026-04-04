@@ -2,7 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PublicRoute } from './PublicRoute';
-import { SuspenseFallback } from '../components/common/SuspenseFallback';
+import SuspenseFallback from '../components/common/SuspenseFallback';
 
 // Lazy load pages
 const HomePage = lazy(() => import('../pages/public/HomePage'));
@@ -22,6 +22,7 @@ const AdminTransactions = lazy(() => import('../pages/admin/Transactions'));
 const AdminSupport = lazy(() => import('../pages/admin/Support'));
 const AdminAnalytics = lazy(() => import('../pages/admin/Analytics'));
 const AdminSettings = lazy(() => import('../pages/admin/Settings'));
+const AdminPaymentConfig = lazy(() => import('../pages/admin/PaymentConfig'));
 
 const AuthorDashboard = lazy(() => import('../pages/author/Dashboard'));
 const AuthorBooks = lazy(() => import('../pages/author/Books'));
@@ -159,6 +160,14 @@ export const AppRoutes: React.FC = () => {
           element={
             <ProtectedRoute allowedRoles={['super_admin', 'sub_admin']}>
               <AdminSettings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/payment-config"
+          element={
+            <ProtectedRoute allowedRoles={['super_admin', 'sub_admin']}>
+              <AdminPaymentConfig />
             </ProtectedRoute>
           }
         />

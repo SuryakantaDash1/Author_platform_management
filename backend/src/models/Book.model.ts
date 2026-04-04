@@ -1,16 +1,18 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { BookStatus, BookType } from '../types';
+import { BookStatus, BookType, PaymentPlan } from '../types';
 
 export interface IBook extends Document {
   bookId: string;
   authorId: string;
   bookName: string;
   subtitle?: string;
+  language: string;
   bookType: BookType;
   targetAudience?: string;
   coverPage?: string;
   needFormatting: boolean;
   needCopyright: boolean;
+  needDesigning: boolean;
   physicalCopies: number;
   royaltyPercentage: number;
   expectedLaunchDate: Date;
@@ -21,20 +23,45 @@ export interface IBook extends Document {
   rejectionReason?: string;
   totalSellingUnits: number;
   totalRevenue: number;
+  priceBreakdown: {
+    publishing: { original: number; discounted: number };
+    coverDesign: { original: number; discounted: number };
+    formatting: { original: number; discounted: number };
+    copyright: { original: number; discounted: number };
+    distribution: { original: number; discounted: number };
+    physicalCopies: { original: number; discounted: number; quantity: number };
+    netAmount: number;
+    totalDiscount: number;
+    referralDiscount: number;
+    finalAmount: number;
+  };
+  paymentPlan: PaymentPlan;
   paymentStatus: {
     totalAmount: number;
     paidAmount: number;
     pendingAmount: number;
     paymentCompletionPercentage: number;
+    dueDate?: Date;
+    installments: {
+      amount: number;
+      status: string;
+      paidAt?: Date;
+    }[];
   };
   platformWiseSales: Map<string, {
     sellingUnits: number;
     productLink?: string;
     rating?: number;
   }>;
+  createdBy?: string;
   createdAt: Date;
   updatedAt: Date;
 }
+
+const priceBreakdownItem = {
+  original: { type: Number, default: 0 },
+  discounted: { type: Number, default: 0 },
+};
 
 const BookSchema: Schema = new Schema(
   {
@@ -59,10 +86,15 @@ const BookSchema: Schema = new Schema(
       type: String,
       trim: true,
     },
+    language: {
+      type: String,
+      trim: true,
+      default: 'English',
+    },
     bookType: {
       type: String,
-      enum: ['fiction', 'non-fiction', 'poetry', 'children', 'academic', 'other'],
       required: true,
+      trim: true,
     },
     targetAudience: {
       type: String,
@@ -76,6 +108,10 @@ const BookSchema: Schema = new Schema(
       default: false,
     },
     needCopyright: {
+      type: Boolean,
+      default: false,
+    },
+    needDesigning: {
       type: Boolean,
       default: false,
     },
@@ -105,7 +141,7 @@ const BookSchema: Schema = new Schema(
     }],
     status: {
       type: String,
-      enum: ['draft', 'pending', 'published', 'rejected'],
+      enum: ['draft', 'pending', 'payment_pending', 'in_progress', 'formatting', 'designing', 'published', 'rejected'],
       default: 'draft',
     },
     rejectionReason: {
@@ -119,23 +155,38 @@ const BookSchema: Schema = new Schema(
       type: Number,
       default: 0,
     },
+    priceBreakdown: {
+      publishing: priceBreakdownItem,
+      coverDesign: priceBreakdownItem,
+      formatting: priceBreakdownItem,
+      copyright: priceBreakdownItem,
+      distribution: priceBreakdownItem,
+      physicalCopies: {
+        original: { type: Number, default: 0 },
+        discounted: { type: Number, default: 0 },
+        quantity: { type: Number, default: 2 },
+      },
+      netAmount: { type: Number, default: 0 },
+      totalDiscount: { type: Number, default: 0 },
+      referralDiscount: { type: Number, default: 0 },
+      finalAmount: { type: Number, default: 0 },
+    },
+    paymentPlan: {
+      type: String,
+      enum: ['full', '2_installments', '3_installments', '4_installments', 'pay_later'],
+      default: 'full',
+    },
     paymentStatus: {
-      totalAmount: {
-        type: Number,
-        default: 0,
-      },
-      paidAmount: {
-        type: Number,
-        default: 0,
-      },
-      pendingAmount: {
-        type: Number,
-        default: 0,
-      },
-      paymentCompletionPercentage: {
-        type: Number,
-        default: 0,
-      },
+      totalAmount: { type: Number, default: 0 },
+      paidAmount: { type: Number, default: 0 },
+      pendingAmount: { type: Number, default: 0 },
+      paymentCompletionPercentage: { type: Number, default: 0 },
+      dueDate: { type: Date },
+      installments: [{
+        amount: { type: Number, required: true },
+        status: { type: String, enum: ['pending', 'paid', 'overdue'], default: 'pending' },
+        paidAt: { type: Date },
+      }],
     },
     platformWiseSales: {
       type: Map,
@@ -146,13 +197,15 @@ const BookSchema: Schema = new Schema(
       }, { _id: false }),
       default: new Map(),
     },
+    createdBy: {
+      type: String,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-// Indexes for searching and filtering
 BookSchema.index({ bookName: 'text' });
 BookSchema.index({ status: 1, createdAt: -1 });
 BookSchema.index({ authorId: 1, status: 1 });

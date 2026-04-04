@@ -8,6 +8,7 @@ import {
   Settings,
   HelpCircle,
   X,
+  DollarSign,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -21,16 +22,19 @@ const Sidebar: React.FC<SidebarProps> = ({
   onClose,
   userRole = 'Author'
 }) => {
-  // Author menu items (Phase 1: Dashboard + Support only)
+  // Author menu items (Phase 2: Dashboard + Books + Support)
   const authorMenuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/author/dashboard' },
+    { icon: Book, label: 'My Books', path: '/author/books' },
     { icon: MessageSquare, label: 'Help Desk', path: '/author/tickets' },
   ];
 
-  // Admin menu items (Phase 1: Dashboard + Authors + Support + Settings)
+  // Admin menu items (Phase 2: Dashboard + Authors + Books + Pricing + Support + Settings)
   const adminMenuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
     { icon: Users, label: 'Authors', path: '/admin/authors' },
+    { icon: Book, label: 'Books', path: '/admin/books' },
+    { icon: DollarSign, label: 'Pricing Config', path: '/admin/payment-config' },
     { icon: MessageSquare, label: 'Help Center', path: '/admin/support' },
     { icon: Settings, label: 'Settings', path: '/admin/settings' },
   ];

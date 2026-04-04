@@ -17,6 +17,7 @@ router.put('/authors/:authorId/tier', AdminController.updateAuthorTier);
 router.put('/authors/:authorId/restrict', AdminController.restrictAuthor);
 
 // Book management
+router.post('/books', AdminController.createBookForAuthor);
 router.get('/books', AdminController.getAllBooks);
 router.put('/books/:bookId/status', AdminController.updateBookStatus);
 

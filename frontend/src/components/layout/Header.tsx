@@ -92,14 +92,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, showMenuButton = true }) =
                 <Menu className="w-6 h-6" />
               </button>
             )}
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-primary-600 to-secondary-600 rounded-lg flex items-center justify-center">
-                <Book className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-h5 font-bold text-neutral-900 dark:text-dark-900 hidden sm:block">
-                POVITAL
-              </span>
-            </Link>
+
           </div>
 
           {/* Right Section */}
@@ -117,38 +110,6 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, showMenuButton = true }) =
               </>
             ) : (
               <>
-                {/* Notifications */}
-                <div className="relative" ref={notifRef}>
-                  <button
-                    onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                    className="relative p-2 rounded-lg text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 dark:text-dark-600 dark:hover:text-dark-900 dark:hover:bg-dark-200 transition-colors"
-                    aria-label="Notifications"
-                  >
-                    <Bell className="w-5 h-5" />
-                    {unreadCount > 0 && (
-                      <span className="absolute top-1 right-1 w-2 h-2 bg-error-DEFAULT rounded-full" />
-                    )}
-                  </button>
-                  {isNotificationsOpen && (
-                    <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-dark-100 rounded-xl shadow-lg border border-neutral-200 dark:border-dark-300 overflow-hidden">
-                      <div className="p-4 border-b border-neutral-200 dark:border-dark-300">
-                        <h3 className="text-h6 font-semibold text-neutral-900 dark:text-dark-900">Notifications</h3>
-                      </div>
-                      <div className="max-h-96 overflow-y-auto">
-                        {notifications.map(n => (
-                          <div
-                            key={n.id}
-                            className={`p-4 border-b border-neutral-100 dark:border-dark-200 hover:bg-neutral-50 dark:hover:bg-dark-200 transition-colors ${!n.read ? 'bg-primary-50/50 dark:bg-primary-900/10' : ''}`}
-                          >
-                            <p className="text-body-sm text-neutral-900 dark:text-dark-900">{n.message}</p>
-                            <p className="text-body-xs text-neutral-500 dark:text-dark-500 mt-1">{n.time}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
                 {/* User Profile */}
                 <div className="relative" ref={profileRef}>
                   <button
