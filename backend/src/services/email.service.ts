@@ -224,4 +224,19 @@ export class EmailService {
       console.error('Error sending royalty payment email:', error);
     }
   }
+
+  // Send raw HTML email (used by cron reminders)
+  static async sendRawEmail(to: string, subject: string, html: string): Promise<void> {
+    try {
+      await this.transporter.sendMail({
+        from: `"POVITAL" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+        to,
+        subject,
+        html,
+      });
+      console.log(`Email sent to ${to}: ${subject}`);
+    } catch (error) {
+      console.error(`Error sending email to ${to}:`, error);
+    }
+  }
 }

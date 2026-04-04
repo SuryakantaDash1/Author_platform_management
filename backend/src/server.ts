@@ -96,6 +96,10 @@ const startServer = async () => {
     // Connect to database
     await connectDB();
 
+    // Initialize cron jobs
+    const { CronService } = await import('./services/cron.service');
+    CronService.init();
+
     // Start listening
     server = app.listen(PORT, () => {
       console.log('🚀 Server started successfully!');
