@@ -13,6 +13,8 @@ import {
   MapPin,
   Pencil,
   Camera,
+  Book,
+  ExternalLink,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/interceptors';
@@ -35,8 +37,7 @@ interface UserProfile {
 
 interface AuthorProfile {
   authorId: string;
-  qualification: string;
-  university: string;
+  publishedArticles?: Array<{ bookName: string; isbn?: string; bookPhoto?: string; links?: Array<{ platform: string; url: string }> }>;
   profilePicture: string;
   referralCode: string;
   totalBooks: number;
@@ -75,6 +76,7 @@ const Dashboard: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showArticles, setShowArticles] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -311,10 +313,12 @@ const Dashboard: React.FC = () => {
               <h2 className="text-h3 font-bold text-neutral-900 dark:text-dark-900 truncate">
                 {user?.firstName} {user?.lastName}
               </h2>
-              {(author?.qualification || author?.university) && (
-                <p className="text-body-sm italic text-neutral-600 dark:text-dark-600 truncate">
-                  {[author.qualification, author.university].filter(Boolean).join(' - ')}
-                </p>
+              {author?.publishedArticles && author.publishedArticles.length > 0 && (
+                <button type="button" onClick={() => setShowArticles(prev => !prev)}
+                  className="inline-flex items-center gap-1 text-body-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer">
+                  Published Author ({author.publishedArticles.length} {author.publishedArticles.length === 1 ? 'book' : 'books'})
+                  <span className="text-[10px]">{showArticles ? '▲' : '▼'}</span>
+                </button>
               )}
 
               <div className="space-y-1.5 pt-1">
@@ -389,6 +393,41 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Published Articles Expandable */}
+      {showArticles && author?.publishedArticles && author.publishedArticles.length > 0 && (
+        <div className="card p-5 space-y-3 animate-in slide-in-from-top-2">
+          <h3 className="text-body font-semibold text-neutral-900 dark:text-dark-900">Published Books / Articles</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {author.publishedArticles.map((article: any, idx: number) => (
+              <div key={idx} className="flex gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                {article.bookPhoto ? (
+                  <img src={article.bookPhoto} alt={article.bookName} className="w-14 h-18 object-cover rounded-lg flex-shrink-0" />
+                ) : (
+                  <div className="w-14 h-18 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Book className="w-6 h-6 text-indigo-400" />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{article.bookName}</p>
+                  {article.isbn && <p className="text-xs text-gray-500 dark:text-gray-400">ISBN: {article.isbn}</p>}
+                  {article.links && article.links.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {article.links.map((link: any, lIdx: number) => (
+                        <a key={lIdx} href={link.url} target="_blank" rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors">
+                          {link.platform}
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((card) => {
@@ -428,8 +467,7 @@ const Dashboard: React.FC = () => {
           }}
           authorData={{
             authorId: author.authorId,
-            qualification: author.qualification || '',
-            university: author.university || '',
+            publishedArticles: author.publishedArticles || [],
             createdAt: author.createdAt || '',
             address: {
               pinCode: author.address?.pinCode || '',

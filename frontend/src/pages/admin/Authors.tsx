@@ -50,8 +50,7 @@ interface Author {
   _id?: string;
   authorId: string;
   userId: AuthorUser;
-  qualification?: string;
-  university?: string;
+  publishedArticles?: any[];
   address?: AuthorAddress;
   totalBooks: number;
   totalEarnings: number;
@@ -80,8 +79,6 @@ interface CreateAuthorForm {
   lastName: string;
   email: string;
   mobile: string;
-  qualification: string;
-  university: string;
   pinCode: string;
   division: string;
   city: string;
@@ -101,8 +98,6 @@ const initialCreateForm: CreateAuthorForm = {
   lastName: '',
   email: '',
   mobile: '',
-  qualification: '',
-  university: '',
   pinCode: '',
   division: '',
   city: '',
@@ -173,7 +168,9 @@ const Authors: React.FC = () => {
 
   // ---- View state ----
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingAuthorId, setEditingAuthorId] = useState<string | null>(null);
   const [showDetailPanel, setShowDetailPanel] = useState(false);
+  const [showArticlesPanel, setShowArticlesPanel] = useState(false);
   const [showRestrictDialog, setShowRestrictDialog] = useState(false);
   const [selectedAuthor, setSelectedAuthor] = useState<Author | null>(null);
   const [authorDetail, setAuthorDetail] = useState<AuthorDetail | null>(null);
@@ -352,17 +349,35 @@ const Authors: React.FC = () => {
 
     setCreateLoading(true);
     try {
-      const response = await axiosInstance.post(API_ENDPOINTS.ADMIN.CREATE_AUTHOR, createForm);
-      if (response.data?.success) {
-        toast.success('Author account created successfully. Credentials sent to email.');
-        setShowCreateModal(false);
-        setCreateForm(initialCreateForm);
-        setCreateErrors({});
-        setCreateApiError('');
-        fetchAuthors(1);
+      if (editingAuthorId) {
+        // Update existing author profile
+        const payload = {
+          address: {
+            pinCode: createForm.pinCode,
+            city: createForm.city,
+            district: createForm.district,
+            state: createForm.state,
+            country: createForm.country,
+            housePlot: createForm.housePlot,
+            landmark: createForm.landmark,
+          },
+        };
+        await axiosInstance.put(`/admin/authors/${editingAuthorId}`, payload);
+        toast.success('Author profile updated successfully');
+      } else {
+        const response = await axiosInstance.post(API_ENDPOINTS.ADMIN.CREATE_AUTHOR, createForm);
+        if (response.data?.success) {
+          toast.success('Author account created successfully. Credentials sent to email.');
+        }
       }
+      setShowCreateModal(false);
+      setEditingAuthorId(null);
+      setCreateForm(initialCreateForm);
+      setCreateErrors({});
+      setCreateApiError('');
+      fetchAuthors(1);
     } catch (error: any) {
-      const msg = error?.response?.data?.message || 'Failed to create author';
+      const msg = error?.response?.data?.message || (editingAuthorId ? 'Failed to update author' : 'Failed to create author');
       setCreateApiError(msg);
       toast.error(msg);
     } finally {
@@ -538,7 +553,7 @@ const Authors: React.FC = () => {
             Search
           </button>
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => { setEditingAuthorId(null); setCreateForm(initialCreateForm); setShowCreateModal(true); }}
             className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-purple-400"
           >
             <Plus className="w-4 h-4" />
@@ -767,11 +782,12 @@ const Authors: React.FC = () => {
       isOpen={showCreateModal}
       onClose={() => {
         setShowCreateModal(false);
+        setEditingAuthorId(null);
         setCreateForm(initialCreateForm);
         setCreateErrors({});
         setCreateApiError('');
       }}
-      title="Create Author Account"
+      title={editingAuthorId ? "Update Author Profile" : "Create Author Account"}
       size="xl"
     >
       <form onSubmit={handleCreateSubmit} className="space-y-5">
@@ -793,7 +809,8 @@ const Authors: React.FC = () => {
               value={createForm.firstName}
               onChange={(e) => handleCreateFormChange('firstName', e.target.value)}
               placeholder="Enter first name"
-              className={`w-full px-3 py-2.5 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${createErrors.firstName ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'}`}
+              disabled={!!editingAuthorId}
+              className={`w-full px-3 py-2.5 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${editingAuthorId ? 'opacity-60 cursor-not-allowed' : ''} ${createErrors.firstName ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'}`}
             />
             {createErrors.firstName && <p className="text-red-500 text-xs mt-1">{createErrors.firstName}</p>}
           </div>
@@ -845,34 +862,6 @@ const Authors: React.FC = () => {
               />
             </div>
             {createErrors.email && <p className="text-red-500 text-xs mt-1">{createErrors.email}</p>}
-          </div>
-        </div>
-
-        {/* Row: Qualification & University */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Highest Qualification
-            </label>
-            <input
-              type="text"
-              value={createForm.qualification}
-              onChange={(e) => handleCreateFormChange('qualification', e.target.value)}
-              placeholder="e.g. B.Tech, M.A., PhD"
-              className="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Passing from University
-            </label>
-            <input
-              type="text"
-              value={createForm.university}
-              onChange={(e) => handleCreateFormChange('university', e.target.value)}
-              placeholder="Enter university name"
-              className="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
-            />
           </div>
         </div>
 
@@ -1112,16 +1101,51 @@ const Authors: React.FC = () => {
 
               {/* Info Cards */}
               <div className="space-y-3">
-                {/* Qualification */}
-                {(author.qualification || author.university) && (
-                  <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                    <BookOpen className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Qualification</p>
-                      <p className="text-sm text-gray-900 dark:text-gray-100">
-                        {[author.qualification, author.university].filter(Boolean).join(' from ')}
-                      </p>
-                    </div>
+                {/* Published Articles */}
+                {author.publishedArticles && author.publishedArticles.length > 0 && (
+                  <div className="rounded-lg overflow-hidden border border-emerald-200 dark:border-emerald-800">
+                    <button type="button" onClick={() => setShowArticlesPanel(prev => !prev)}
+                      className="flex items-center justify-between gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 w-full text-left hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <BookOpen className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Published Books/Articles</p>
+                          <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                            {author.publishedArticles.length} {author.publishedArticles.length === 1 ? 'book' : 'books'} published
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-xs text-emerald-500">{showArticlesPanel ? '▲' : '▼'}</span>
+                    </button>
+                    {showArticlesPanel && (
+                      <div className="p-3 space-y-2 bg-white dark:bg-gray-900">
+                        {author.publishedArticles.map((article: any, idx: number) => (
+                          <div key={idx} className="flex gap-3 p-2.5 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                            {article.bookPhoto ? (
+                              <img src={article.bookPhoto} alt={article.bookName} className="w-12 h-16 object-cover rounded flex-shrink-0" />
+                            ) : (
+                              <div className="w-12 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 rounded flex items-center justify-center flex-shrink-0">
+                                <BookOpen className="w-5 h-5 text-indigo-400" />
+                              </div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{article.bookName}</p>
+                              {article.isbn && <p className="text-xs text-gray-500 dark:text-gray-400">ISBN: {article.isbn}</p>}
+                              {article.links && article.links.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {article.links.map((link: any, lIdx: number) => (
+                                    <a key={lIdx} href={link.url} target="_blank" rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-0.5 text-[10px] font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors">
+                                      {link.platform} ↗
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1140,7 +1164,7 @@ const Authors: React.FC = () => {
                   <div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Phone</p>
                     <p className="text-sm text-gray-900 dark:text-gray-100">
-                      {author.mobile || '—'}
+                      {author.mobile || (author as any).user?.mobile || '—'}
                     </p>
                   </div>
                 </div>
@@ -1213,7 +1237,26 @@ const Authors: React.FC = () => {
               {/* Update Profile Button */}
               <button
                 onClick={() => {
-                  toast.success('Update profile flow coming soon');
+                  if (!selectedAuthor) return;
+                  const a = selectedAuthor;
+                  const u = (a as any).user || (a as any).userId || {};
+                  setCreateForm({
+                    firstName: u.firstName || '',
+                    lastName: u.lastName || '',
+                    email: u.email || '',
+                    mobile: u.mobile || '',
+                    pinCode: a.address?.pinCode || '',
+                    division: a.address?.district || '',
+                    city: a.address?.city || '',
+                    district: a.address?.district || '',
+                    state: a.address?.state || '',
+                    country: a.address?.country || '',
+                    housePlot: a.address?.housePlot || '',
+                    landmark: a.address?.landmark || '',
+                  });
+                  setEditingAuthorId(a.authorId);
+                  setShowCreateModal(true);
+                  setShowDetailPanel(false);
                 }}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-purple-400"
               >

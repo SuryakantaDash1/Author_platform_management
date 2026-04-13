@@ -15,7 +15,7 @@ export class AdminController {
   // Create author account by admin (with auto-generated password)
   static createAuthor = asyncHandler(
     async (req: Request, res: Response, _next: NextFunction) => {
-      const { firstName, lastName, email, mobile, referralCode, qualification, university, pinCode, city, district, state, country, housePlot, landmark } = req.body;
+      const { firstName, lastName, email, mobile, referralCode, pinCode, city, district, state, country, housePlot, landmark } = req.body;
 
       if (!firstName || !lastName || !email) {
         throw new ApiError(400, 'First name, last name, and email are required');
@@ -51,8 +51,6 @@ export class AdminController {
 
       // Update author with additional profile fields
       const authorUpdate: any = {};
-      if (qualification) authorUpdate.qualification = qualification;
-      if (university) authorUpdate.university = university;
       if (pinCode || city || district || state || country || housePlot || landmark) {
         authorUpdate.address = {
           pinCode: pinCode || '',
@@ -463,6 +461,9 @@ export class AdminController {
         status,
         priority,
         category,
+        search,
+        fromDate,
+        toDate,
         sortBy = 'createdAt',
         sortOrder = 'desc',
       } = req.query;
@@ -479,6 +480,38 @@ export class AdminController {
 
       if (category) {
         filter.category = category;
+      }
+
+      if (fromDate || toDate) {
+        filter.createdAt = {};
+        if (fromDate) filter.createdAt.$gte = new Date(fromDate as string);
+        if (toDate) {
+          const to = new Date(toDate as string);
+          to.setHours(23, 59, 59, 999);
+          filter.createdAt.$lte = to;
+        }
+      }
+
+      // If search is provided, find matching authors first then filter tickets by authorId
+      let authorIdFilter: string[] | null = null;
+      if (search) {
+        const searchRegex = new RegExp(search as string, 'i');
+        const matchingUsers = await User.find({
+          $or: [
+            { firstName: searchRegex },
+            { lastName: searchRegex },
+            { email: searchRegex },
+          ]
+        }).select('userId').lean();
+        const matchingUserIds = matchingUsers.map(u => u.userId);
+        const matchingAuthors = await Author.find({
+          $or: [
+            { userId: { $in: matchingUserIds } },
+            { authorId: searchRegex },
+          ]
+        }).select('authorId').lean();
+        authorIdFilter = matchingAuthors.map(a => a.authorId);
+        filter.authorId = { $in: authorIdFilter };
       }
 
       const skip = (Number(page) - 1) * Number(limit);

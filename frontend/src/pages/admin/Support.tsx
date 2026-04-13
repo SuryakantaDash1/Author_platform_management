@@ -10,6 +10,7 @@ import {
   Eye,
   Trash2,
   RefreshCw,
+  X,
 } from 'lucide-react';
 import axiosInstance from '../../api/interceptors';
 import toast from 'react-hot-toast';
@@ -93,6 +94,139 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
       />
       {config.label}
     </span>
+  );
+};
+
+// Ticket Detail Modal with messaging
+const TicketDetailModal: React.FC<{
+  ticket: TicketWithAuthor;
+  onClose: () => void;
+  onStatusUpdate: (status: string) => Promise<void>;
+}> = ({ ticket, onClose, onStatusUpdate }) => {
+  const [messages, setMessages] = useState<any[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [loadingMsgs, setLoadingMsgs] = useState(true);
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+
+  const fetchMessages = useCallback(async () => {
+    try {
+      const res = await axiosInstance.get(`/support/tickets/${ticket.ticketId}`);
+      const data = res.data?.data;
+      setMessages(data?.messages || []);
+    } catch { setMessages([]); }
+    finally { setLoadingMsgs(false); }
+  }, [ticket.ticketId]);
+
+  useEffect(() => { fetchMessages(); }, [fetchMessages]);
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+
+  const handleSend = async () => {
+    if (!newMessage.trim()) return;
+    setSending(true);
+    try {
+      await axiosInstance.post(`/support/tickets/${ticket.ticketId}/messages`, { message: newMessage.trim() });
+      setNewMessage('');
+      fetchMessages();
+      toast.success('Message sent');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to send message');
+    } finally { setSending(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Ticket Details</h2>
+            <span className="text-xs font-mono text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded">{ticket.ticketId}</span>
+            <StatusBadge status={ticket.status} />
+          </div>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+
+        {/* Info */}
+        <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 space-y-3">
+          <div className="grid grid-cols-2 gap-4">
+            <div><p className="text-xs text-gray-500">Author</p><p className="text-sm font-medium text-gray-900 dark:text-white">{ticket.authorName || 'Unknown'}</p></div>
+            <div><p className="text-xs text-gray-500">Category</p><p className="text-sm font-medium text-gray-900 dark:text-white">{ticket.category || ticket.title}</p></div>
+          </div>
+          <div><p className="text-xs text-gray-500">Description</p><p className="text-sm text-gray-700 dark:text-gray-300">{ticket.description || '—'}</p></div>
+          <div className="grid grid-cols-3 gap-3">
+            <div><p className="text-xs text-gray-500">Discussion Day</p><p className="text-sm">{ticket.discussionDay ? new Date(ticket.discussionDay).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</p></div>
+            <div><p className="text-xs text-gray-500">Time</p><p className="text-sm">{ticket.discussionTime || ticket.discussionTimeSlot1 || '—'}</p></div>
+            <div><p className="text-xs text-gray-500">Created</p><p className="text-sm">{new Date(ticket.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p></div>
+          </div>
+          {/* Status buttons */}
+          <div className="flex gap-2">
+            {ticket.status !== 'in_progress' && ticket.status !== 'resolved' && ticket.status !== 'closed' && (
+              <button onClick={() => onStatusUpdate('in_progress')} className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg">In Progress</button>
+            )}
+            {ticket.status !== 'resolved' && ticket.status !== 'closed' && (
+              <button onClick={() => onStatusUpdate('resolved')} className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg">Resolve</button>
+            )}
+            {ticket.status !== 'closed' && (
+              <button onClick={() => onStatusUpdate('closed')} className="px-3 py-1.5 text-xs font-medium text-white bg-gray-600 hover:bg-gray-700 rounded-lg">Close</button>
+            )}
+          </div>
+        </div>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-3 min-h-[150px] max-h-[300px] bg-gray-50 dark:bg-gray-800/30">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Messages</h3>
+          {loadingMsgs ? (
+            <p className="text-xs text-gray-400 text-center py-4">Loading messages...</p>
+          ) : messages.length === 0 ? (
+            <p className="text-xs text-gray-400 text-center py-4">No messages yet. Send a reply below.</p>
+          ) : (
+            messages.map((msg: any, i: number) => (
+              <div key={i} className={`flex ${msg.senderRole === 'admin' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[75%] px-3 py-2 rounded-xl text-sm ${
+                  msg.senderRole === 'admin'
+                    ? 'bg-indigo-600 text-white rounded-br-sm'
+                    : msg.senderRole === 'system'
+                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs italic rounded-bl-sm'
+                    : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600 rounded-bl-sm'
+                }`}>
+                  <p>{msg.message}</p>
+                  <p className={`text-[10px] mt-1 ${msg.senderRole === 'admin' ? 'text-indigo-200' : 'text-gray-400'}`}>
+                    {msg.senderRole === 'admin' ? 'Admin' : msg.senderRole === 'system' ? 'System' : (ticket.authorName || 'Author')} · {new Date(msg.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+              </div>
+            ))
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Send message */}
+        {ticket.status !== 'closed' && (
+          <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={e => setNewMessage(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }}}
+                placeholder="Type your reply to the author..."
+                className="flex-1 px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              />
+              <button
+                onClick={handleSend}
+                disabled={sending || !newMessage.trim()}
+                className="px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+              >
+                {sending ? '...' : 'Send'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
@@ -188,9 +322,10 @@ const Support: React.FC = () => {
     fetchTickets(page);
   };
 
+  const [viewingTicket, setViewingTicket] = useState<TicketWithAuthor | null>(null);
+
   const handleViewTicket = (ticket: TicketWithAuthor) => {
-    toast.success(`Viewing ticket: ${ticket.ticketId}`);
-    // Future: navigate to ticket detail
+    setViewingTicket(ticket);
   };
 
   const handleDeleteTicket = async (ticket: TicketWithAuthor) => {
@@ -434,8 +569,27 @@ const Support: React.FC = () => {
                     <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
                       {formatDate(ticket.createdAt)}
                     </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={ticket.status} />
+                    <td className="px-4 py-3 relative">
+                      <select
+                        value={ticket.status}
+                        onChange={async (e) => {
+                          const newStatus = e.target.value;
+                          if (newStatus !== ticket.status) {
+                            await handleUpdateStatus(ticket, newStatus);
+                          }
+                        }}
+                        className={`text-xs font-medium px-2 py-1 rounded-full border-0 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:outline-none ${
+                          ticket.status === 'pending' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
+                          : ticket.status === 'in_progress' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                          : ticket.status === 'resolved' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                          : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300'
+                        }`}
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="closed">Closed</option>
+                      </select>
                     </td>
                     <td className="px-4 py-3 text-sm relative" ref={activeDropdown === ticket._id ? dropdownRef : null}>
                       <button
@@ -566,6 +720,16 @@ const Support: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Ticket Detail Modal */}
+      {viewingTicket && <TicketDetailModal
+        ticket={viewingTicket}
+        onClose={() => setViewingTicket(null)}
+        onStatusUpdate={async (status: string) => {
+          await handleUpdateStatus(viewingTicket, status);
+          setViewingTicket({ ...viewingTicket, status: status as any });
+        }}
+      />}
     </div>
   );
 };

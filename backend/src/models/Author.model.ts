@@ -4,8 +4,12 @@ export interface IAuthor extends Document {
   userId: string;
   authorId: string;
   profilePicture?: string;
-  qualification?: string;
-  university?: string;
+  publishedArticles?: Array<{
+    bookName: string;
+    isbn?: string;
+    bookPhoto?: string;
+    links: Array<{ platform: string; url: string }>;
+  }>;
   address?: {
     pinCode: string;
     city: string;
@@ -44,14 +48,15 @@ const AuthorSchema: Schema = new Schema(
     profilePicture: {
       type: String,
     },
-    qualification: {
-      type: String,
-      trim: true,
-    },
-    university: {
-      type: String,
-      trim: true,
-    },
+    publishedArticles: [{
+      bookName: { type: String, required: true, trim: true },
+      isbn: { type: String, trim: true },
+      bookPhoto: { type: String },
+      links: [{
+        platform: { type: String, required: true, trim: true },
+        url: { type: String, required: true, trim: true },
+      }],
+    }],
     address: {
       pinCode: String,
       city: String,

@@ -2,12 +2,15 @@ import Joi from 'joi';
 
 export const authorValidation = {
   updateProfile: Joi.object({
-    qualification: Joi.string().max(100).optional().messages({
-      'string.max': 'Qualification cannot exceed 100 characters',
-    }),
-    university: Joi.string().max(100).optional().messages({
-      'string.max': 'University name cannot exceed 100 characters',
-    }),
+    publishedArticles: Joi.array().items(Joi.object({
+      bookName: Joi.string().max(200).required(),
+      isbn: Joi.string().max(50).optional().allow(''),
+      bookPhoto: Joi.string().optional().allow(''),
+      links: Joi.array().items(Joi.object({
+        platform: Joi.string().max(100).required(),
+        url: Joi.string().max(500).required(),
+      })).optional(),
+    })).optional(),
     address: Joi.object({
       pinCode: Joi.string().pattern(/^[0-9]{6}$/).optional().messages({
         'string.pattern.base': 'Pin code must be 6 digits',
@@ -24,10 +27,10 @@ export const authorValidation = {
       country: Joi.string().max(50).optional().messages({
         'string.max': 'Country name cannot exceed 50 characters',
       }),
-      housePlot: Joi.string().max(200).optional().messages({
+      housePlot: Joi.string().max(200).optional().allow('').messages({
         'string.max': 'House/Plot cannot exceed 200 characters',
       }),
-      landmark: Joi.string().max(100).optional().messages({
+      landmark: Joi.string().max(100).optional().allow('').messages({
         'string.max': 'Landmark cannot exceed 100 characters',
       }),
     }).optional(),

@@ -30,8 +30,6 @@ interface AuthorProfile {
   email?: string;
   mobile?: string;
   profilePicture?: string;
-  qualification?: string;
-  university?: string;
   address?: string;
   city?: string;
   state?: string;
@@ -81,6 +79,74 @@ const categoryLabel = (category: string) => {
 };
 
 // ── Component ─────────────────────────────────────────────────────────
+// Inline messages component for expanded tickets
+const TicketMessages: React.FC<{ ticketId: string; status: string }> = ({ ticketId, status }) => {
+  const [messages, setMessages] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [reply, setReply] = React.useState('');
+  const [sending, setSending] = React.useState(false);
+
+  const fetchMsgs = React.useCallback(async () => {
+    try {
+      const res = await axiosInstance.get(`/support/tickets/${ticketId}`);
+      setMessages(res.data?.data?.messages || []);
+    } catch { setMessages([]); }
+    finally { setLoading(false); }
+  }, [ticketId]);
+
+  React.useEffect(() => { fetchMsgs(); }, [fetchMsgs]);
+
+  const handleSend = async () => {
+    if (!reply.trim()) return;
+    setSending(true);
+    try {
+      await axiosInstance.post(`/support/tickets/${ticketId}/messages`, { message: reply.trim() });
+      setReply('');
+      fetchMsgs();
+    } catch { /* silent */ }
+    finally { setSending(false); }
+  };
+
+  return (
+    <div className="mt-3 pt-3 border-t border-neutral-200 dark:border-dark-300" onClick={e => e.stopPropagation()}>
+      <p className="text-body-xs font-semibold text-neutral-700 dark:text-dark-700 mb-2">Messages</p>
+      <div className="space-y-2 max-h-[200px] overflow-y-auto mb-3">
+        {loading ? <p className="text-body-xs text-neutral-400 py-2">Loading...</p>
+          : messages.length === 0 ? <p className="text-body-xs text-neutral-400 py-2">No messages yet</p>
+          : messages.filter((m: any) => m.senderRole !== 'system').length === 0 ? <p className="text-body-xs text-neutral-400 py-2">No messages yet</p>
+          : messages.filter((m: any) => m.senderRole !== 'system').map((msg: any, i: number) => (
+            <div key={i} className={`flex ${msg.senderRole === 'author' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[80%] px-3 py-2 rounded-xl text-body-sm ${
+                msg.senderRole === 'author'
+                  ? 'bg-indigo-600 text-white rounded-br-sm'
+                  : msg.senderRole === 'system'
+                  ? 'bg-neutral-100 dark:bg-dark-200 text-neutral-500 text-body-xs italic'
+                  : 'bg-white dark:bg-dark-200 text-neutral-900 dark:text-dark-900 border border-neutral-200 dark:border-dark-300 rounded-bl-sm'
+              }`}>
+                <p>{msg.message}</p>
+                <p className={`text-[10px] mt-0.5 ${msg.senderRole === 'author' ? 'text-indigo-200' : 'text-neutral-400'}`}>
+                  {msg.senderRole === 'admin' ? 'Admin' : msg.senderRole === 'system' ? 'System' : 'You'} · {new Date(msg.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+            </div>
+          ))}
+      </div>
+      {status !== 'closed' && (
+        <div className="flex gap-2">
+          <input type="text" value={reply} onChange={e => setReply(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSend(); }}}
+            placeholder="Type a reply..."
+            className="flex-1 px-3 py-2 text-body-sm border border-neutral-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+          <button onClick={handleSend} disabled={sending || !reply.trim()}
+            className="px-3 py-2 text-body-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 rounded-lg">
+            {sending ? '...' : 'Send'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Tickets: React.FC = () => {
   const { user } = useAuth();
 
@@ -91,6 +157,7 @@ const Tickets: React.FC = () => {
   // Tickets state
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [ticketsLoading, setTicketsLoading] = useState(true);
+  const [expandedTicket, setExpandedTicket] = useState<string | null>(null);
 
   // Form state
   const [form, setForm] = useState<TicketFormData>({
@@ -115,8 +182,6 @@ const Tickets: React.FC = () => {
           email: authorData.email || user?.email,
           mobile: authorData.mobile || user?.mobile,
           profilePicture: authorData.profilePicture,
-          qualification: authorData.qualification,
-          university: authorData.university,
           address: authorData.address,
           city: authorData.city,
           state: authorData.state,
@@ -221,9 +286,10 @@ const Tickets: React.FC = () => {
   // ── Computed profile fields ─────────────────────────────────────────
   const fullName =
     [profile?.firstName, profile?.lastName].filter(Boolean).join(' ') || 'Author';
-  const addressLine = [profile?.address, profile?.city, profile?.state, profile?.pincode]
-    .filter(Boolean)
-    .join(', ');
+  const addr = profile?.address && typeof profile.address === 'object' ? profile.address : null;
+  const addressLine = [
+    addr?.housePlot, addr?.city || profile?.city, addr?.district, addr?.state || profile?.state, addr?.country, addr?.pinCode || profile?.pincode
+  ].filter(Boolean).join(', ');
 
   // ── Render ──────────────────────────────────────────────────────────
   return (
@@ -285,16 +351,6 @@ const Tickets: React.FC = () => {
 
                 {/* Detail rows */}
                 <div className="space-y-3 border-t border-neutral-200 dark:border-dark-300 pt-4">
-                  {profile?.qualification && (
-                    <div className="flex items-start gap-3">
-                      <GraduationCap className="w-4 h-4 mt-0.5 text-indigo-500 shrink-0" />
-                      <span className="text-body-sm text-neutral-700 dark:text-dark-700">
-                        {profile.qualification}
-                        {profile.university ? `, ${profile.university}` : ''}
-                      </span>
-                    </div>
-                  )}
-
                   {addressLine && (
                     <div className="flex items-start gap-3">
                       <MapPin className="w-4 h-4 mt-0.5 text-indigo-500 shrink-0" />
@@ -418,21 +474,30 @@ const Tickets: React.FC = () => {
                 </div>
               </div>
 
-              {/* Discussion Day - Date Picker */}
+              {/* Discussion Day - Dropdown */}
               <div>
                 <label className="block text-sm font-medium text-neutral-700 dark:text-dark-700 mb-2">
                   Discussion Day <span className="text-red-500">*</span>
                 </label>
-                <div className="relative">
-                  <input
-                    type="date"
-                    name="discussionDay"
-                    value={form.discussionDay}
-                    onChange={handleChange}
-                    min={new Date().toISOString().split('T')[0]}
-                    className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 dark:border-dark-300 bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
-                  />
-                </div>
+                <select
+                  name="discussionDay"
+                  value={form.discussionDay}
+                  onChange={handleChange as any}
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 dark:border-dark-300 bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                >
+                  <option value="">-- Select a day --</option>
+                  {(() => {
+                    const days = [];
+                    for (let i = 0; i < 3; i++) {
+                      const d = new Date();
+                      d.setDate(d.getDate() + i);
+                      const label = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : 'Day After Tomorrow';
+                      const val = d.toISOString().split('T')[0];
+                      days.push(<option key={val} value={val}>{label} ({d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })})</option>);
+                    }
+                    return days;
+                  })()}
+                </select>
               </div>
 
               {/* Description */}
@@ -507,7 +572,8 @@ const Tickets: React.FC = () => {
                 {tickets.map((ticket) => (
                   <div
                     key={ticket._id}
-                    className="border border-neutral-200 dark:border-dark-300 rounded-xl p-4 hover:shadow-md transition-all duration-200 bg-neutral-50/50 dark:bg-dark-100/50"
+                    className="border border-neutral-200 dark:border-dark-300 rounded-xl p-4 hover:shadow-md transition-all duration-200 bg-neutral-50/50 dark:bg-dark-100/50 cursor-pointer"
+                    onClick={() => setExpandedTicket(expandedTicket === ticket.ticketId ? null : ticket.ticketId)}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                       <div className="flex-1 min-w-0">
@@ -557,6 +623,11 @@ const Tickets: React.FC = () => {
                         </span>
                       )}
                     </div>
+
+                    {/* Expanded Messages Section */}
+                    {expandedTicket === ticket.ticketId && (
+                      <TicketMessages ticketId={ticket.ticketId} status={ticket.status} />
+                    )}
                   </div>
                 ))}
               </div>

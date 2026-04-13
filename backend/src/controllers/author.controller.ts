@@ -39,8 +39,7 @@ export class AuthorController {
   static updateProfile = asyncHandler(
     async (req: Request, res: Response, _next: NextFunction) => {
       const {
-        qualification,
-        university,
+        publishedArticles,
         address,
       } = req.body;
 
@@ -54,8 +53,7 @@ export class AuthorController {
         throw new ApiError(404, 'Author profile not found');
       }
 
-      if (qualification) author.qualification = qualification;
-      if (university) author.university = university;
+      if (publishedArticles !== undefined) author.publishedArticles = publishedArticles;
       if (address) {
         author.address = {
           ...author.address,

@@ -19,6 +19,7 @@ import {
   Trash2,
   ChevronUp,
   ExternalLink,
+  Pencil,
 } from 'lucide-react';
 import axiosInstance from '../../api/interceptors';
 import { API_ENDPOINTS } from '../../api/endpoints';
@@ -228,6 +229,7 @@ const Books: React.FC = () => {
 
   // Wizard state
   const [wizardStep, setWizardStep] = useState(1);
+  const [editingBookId, setEditingBookId] = useState<string | null>(null);
   const [formData, setFormData] = useState<WizardFormData>({
     bookName: '',
     language: '',
@@ -430,9 +432,9 @@ const Books: React.FC = () => {
     if (!formData.language) errs.language = 'Language is required';
     if (!formData.bookType) errs.bookType = 'Book type is required';
     if (!formData.expectedLaunchDate) errs.expectedLaunchDate = 'Launch date is required';
-    const today = new Date().toISOString().split('T')[0];
-    if (formData.expectedLaunchDate && formData.expectedLaunchDate < today) {
-      errs.expectedLaunchDate = 'Launch date cannot be in the past';
+    const minDate = (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().split('T')[0]; })();
+    if (formData.expectedLaunchDate && formData.expectedLaunchDate < minDate) {
+      errs.expectedLaunchDate = 'Launch date must be at least 7 days from today';
     }
     setFormErrors(errs);
     return Object.keys(errs).length === 0;
@@ -612,9 +614,14 @@ const Books: React.FC = () => {
         hasCover: formData.needCoverPage,
       };
 
-      const res = await axiosInstance.post(API_ENDPOINTS.BOOKS.CREATE_BOOK, payload);
+      let res;
+      if (editingBookId) {
+        res = await axiosInstance.put(API_ENDPOINTS.BOOKS.UPDATE_BOOK(editingBookId), payload);
+      } else {
+        res = await axiosInstance.post(API_ENDPOINTS.BOOKS.CREATE_BOOK, payload);
+      }
       const createdBook = res.data?.data?.book || res.data?.data || res.data;
-      const bookId = createdBook?.bookId || createdBook?._id;
+      const bookId = editingBookId || createdBook?.bookId || createdBook?._id;
 
       // Upload cover if provided
       if (bookId && formData.needCoverPage && formData.coverPageFile) {
@@ -634,7 +641,8 @@ const Books: React.FC = () => {
         }
       }
 
-      toast.success('Book submitted successfully! Payment processing...');
+      toast.success(editingBookId ? 'Book updated successfully!' : 'Book submitted successfully! Payment processing...');
+      setEditingBookId(null);
       setViewMode('listing');
       fetchBooks();
     } catch (err: any) {
@@ -673,7 +681,7 @@ const Books: React.FC = () => {
     return { isPaid: pending <= 0, paidAmount: paid, pendingAmount: pending, totalAmount: total };
   };
 
-  const today = new Date().toISOString().split('T')[0];
+  const minLaunchDate = (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().split('T')[0]; })();
 
   // ===========================================================================
   // VIEW 1: Books Listing
@@ -871,6 +879,35 @@ const Books: React.FC = () => {
             <ArrowLeft className="w-4 h-4" />
             Back to Books
           </button>
+          {(book.status === 'draft' || book.status === 'rejected') && (
+            <button
+              onClick={() => {
+                setFormData({
+                  bookName: book.bookName || '',
+                  language: book.language || '',
+                  bookType: book.bookType || '',
+                  subtitle: book.subtitle || '',
+                  targetAudience: book.targetAudience || '',
+                  expectedLaunchDate: book.expectedLaunchDate ? new Date(book.expectedLaunchDate).toISOString().split('T')[0] : '',
+                  physicalCopies: book.physicalCopies ?? 2,
+                  royaltyPercentage: book.royaltyPercentage ?? 70,
+                  needCoverPage: !!book.coverPage || book.needCoverPage || false,
+                  needFormatting: book.needFormatting ?? false,
+                  needCopyright: book.needCopyright ?? false,
+                  needDesigning: book.needDesigning ?? false,
+                  paymentPlan: (book as any).paymentPlan || '100',
+                  marketplaces: book.marketplaces || [],
+                });
+                setEditingBookId(book.bookId);
+                setWizardStep(1);
+                setViewMode('add');
+              }}
+              className="ml-auto inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+            >
+              <Pencil className="w-4 h-4" />
+              Edit Book
+            </button>
+          )}
         </div>
 
         {/* Book info card */}
@@ -1295,7 +1332,7 @@ const Books: React.FC = () => {
         <input
           type="date"
           value={formData.expectedLaunchDate}
-          min={today}
+          min={minLaunchDate}
           onChange={(e) => setFormData((p) => ({ ...p, expectedLaunchDate: e.target.value }))}
           className={`w-full px-4 py-2.5 rounded-lg border ${
             formErrors.expectedLaunchDate

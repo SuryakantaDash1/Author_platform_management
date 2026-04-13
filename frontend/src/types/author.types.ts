@@ -3,8 +3,7 @@ export interface Author {
   userId: string;
   authorId: string;
   profilePicture?: string;
-  qualification?: string;
-  university?: string;
+  publishedArticles?: Array<{ bookName: string; isbn?: string; bookPhoto?: string; links?: Array<{ platform: string; url: string }> }>;
   address?: {
     pinCode?: string;
     city?: string;
@@ -26,8 +25,7 @@ export interface Author {
 }
 
 export interface UpdateAuthorProfileRequest {
-  qualification?: string;
-  university?: string;
+  publishedArticles?: Array<{ bookName: string; isbn?: string; bookPhoto?: string; links?: Array<{ platform: string; url: string }> }>;
   address?: {
     pinCode?: string;
     city?: string;
