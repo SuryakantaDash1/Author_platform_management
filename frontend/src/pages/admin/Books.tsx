@@ -161,6 +161,7 @@ const initialForm: BookFormData = {
   bookName: '',
   subtitle: '',
   bookType: '',
+  customBookType: '',
   targetAudience: '',
   expectedLaunchDate: '',
   physicalCopies: 2,
@@ -287,6 +288,17 @@ const AdminBooks: React.FC = () => {
     })();
   }, []);
 
+  // When book types load, fix bookType if edit modal is open and type wasn't resolved yet
+  useEffect(() => {
+    if (dynamicBookTypes.length === 0) return;
+    setForm(prev => {
+      if (!prev.bookType || prev.bookType === 'Other') return prev;
+      if (dynamicBookTypes.includes(prev.bookType)) return prev;
+      // Type is set but not in list — move to custom
+      return { ...prev, bookType: 'Other', customBookType: prev.bookType };
+    });
+  }, [dynamicBookTypes]);
+
   // Close menu on outside click
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -368,7 +380,7 @@ const AdminBooks: React.FC = () => {
     if (!pricingConfig) return 0;
     let total = disc(pricingConfig.publishingPrice);
     if (form.services.coverPage) total += disc(pricingConfig.coverDesignPrice);
-    if (form.services.formatting) total += disc(pricingConfig.formattingPrice);
+    if (form.services.designing) total += disc(pricingConfig.formattingPrice);
     if (form.services.copyright) total += disc(pricingConfig.copyrightPrice);
     total += disc(pricingConfig.distributionPrice);
     const freeCopies = 2;
@@ -402,6 +414,12 @@ const AdminBooks: React.FC = () => {
   };
 
   const openEditModal = (book: Book) => {
+    const savedType = book.bookType || '';
+    // If the saved type isn't in the known list, treat as custom "Other"
+    const isKnownType = !savedType || dynamicBookTypes.includes(savedType) || savedType === 'Other';
+    const resolvedBookType = isKnownType ? savedType : 'Other';
+    const resolvedCustomType = isKnownType ? '' : savedType;
+
     setForm({
       authorSearch: book.authorName || '',
       authorId: book.authorId || '',
@@ -409,7 +427,8 @@ const AdminBooks: React.FC = () => {
       language: book.language || '',
       bookName: book.bookName || '',
       subtitle: book.subtitle || '',
-      bookType: book.bookType || '',
+      bookType: resolvedBookType,
+      customBookType: resolvedCustomType,
       targetAudience: book.targetAudience || '',
       expectedLaunchDate: book.expectedLaunchDate ? book.expectedLaunchDate.split('T')[0] : '',
       physicalCopies: book.physicalCopies ?? 2,
@@ -1041,7 +1060,6 @@ const AdminBooks: React.FC = () => {
           {([
             { key: 'coverPage', label: 'Cover Page Design' },
             { key: 'designing', label: 'Book Designing' },
-            { key: 'formatting', label: 'Formatting' },
             { key: 'copyright', label: 'Copyright' },
           ] as { key: keyof typeof form.services; label: string }[]).map(({ key, label }) => (
             <button
@@ -1149,9 +1167,9 @@ const AdminBooks: React.FC = () => {
     const rows: { label: string; original: number; discountPct: number; you_pay: number }[] = [
       { label: 'Book Publishing', original: p?.publishingPrice?.main || 0,  discountPct: p?.publishingPrice?.discount || 0,  you_pay: disc(p?.publishingPrice) },
     ];
-    if (form.services.coverPage)  rows.push({ label: 'Cover Design',   original: p?.coverDesignPrice?.main || 0,  discountPct: p?.coverDesignPrice?.discount || 0,  you_pay: disc(p?.coverDesignPrice) });
-    if (form.services.formatting) rows.push({ label: 'Formatting',     original: p?.formattingPrice?.main || 0,   discountPct: p?.formattingPrice?.discount || 0,   you_pay: disc(p?.formattingPrice) });
-    if (form.services.copyright)  rows.push({ label: 'Copyright',      original: p?.copyrightPrice?.main || 0,    discountPct: p?.copyrightPrice?.discount || 0,    you_pay: disc(p?.copyrightPrice) });
+    if (form.services.coverPage)  rows.push({ label: 'Cover Design',    original: p?.coverDesignPrice?.main || 0,  discountPct: p?.coverDesignPrice?.discount || 0,  you_pay: disc(p?.coverDesignPrice) });
+    if (form.services.designing)  rows.push({ label: 'Book Designing',  original: p?.formattingPrice?.main || 0,   discountPct: p?.formattingPrice?.discount || 0,   you_pay: disc(p?.formattingPrice) });
+    if (form.services.copyright)  rows.push({ label: 'Copyright',       original: p?.copyrightPrice?.main || 0,    discountPct: p?.copyrightPrice?.discount || 0,    you_pay: disc(p?.copyrightPrice) });
     rows.push({ label: 'Distribution',  original: p?.distributionPrice?.main || 0,  discountPct: p?.distributionPrice?.discount || 0,  you_pay: disc(p?.distributionPrice) });
     rows.push({ label: `Per Book Copy (×${extraCopies})`, original: extraCopies * (p?.perBookCopyPrice?.main || 0), discountPct: p?.perBookCopyPrice?.discount || 0, you_pay: extraCopies * disc(p?.perBookCopyPrice) });
 

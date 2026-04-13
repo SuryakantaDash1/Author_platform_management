@@ -338,22 +338,16 @@ const Books: React.FC = () => {
         show: formData.needCoverPage,
       },
       {
-        label: 'Formatting',
+        label: 'Book Designing',
         original: p.formattingPrice?.main || 0,
         discountedPrice: disc(p.formattingPrice),
-        show: formData.needFormatting,
+        show: formData.needDesigning,
       },
       {
         label: 'Copyright',
         original: p.copyrightPrice?.main || 0,
         discountedPrice: disc(p.copyrightPrice),
         show: formData.needCopyright,
-      },
-      {
-        label: 'Book Designing',
-        original: p.coverDesignPrice?.main || 0,
-        discountedPrice: disc(p.coverDesignPrice),
-        show: formData.needDesigning,
       },
       {
         label: `Physical Copies (${extraCopies} extra)`,
@@ -377,7 +371,7 @@ const Books: React.FC = () => {
     const netPayable = totalDiscounted - referralDiscount;
 
     return { rows: visibleRows, totalOriginal, totalDiscounted, totalDiscount, referralDiscount, netPayable };
-  }, [pricingConfig, formData.needCoverPage, formData.needFormatting, formData.needCopyright, formData.needDesigning, formData.physicalCopies]);
+  }, [pricingConfig, formData.needCoverPage, formData.needCopyright, formData.needDesigning, formData.physicalCopies]);
 
   // ===========================================================================
   // Handlers
