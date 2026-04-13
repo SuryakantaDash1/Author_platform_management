@@ -52,7 +52,6 @@ export class PaymentConfigController {
 
     return {
       language: body.language,
-      languagePrice: toPrice(s.languagePrice || body.languagePrice),
       publishingPrice: toPrice(s.publishing || body.publishingPrice),
       coverDesignPrice: toPrice(s.coverDesign || body.coverDesignPrice),
       distributionPrice: toPrice(s.distribution || body.distributionPrice),

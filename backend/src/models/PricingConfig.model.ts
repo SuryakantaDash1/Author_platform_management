@@ -2,7 +2,6 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IPricingConfig extends Document {
   language: string;
-  languagePrice: { main: number; discount: number };
   publishingPrice: { main: number; discount: number };
   coverDesignPrice: { main: number; discount: number };
   distributionPrice: { main: number; discount: number };
@@ -39,7 +38,6 @@ const PricingConfigSchema: Schema = new Schema(
       trim: true,
       index: true,
     },
-    languagePrice: priceField,
     publishingPrice: priceField,
     coverDesignPrice: priceField,
     distributionPrice: priceField,

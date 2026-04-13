@@ -10,7 +10,6 @@ import {
   Check,
   Loader2,
   FileText,
-  Image,
   IndianRupee,
   Eye,
   ShoppingCart,
@@ -110,7 +109,6 @@ interface PriceField { main: number; discount: number; }
 interface PricingConfig {
   _id?: string;
   language?: string;
-  languagePrice?: PriceField;
   publishingPrice?: PriceField;
   coverDesignPrice?: PriceField;
   formattingPrice?: PriceField;
@@ -262,7 +260,6 @@ const Books: React.FC = () => {
   // Drag state for file upload
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const coverInputRef = useRef<HTMLInputElement>(null);
 
   // ===========================================================================
   // Data fetching
@@ -1350,21 +1347,22 @@ const Books: React.FC = () => {
   const renderStep2 = () => (
     <div className="space-y-6">
       {/* Cover Page */}
-      <div className="p-4 bg-neutral-50 dark:bg-dark-100 rounded-xl space-y-3">
+      <div className="p-4 bg-neutral-50 dark:bg-dark-100 rounded-xl">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-neutral-700 dark:text-dark-700">
-            Book Cover
-          </label>
+          <div>
+            <label className="text-sm font-medium text-neutral-700 dark:text-dark-700">
+              Book Cover
+            </label>
+            {formData.needCoverPage && (
+              <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">
+                Admin will design the cover for you
+              </p>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() =>
-                setFormData((p) => ({
-                  ...p,
-                  needCoverPage: false,
-                  coverPageFile: null,
-                }))
-              }
+              onClick={() => setFormData((p) => ({ ...p, needCoverPage: false, coverPageFile: null }))}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
                 !formData.needCoverPage
                   ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
@@ -1386,51 +1384,6 @@ const Books: React.FC = () => {
             </button>
           </div>
         </div>
-        {formData.needCoverPage && (
-          <div>
-            <input
-              ref={coverInputRef}
-              type="file"
-              accept="image/jpeg,image/jpg,image/png"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) setFormData((p) => ({ ...p, coverPageFile: file }));
-              }}
-            />
-            {formData.coverPageFile ? (
-              <div className="flex items-center gap-3 p-3 bg-white dark:bg-dark-50 rounded-lg border border-neutral-200 dark:border-dark-300">
-                <Image className="w-5 h-5 text-indigo-500 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-body-sm font-medium text-neutral-800 dark:text-dark-800 truncate">
-                    {formData.coverPageFile.name}
-                  </p>
-                  <p className="text-body-xs text-neutral-400 dark:text-dark-400">
-                    {formatFileSize(formData.coverPageFile.size)}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setFormData((p) => ({ ...p, coverPageFile: null }))}
-                  className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => coverInputRef.current?.click()}
-                className="w-full py-3 border-2 border-dashed border-neutral-300 dark:border-dark-400 rounded-lg text-center text-body-sm text-neutral-500 dark:text-dark-500 hover:border-indigo-400 hover:text-indigo-500 transition-colors"
-              >
-                <Upload className="w-5 h-5 mx-auto mb-1" />
-                Upload Cover (JPG/PNG, max 10MB)
-              </button>
-            )}
-            {formErrors.coverPageFile && (
-              <p className="text-red-500 text-xs mt-1">{formErrors.coverPageFile}</p>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Service toggles */}
@@ -1603,17 +1556,17 @@ const Books: React.FC = () => {
         <button
           type="button"
           onClick={toggleAllPlatforms}
-          className={`w-10 h-6 rounded-full transition-colors duration-200 relative ${
+          className={`w-11 h-6 rounded-full transition-colors duration-200 relative flex-shrink-0 ${
             formData.selectedPlatforms.length === DEFAULT_PLATFORMS.length
               ? 'bg-indigo-600'
               : 'bg-neutral-300 dark:bg-dark-400'
           }`}
         >
           <span
-            className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
+            className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
               formData.selectedPlatforms.length === DEFAULT_PLATFORMS.length
-                ? 'translate-x-4'
-                : 'translate-x-0.5'
+                ? 'translate-x-5'
+                : 'translate-x-0'
             }`}
           />
         </button>

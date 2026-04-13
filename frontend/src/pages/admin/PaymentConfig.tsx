@@ -25,7 +25,6 @@ import Modal from '../../components/common/Modal';
 // ---------------------------------------------------------------------------
 
 const SERVICE_KEYS = [
-  'languagePrice',
   'publishing',
   'coverDesign',
   'distribution',
@@ -37,7 +36,6 @@ const SERVICE_KEYS = [
 type ServiceKey = (typeof SERVICE_KEYS)[number];
 
 const SERVICE_LABELS: Record<ServiceKey, string> = {
-  languagePrice: 'Language Price',
   publishing: 'Book Publishing',
   coverDesign: 'Cover Design',
   distribution: 'Distribution',
@@ -46,7 +44,6 @@ const SERVICE_LABELS: Record<ServiceKey, string> = {
   perBookCopy: 'Per Book Copy',
 };
 
-/** Labels shown on the display cards (subset without languagePrice) */
 const DISPLAY_SERVICE_KEYS: ServiceKey[] = [
   'publishing',
   'coverDesign',
@@ -186,7 +183,6 @@ const PaymentConfig: React.FC = () => {
       // Try frontend shape first (services.xxx.price), then DB shape (xxxPrice.main)
       const svc = raw.services?.[key];
       const dbKeyMap: Record<string, string> = {
-        languagePrice: 'languagePrice',
         publishing: 'publishingPrice',
         coverDesign: 'coverDesignPrice',
         distribution: 'distributionPrice',
@@ -831,53 +827,6 @@ const PaymentConfig: React.FC = () => {
             />
             {errors.language && (
               <p className="mt-1 text-xs text-red-500">{errors.language}</p>
-            )}
-          </div>
-
-          {/* Language Price (base) */}
-          <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-              {SERVICE_LABELS.languagePrice}
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">Rs</span>
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={form.services.languagePrice.price}
-                  onChange={(e) => updateService('languagePrice', 'price', e.target.value)}
-                  placeholder="Main Price"
-                  className={`w-full pl-9 pr-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
-                    errors['service_languagePrice_price']
-                      ? 'border-red-400 dark:border-red-500'
-                      : 'border-gray-300 dark:border-gray-600'
-                  }`}
-                />
-              </div>
-              <div className="relative">
-                <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={form.services.languagePrice.discount}
-                  onChange={(e) => updateService('languagePrice', 'discount', e.target.value)}
-                  placeholder="Discount %"
-                  className={`w-full pl-9 pr-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
-                    errors['service_languagePrice_discount']
-                      ? 'border-red-400 dark:border-red-500'
-                      : 'border-gray-300 dark:border-gray-600'
-                  }`}
-                />
-              </div>
-            </div>
-            {(errors['service_languagePrice_price'] || errors['service_languagePrice_discount']) && (
-              <p className="mt-1 text-xs text-red-500">
-                {errors['service_languagePrice_price'] || errors['service_languagePrice_discount']}
-              </p>
             )}
           </div>
 

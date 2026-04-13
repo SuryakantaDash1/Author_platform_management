@@ -69,12 +69,20 @@ interface Book {
   subtitle?: string;
   targetAudience?: string;
   paymentInstallment?: number;
+  // nested services object (if present)
   services?: {
     coverPage?: boolean;
     designing?: boolean;
     formatting?: boolean;
     copyright?: boolean;
   };
+  // flat fields from Book model
+  hasCover?: boolean;
+  needDesigning?: boolean;
+  needFormatting?: boolean;
+  needCopyright?: boolean;
+  coverPage?: string;
+  marketplaces?: string[];
   platforms?: string[];
   uploadedFiles?: Array<{ name: string; url: string; type: string }>;
   payment?: {
@@ -92,7 +100,6 @@ interface AuthorSuggestion {
 }
 
 interface PricingConfig {
-  languagePrice?: { main: number; discount: number };
   publishingPrice?: { main: number; discount: number };
   coverDesignPrice?: { main: number; discount: number };
   formattingPrice?: { main: number; discount: number };
@@ -359,8 +366,7 @@ const AdminBooks: React.FC = () => {
 
   const calcTotal = (): number => {
     if (!pricingConfig) return 0;
-    let total = disc(pricingConfig.languagePrice);
-    total += disc(pricingConfig.publishingPrice);
+    let total = disc(pricingConfig.publishingPrice);
     if (form.services.coverPage) total += disc(pricingConfig.coverDesignPrice);
     if (form.services.formatting) total += disc(pricingConfig.formattingPrice);
     if (form.services.copyright) total += disc(pricingConfig.copyrightPrice);
@@ -410,12 +416,12 @@ const AdminBooks: React.FC = () => {
       royaltyPercentage: book.royaltyPercentage ?? 10,
       paymentInstallment: book.paymentInstallment ?? 1,
       services: {
-        coverPage: book.services?.coverPage ?? false,
-        designing: book.services?.designing ?? false,
-        formatting: book.services?.formatting ?? false,
-        copyright: book.services?.copyright ?? false,
+        coverPage: book.services?.coverPage ?? book.hasCover ?? false,
+        designing: book.services?.designing ?? book.needDesigning ?? false,
+        formatting: book.services?.formatting ?? book.needFormatting ?? false,
+        copyright: book.services?.copyright ?? book.needCopyright ?? false,
       },
-      platforms: book.platforms || [],
+      platforms: book.platforms || book.marketplaces || [],
       uploadedFiles: [],
     });
     setFormErrors({});
@@ -985,7 +991,7 @@ const AdminBooks: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Physical Copies */}
         <div>
           <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -1021,36 +1027,6 @@ const AdminBooks: React.FC = () => {
             className={`w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${formErrors.royaltyPercentage ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'}`}
           />
           {formErrors.royaltyPercentage && <p className="mt-1 text-xs text-red-500">{formErrors.royaltyPercentage}</p>}
-        </div>
-
-        {/* Payment Installment */}
-        <div>
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Payment Plan</label>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { value: 1, label: 'Full Payment', desc: '100% at once', icon: '💳' },
-              { value: 2, label: '2 Installments', desc: '50% + 50%', icon: '📋' },
-              { value: 3, label: '3 Installments', desc: '25% + 50% + 25%', icon: '📊' },
-              { value: 4, label: '4 Installments', desc: '25% + 50% + 25% + 0%', icon: '📑' },
-            ].map(opt => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setForm(p => ({ ...p, paymentInstallment: opt.value }))}
-                className={`flex items-start gap-2 p-2.5 rounded-lg border-2 text-left transition-all duration-200 ${
-                  form.paymentInstallment === opt.value
-                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 shadow-sm'
-                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-purple-300 dark:hover:border-purple-700'
-                }`}
-              >
-                <span className="text-base mt-0.5">{opt.icon}</span>
-                <div className="min-w-0">
-                  <p className={`text-xs font-semibold ${form.paymentInstallment === opt.value ? 'text-purple-700 dark:text-purple-300' : 'text-gray-800 dark:text-gray-200'}`}>{opt.label}</p>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400">{opt.desc}</p>
-                </div>
-              </button>
-            ))}
-          </div>
         </div>
       </div>
     </div>
@@ -1171,7 +1147,6 @@ const AdminBooks: React.FC = () => {
     const freeCopies = 2;
     const extraCopies = Math.max(0, (form.physicalCopies || 2) - freeCopies);
     const rows: { label: string; original: number; discountPct: number; you_pay: number }[] = [
-      { label: 'Language Base',   original: p?.languagePrice?.main || 0,    discountPct: p?.languagePrice?.discount || 0,    you_pay: disc(p?.languagePrice) },
       { label: 'Book Publishing', original: p?.publishingPrice?.main || 0,  discountPct: p?.publishingPrice?.discount || 0,  you_pay: disc(p?.publishingPrice) },
     ];
     if (form.services.coverPage)  rows.push({ label: 'Cover Design',   original: p?.coverDesignPrice?.main || 0,  discountPct: p?.coverDesignPrice?.discount || 0,  you_pay: disc(p?.coverDesignPrice) });
@@ -1228,6 +1203,36 @@ const AdminBooks: React.FC = () => {
               <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                 <p className="text-xs text-green-600 dark:text-green-400 font-medium">Author Royalty ({form.royaltyPercentage}%)</p>
                 <p className="text-lg font-bold text-green-700 dark:text-green-300 mt-1">Rs {royaltyEarnings.toLocaleString('en-IN')}</p>
+              </div>
+            </div>
+
+            {/* Payment Plan Selection */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">Payment Plan</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { value: 1, label: 'Full Payment', desc: '100% at once', icon: '💳' },
+                  { value: 2, label: '2 Installments', desc: '50% + 50%', icon: '📋' },
+                  { value: 3, label: '3 Installments', desc: '25% + 50% + 25%', icon: '📊' },
+                  { value: 4, label: '4 Installments', desc: '25% + 50% + 25% + 0%', icon: '📑' },
+                ].map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setForm(p => ({ ...p, paymentInstallment: opt.value }))}
+                    className={`flex items-start gap-3 p-3 rounded-lg border-2 text-left transition-all duration-200 ${
+                      form.paymentInstallment === opt.value
+                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 shadow-sm'
+                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-purple-300 dark:hover:border-purple-700'
+                    }`}
+                  >
+                    <span className="text-xl mt-0.5">{opt.icon}</span>
+                    <div className="min-w-0">
+                      <p className={`text-sm font-semibold ${form.paymentInstallment === opt.value ? 'text-purple-700 dark:text-purple-300' : 'text-gray-800 dark:text-gray-200'}`}>{opt.label}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{opt.desc}</p>
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
 
