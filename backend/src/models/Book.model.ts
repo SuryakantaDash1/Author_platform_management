@@ -53,6 +53,19 @@ export interface IBook extends Document {
     productLink?: string;
     rating?: number;
   }>;
+  statusHistory: {
+    status: string;
+    changedBy: string;
+    changedAt: Date;
+    note?: string;
+  }[];
+  paymentRequests: {
+    amount: number;
+    serviceType: string;
+    description: string;
+    status: string;
+    createdAt: Date;
+  }[];
   createdBy?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -141,7 +154,7 @@ const BookSchema: Schema = new Schema(
     }],
     status: {
       type: String,
-      enum: ['draft', 'pending', 'payment_pending', 'in_progress', 'formatting', 'designing', 'published', 'rejected'],
+      enum: ['draft', 'pending', 'payment_pending', 'in_progress', 'formatting', 'designing', 'printing', 'published', 'rejected'],
       default: 'draft',
     },
     rejectionReason: {
@@ -197,12 +210,36 @@ const BookSchema: Schema = new Schema(
       }, { _id: false }),
       default: new Map(),
     },
+    statusHistory: [{
+      status: { type: String, required: true },
+      changedBy: { type: String, required: true },
+      changedAt: { type: Date, default: Date.now },
+      note: { type: String },
+    }],
+    paymentRequests: [{
+      amount: { type: Number, required: true },
+      serviceType: { type: String, required: true },
+      description: { type: String, required: true },
+      status: { type: String, enum: ['pending', 'paid', 'cancelled'], default: 'pending' },
+      createdAt: { type: Date, default: Date.now },
+    }],
     createdBy: {
       type: String,
     },
   },
   {
     timestamps: true,
+    toJSON: {
+      transform(_doc, ret) {
+        // Convert platformWiseSales Map to plain object so it serializes correctly
+        if (ret.platformWiseSales instanceof Map) {
+          const obj: Record<string, unknown> = {};
+          (ret.platformWiseSales as Map<string, unknown>).forEach((v, k) => { obj[k] = v; });
+          ret.platformWiseSales = obj as any;
+        }
+        return ret;
+      },
+    },
   }
 );
 

@@ -346,12 +346,11 @@ export class AuthorController {
       }
 
       // Encrypt account number for security
-      const cipher = crypto.createCipher(
-        'aes-256-cbc',
-        process.env.ENCRYPTION_KEY!
-      );
-      let encryptedAccountNumber = cipher.update(accountNumber, 'utf8', 'hex');
-      encryptedAccountNumber += cipher.final('hex');
+      const rawKey = (process.env.ENCRYPTION_KEY || 'default_encryption_key_32_chars!!').slice(0, 32).padEnd(32, '0');
+      const key = Buffer.from(rawKey, 'utf8');
+      const iv = crypto.randomBytes(16);
+      const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+      let encryptedAccountNumber = iv.toString('hex') + ':' + cipher.update(accountNumber, 'utf8', 'hex') + cipher.final('hex');
 
       const bankAccount = await BankAccount.create({
         authorId: author.authorId,
@@ -431,6 +430,45 @@ export class AuthorController {
     }
   );
 
+  // Edit bank account
+  static editBankAccount = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const { accountId } = req.params;
+      const { bankName, accountHolderName, ifscCode, branchName, accountType } = req.body;
+
+      const userId = req.user?.userId;
+      if (!userId) throw new ApiError(401, 'Unauthorized');
+
+      const author = await Author.findOne({ userId });
+      if (!author) throw new ApiError(404, 'Author profile not found');
+
+      const bankAccount = await BankAccount.findOne({ _id: accountId, authorId: author.authorId, isActive: true });
+      if (!bankAccount) throw new ApiError(404, 'Bank account not found');
+
+      // If setting as primary, demote existing primary
+      if (accountType === 'primary' && bankAccount.accountType !== 'primary') {
+        await BankAccount.updateMany(
+          { authorId: author.authorId, accountType: 'primary' },
+          { accountType: 'secondary' }
+        );
+      }
+
+      if (bankName) bankAccount.bankName = bankName;
+      if (accountHolderName) bankAccount.accountHolderName = accountHolderName;
+      if (ifscCode) bankAccount.ifscCode = ifscCode.toUpperCase();
+      if (branchName) bankAccount.branchName = branchName;
+      if (accountType) bankAccount.accountType = accountType;
+
+      await bankAccount.save();
+
+      res.status(200).json({
+        success: true,
+        message: 'Bank account updated successfully',
+        data: { bankAccount },
+      });
+    }
+  );
+
   // Get referrals
   static getReferrals = asyncHandler(
     async (req: Request, res: Response, _next: NextFunction) => {
@@ -459,6 +497,81 @@ export class AuthorController {
           totalReferrals: referrals.length,
           totalEarnings: totalEarnings[0]?.total || 0,
           referrals,
+        },
+      });
+    }
+  );
+
+  // Apply referral balance to a book's pending payment
+  static applyReferralBalance = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const { bookId } = req.body;
+
+      if (!bookId) {
+        throw new ApiError(400, 'Book ID is required');
+      }
+
+      const userId = req.user?.userId;
+      if (!userId) {
+        throw new ApiError(401, 'Unauthorized');
+      }
+
+      const author = await Author.findOne({ userId });
+      if (!author) {
+        throw new ApiError(404, 'Author profile not found');
+      }
+
+      const book = await Book.findOne({ bookId, authorId: author.authorId });
+      if (!book) {
+        throw new ApiError(404, 'Book not found');
+      }
+
+      if (book.paymentStatus.pendingAmount <= 0) {
+        throw new ApiError(400, 'No pending payment on this book');
+      }
+
+      // Get total available referral balance for this author
+      const referrals = await Referral.find({ referrerId: author.authorId, isActive: true });
+      const totalAvailable = referrals.reduce((sum, r) => sum + r.availableBalance, 0);
+
+      if (totalAvailable <= 0) {
+        throw new ApiError(400, 'No referral balance available');
+      }
+
+      // Deduct the lesser of available balance or pending amount
+      const deduction = Math.min(totalAvailable, book.paymentStatus.pendingAmount);
+      let remaining = deduction;
+
+      // Deduct from referral records
+      for (const referral of referrals) {
+        if (remaining <= 0) break;
+        const deductFromThis = Math.min(referral.availableBalance, remaining);
+        referral.availableBalance -= deductFromThis;
+        referral.utilizedBalance += deductFromThis;
+        remaining -= deductFromThis;
+        await referral.save();
+      }
+
+      // Update book payment status
+      book.paymentStatus.paidAmount += deduction;
+      book.paymentStatus.pendingAmount -= deduction;
+      book.paymentStatus.paymentCompletionPercentage = book.paymentStatus.totalAmount > 0
+        ? Math.round((book.paymentStatus.paidAmount / book.paymentStatus.totalAmount) * 100)
+        : 0;
+
+      // Update referral discount in price breakdown
+      book.priceBreakdown.referralDiscount = (book.priceBreakdown.referralDiscount || 0) + deduction;
+      book.priceBreakdown.finalAmount = Math.max(0, book.priceBreakdown.finalAmount - deduction);
+
+      await book.save();
+
+      res.status(200).json({
+        success: true,
+        message: `Referral balance of ${deduction} applied successfully`,
+        data: {
+          appliedAmount: deduction,
+          remainingReferralBalance: totalAvailable - deduction,
+          bookPaymentStatus: book.paymentStatus,
         },
       });
     }

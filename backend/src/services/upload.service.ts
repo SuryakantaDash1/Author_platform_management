@@ -9,9 +9,16 @@ export class UploadService {
     folder: string = 'povital'
   ): Promise<string> {
     try {
+      // Use 'raw' for non-image files (PDF, DOC, etc.) so they're accessible without auth
+      const ext = filePath.split('.').pop()?.toLowerCase() || '';
+      const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff'];
+      const resourceType = imageExts.includes(ext) ? 'image' as const : 'raw' as const;
+
       const result = await cloudinary.uploader.upload(filePath, {
         folder,
-        resource_type: 'auto',
+        resource_type: resourceType,
+        access_mode: 'public',
+        type: 'upload',
       });
 
       // Delete local file after upload

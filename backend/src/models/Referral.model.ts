@@ -5,6 +5,8 @@ export interface IReferral extends Document {
   referredAuthorId: string;
   referralCode: string;
   earningPercentage: number;
+  commissionAmount: number;
+  status: 'pending' | 'completed';
   totalEarnings: number;
   availableBalance: number;
   utilizedBalance: number;
@@ -38,6 +40,15 @@ const ReferralSchema: Schema = new Schema(
       required: true,
       min: 0,
       max: 100,
+    },
+    commissionAmount: {
+      type: Number,
+      default: 0,
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'completed'],
+      default: 'pending',
     },
     totalEarnings: {
       type: Number,

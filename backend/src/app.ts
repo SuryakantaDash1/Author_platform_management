@@ -17,6 +17,8 @@ import supportRoutes from './routes/support.routes';
 import referralRoutes from './routes/referral.routes';
 import utilityRoutes from './routes/utility.routes';
 import paymentConfigRoutes from './routes/payment-config.routes';
+import reviewRoutes from './routes/review.routes';
+import paymentRoutes from './routes/payment.routes';
 
 const app: Application = express();
 
@@ -67,6 +69,8 @@ app.use('/api/referrals', referralRoutes);
 app.use('/api/utility', utilityRoutes);
 app.use('/api/payment-config', paymentConfigRoutes);  // Public pricing route
 app.use('/api/admin/payment-config', paymentConfigRoutes);  // Admin CRUD routes
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // Root endpoint
 app.get('/', (_req: Request, res: Response) => {

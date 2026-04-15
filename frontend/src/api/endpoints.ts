@@ -29,6 +29,12 @@ export const API_ENDPOINTS = {
     GET_BOOK_DETAIL: (bookId: string) => `/admin/books/${bookId}`,
     UPDATE_BOOK: (bookId: string) => `/admin/books/${bookId}`,
     UPDATE_BOOK_STATUS: (bookId: string) => `/admin/books/${bookId}/status`,
+    APPROVE_BOOK: (bookId: string) => `/admin/books/${bookId}/approve`,
+    DECLINE_BOOK: (bookId: string) => `/admin/books/${bookId}/decline`,
+    UPDATE_BOOK_STAGE: (bookId: string) => `/admin/books/${bookId}/stage`,
+    UPDATE_PRODUCT_LINKS: (bookId: string) => `/admin/books/${bookId}/product-links`,
+    REQUEST_PAYMENT: (bookId: string) => `/admin/books/${bookId}/payment-request`,
+    EXTEND_DUE_DATE: (bookId: string) => `/admin/books/${bookId}/extend-due-date`,
     // Payment Config
     GET_PAYMENT_CONFIG: '/admin/payment-config',
     CREATE_PAYMENT_CONFIG: '/admin/payment-config',
@@ -107,6 +113,29 @@ export const API_ENDPOINTS = {
   // Admin Auth endpoints
   ADMIN_AUTH: {
     CHANGE_PASSWORD: '/admin/auth/change-password',
+  },
+
+  // Payment endpoints (Razorpay)
+  PAYMENT: {
+    CREATE_ORDER: '/payment/create-order',
+    VERIFY: '/payment/verify',
+    PENDING_REQUESTS: '/payment/pending-requests',
+  },
+
+  // Reviews endpoints
+  REVIEWS: {
+    MY: '/reviews/my',
+    SUBMIT: '/reviews',
+    UPDATE: (id: string) => `/reviews/${id}`,
+    PUBLIC: '/reviews/public',
+    ADMIN_ALL: '/reviews/admin',
+    ADMIN_EDIT: (id: string) => `/reviews/admin/${id}`,
+    ADMIN_DELETE: (id: string) => `/reviews/admin/${id}`,
+  },
+
+  // Bank account edit
+  BANK_ACCOUNT: {
+    EDIT: (accountId: string) => `/author/bank-accounts/${accountId}`,
   },
 
   // Referral endpoints

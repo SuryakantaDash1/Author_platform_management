@@ -5,7 +5,7 @@ export interface ITransaction extends Document {
   transactionId: string;
   authorId: string;
   bookId?: string;
-  type: 'royalty_payment' | 'referral_earning' | 'adjustment' | 'refund';
+  type: 'book_payment' | 'royalty_payment' | 'referral_earning' | 'adjustment' | 'refund';
   amount: number;
   description: string;
   status: TransactionStatus;
@@ -39,7 +39,7 @@ const TransactionSchema: Schema = new Schema(
     },
     type: {
       type: String,
-      enum: ['royalty_payment', 'referral_earning', 'adjustment', 'refund'],
+      enum: ['book_payment', 'royalty_payment', 'referral_earning', 'adjustment', 'refund'],
       required: true,
     },
     amount: {

@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   BookOpen,
   Upload,
-  X,
   ChevronDown,
   ChevronRight,
   Check,
@@ -260,6 +259,10 @@ const Books: React.FC = () => {
   // Drag state for file upload
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Razorpay payment state
+  const [payingBook, setPayingBook] = useState<BookData | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   // ===========================================================================
   // Data fetching
@@ -643,6 +646,63 @@ const Books: React.FC = () => {
     }
   };
 
+  // Razorpay payment handler
+  const handlePayNow = async (book: BookData) => {
+    setPayingBook(book);
+    setPaymentLoading(true);
+    try {
+      const res = await axiosInstance.post(API_ENDPOINTS.PAYMENT.CREATE_ORDER, { bookId: book.bookId });
+      const { orderId, amount, currency, keyId, bookName, authorName } = res.data.data;
+
+      const options: any = {
+        key: keyId,
+        amount: amount * 100,
+        currency,
+        name: 'POVITAL',
+        description: `Payment for "${bookName}"`,
+        order_id: orderId,
+        handler: async (response: any) => {
+          try {
+            await axiosInstance.post(API_ENDPOINTS.PAYMENT.VERIFY, {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              bookId: book.bookId,
+            });
+            toast.success('Payment successful! Book submitted for approval.');
+            fetchBooks();
+          } catch {
+            toast.error('Payment verification failed. Contact support.');
+          }
+        },
+        prefill: { name: authorName },
+        theme: { color: '#6366f1' },
+        modal: {
+          ondismiss: () => { setPayingBook(null); setPaymentLoading(false); },
+        },
+      };
+
+      // Load Razorpay script dynamically if not present
+      if (!(window as any).Razorpay) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error('Failed to load Razorpay'));
+          document.head.appendChild(script);
+        });
+      }
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to initiate payment');
+    } finally {
+      setPaymentLoading(false);
+      setPayingBook(null);
+    }
+  };
+
   // Helpers
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '--';
@@ -795,8 +855,15 @@ const Books: React.FC = () => {
                                 Paid
                               </span>
                             ) : (
-                              <button className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-500 hover:bg-orange-600 text-white transition-colors">
-                                <IndianRupee className="w-3 h-3" />
+                              <button
+                                onClick={() => handlePayNow(book)}
+                                disabled={paymentLoading && payingBook?.bookId === book.bookId}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white transition-colors"
+                              >
+                                {paymentLoading && payingBook?.bookId === book.bookId
+                                  ? <Loader2 className="w-3 h-3 animate-spin" />
+                                  : <IndianRupee className="w-3 h-3" />
+                                }
                                 Pay Now
                               </button>
                             )}
@@ -873,7 +940,8 @@ const Books: React.FC = () => {
           {(book.status === 'draft' || book.status === 'rejected') && (
             <button
               onClick={() => {
-                setFormData({
+                setFormData(prev => ({
+                  ...prev,
                   bookName: book.bookName || '',
                   language: book.language || '',
                   bookType: book.bookType || '',
@@ -881,14 +949,15 @@ const Books: React.FC = () => {
                   targetAudience: book.targetAudience || '',
                   expectedLaunchDate: book.expectedLaunchDate ? new Date(book.expectedLaunchDate).toISOString().split('T')[0] : '',
                   physicalCopies: book.physicalCopies ?? 2,
-                  royaltyPercentage: book.royaltyPercentage ?? 70,
-                  needCoverPage: !!book.coverPage || book.needCoverPage || false,
+                  needCoverPage: !!book.coverPage,
+                  coverPageFile: null,
+                  manuscriptFiles: [],
                   needFormatting: book.needFormatting ?? false,
                   needCopyright: book.needCopyright ?? false,
                   needDesigning: book.needDesigning ?? false,
-                  paymentPlan: (book as any).paymentPlan || '100',
-                  marketplaces: book.marketplaces || [],
-                });
+                  paymentPlan: '100',
+                  selectedPlatforms: book.marketplaces || [],
+                }));
                 setEditingBookId(book.bookId);
                 setWizardStep(1);
                 setViewMode('add');

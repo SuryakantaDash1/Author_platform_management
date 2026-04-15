@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   sendSignupOTP,
+  checkOTP,
   verifyOTPAndRegister,
   authorLogin,
   sendLoginOTP,
@@ -23,6 +24,13 @@ const router = Router();
  * @access  Public
  */
 router.post('/send-signup-otp', validate(sendSignupOTPSchema), sendSignupOTP);
+
+/**
+ * @route   POST /api/author/auth/check-otp
+ * @desc    Check OTP validity without consuming it
+ * @access  Public
+ */
+router.post('/check-otp', checkOTP);
 
 /**
  * @route   POST /api/author/auth/verify-otp-signup

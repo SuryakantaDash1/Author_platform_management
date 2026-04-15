@@ -29,10 +29,12 @@ router.get('/transactions', AuthorController.getTransactions);
 // Bank accounts
 router.post('/bank-accounts', validate(authorValidation.addBankAccount), AuthorController.addBankAccount);
 router.get('/bank-accounts', AuthorController.getBankAccounts);
+router.put('/bank-accounts/:accountId', AuthorController.editBankAccount);
 router.delete('/bank-accounts/:accountId', AuthorController.deleteBankAccount);
 
 // Referrals
 router.get('/referrals', AuthorController.getReferrals);
+router.post('/referral/apply', AuthorController.applyReferralBalance);
 
 // Analytics
 router.get('/analytics/sales', AuthorController.getSalesAnalytics);

@@ -15,6 +15,8 @@ import {
   Camera,
   Book,
   ExternalLink,
+  Bell,
+  Loader2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/interceptors';
@@ -80,6 +82,11 @@ const Dashboard: React.FC = () => {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Payment requests from admin
+  const [paymentRequests, setPaymentRequests] = useState<any[]>([]);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [payingBookId, setPayingBookId] = useState<string | null>(null);
+
   // Fetch profile data
   const fetchProfile = useCallback(async () => {
     try {
@@ -114,15 +121,77 @@ const Dashboard: React.FC = () => {
     }
   }, []);
 
+  // Fetch pending payment requests
+  const fetchPaymentRequests = useCallback(async () => {
+    try {
+      const res = await axiosInstance.get(API_ENDPOINTS.PAYMENT.PENDING_REQUESTS);
+      setPaymentRequests(res.data?.data?.requests || []);
+    } catch {
+      // non-critical
+    }
+  }, []);
+
+  // Razorpay pay handler from dashboard
+  const handlePayFromDashboard = async (request: any) => {
+    setPayingBookId(request.bookId);
+    setPaymentLoading(true);
+    try {
+      const res = await axiosInstance.post(API_ENDPOINTS.PAYMENT.CREATE_ORDER, { bookId: request.bookId });
+      const { orderId, amount, currency, keyId, bookName, authorName } = res.data.data;
+
+      const options: any = {
+        key: keyId,
+        amount: amount * 100,
+        currency,
+        name: 'POVITAL',
+        description: `Payment for "${bookName}"`,
+        order_id: orderId,
+        handler: async (response: any) => {
+          try {
+            await axiosInstance.post(API_ENDPOINTS.PAYMENT.VERIFY, {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              bookId: request.bookId,
+            });
+            toast.success('Payment successful!');
+            fetchPaymentRequests();
+          } catch {
+            toast.error('Payment verification failed. Contact support.');
+          }
+        },
+        prefill: { name: authorName },
+        theme: { color: '#6366f1' },
+      };
+
+      if (!(window as any).Razorpay) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error('Failed to load Razorpay'));
+          document.head.appendChild(script);
+        });
+      }
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to initiate payment');
+    } finally {
+      setPaymentLoading(false);
+      setPayingBookId(null);
+    }
+  };
+
   // Initial data load
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      await Promise.all([fetchProfile(), fetchDashboardStats()]);
+      await Promise.all([fetchProfile(), fetchDashboardStats(), fetchPaymentRequests()]);
       setLoading(false);
     };
     loadData();
-  }, [fetchProfile, fetchDashboardStats]);
+  }, [fetchProfile, fetchDashboardStats, fetchPaymentRequests]);
 
   // Handle profile update completion
   const handleProfileUpdated = () => {
@@ -252,6 +321,49 @@ const Dashboard: React.FC = () => {
           <p className="text-red-700 dark:text-red-300 font-medium text-body-sm">
             Account Restricted &mdash; Please contact admin support
           </p>
+        </div>
+      )}
+
+      {/* Payment Request / Overdue Notifications */}
+      {paymentRequests.length > 0 && (
+        <div className="space-y-3">
+          {paymentRequests.map((req, idx) => (
+            <div
+              key={idx}
+              className={`flex items-start gap-4 px-5 py-4 rounded-xl border ${
+                req.status === 'overdue'
+                  ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                  : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+              }`}
+            >
+              <Bell className={`w-5 h-5 flex-shrink-0 mt-0.5 ${req.status === 'overdue' ? 'text-red-500' : 'text-amber-500'}`} />
+              <div className="flex-1 min-w-0">
+                <p className={`font-semibold text-sm ${req.status === 'overdue' ? 'text-red-700 dark:text-red-300' : 'text-amber-700 dark:text-amber-300'}`}>
+                  {req.status === 'overdue'
+                    ? `Payment Overdue — "${req.bookName}" publishing paused`
+                    : `Payment Request — "${req.bookName}"`
+                  }
+                </p>
+                <p className={`text-xs mt-0.5 ${req.status === 'overdue' ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                  {req.description
+                    ? req.description
+                    : `Amount due: ₹${new Intl.NumberFormat('en-IN').format(req.amount)}`
+                  }
+                </p>
+              </div>
+              <button
+                onClick={() => handlePayFromDashboard(req)}
+                disabled={paymentLoading && payingBookId === req.bookId}
+                className="flex-shrink-0 inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg transition-colors"
+              >
+                {paymentLoading && payingBookId === req.bookId
+                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  : <IndianRupee className="w-3.5 h-3.5" />
+                }
+                Pay ₹{new Intl.NumberFormat('en-IN').format(req.amount)}
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
@@ -467,7 +579,7 @@ const Dashboard: React.FC = () => {
           }}
           authorData={{
             authorId: author.authorId,
-            publishedArticles: author.publishedArticles || [],
+            publishedArticles: (author.publishedArticles || []) as any,
             createdAt: author.createdAt || '',
             address: {
               pinCode: author.address?.pinCode || '',

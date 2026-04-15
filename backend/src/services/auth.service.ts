@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.model';
 import Author from '../models/Author.model';
 import OTP from '../models/OTP.model';
+import Referral from '../models/Referral.model';
 import { Tokens, JWTPayload } from '../types';
 import { generateUniqueId, generateReferralCode } from '../utils/helpers';
 
@@ -162,11 +163,16 @@ export class AuthService {
     });
 
     // Create author profile
-    let referredBy;
+    let referredBy: string | undefined;
+    let referrerAuthorId: string | undefined;
+    let usedReferralCode: string | undefined;
+
     if (data.referralCode) {
-      const referrer = await Author.findOne({ referralCode: data.referralCode });
+      const referrer = await Author.findOne({ referralCode: data.referralCode.toUpperCase() });
       if (referrer) {
         referredBy = referrer.authorId;
+        referrerAuthorId = referrer.authorId;
+        usedReferralCode = data.referralCode.toUpperCase();
       }
     }
 
@@ -176,6 +182,20 @@ export class AuthService {
       referralCode: newReferralCode,
       referredBy,
     });
+
+    // Create Referral record so the referrer can see this in their referrals list
+    if (referrerAuthorId && usedReferralCode) {
+      await Referral.create({
+        referrerId: referrerAuthorId,
+        referredAuthorId: authorId,
+        referralCode: usedReferralCode,
+        earningPercentage: 0, // Admin sets the actual percentage later
+        totalEarnings: 0,
+        availableBalance: 0,
+        utilizedBalance: 0,
+        isActive: true,
+      });
+    }
 
     return { user, author };
   }

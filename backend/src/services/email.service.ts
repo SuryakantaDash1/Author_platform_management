@@ -67,20 +67,28 @@ export class EmailService {
   }
 
   // Send welcome email
-  static async sendWelcomeEmail(email: string, name: string): Promise<void> {
+  static async sendWelcomeEmail(email: string, name: string, password?: string): Promise<void> {
     try {
+      const credentialsBlock = password ? `
+        <div style="background: #f0f4ff; border-left: 4px solid #4F46E5; padding: 16px 20px; border-radius: 6px; margin: 24px 0;">
+          <p style="margin: 0 0 8px 0; font-weight: bold; color: #333;">Your Login Credentials</p>
+          <p style="margin: 4px 0; color: #555;">Email: <strong>${email}</strong></p>
+          <p style="margin: 4px 0; color: #555;">Password: <strong style="font-family: monospace; font-size: 15px; color: #4F46E5;">${password}</strong></p>
+        </div>
+      ` : '';
+
       await this.transporter.sendMail({
         from: `"POVITAL" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
         to: email,
         subject: 'Welcome to POVITAL - Your Author Account is Ready!',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #333;">Welcome to POVITAL, ${name}! 🎉</h2>
-            <p>Your author account has been successfully created.</p>
-            <p>You can now start publishing your books and managing your content.</p>
+            <h2 style="color: #333;">Welcome to POVITAL, ${name}!</h2>
+            <p>Your author account has been successfully created. You can now start publishing your books and managing your content.</p>
+            ${credentialsBlock}
             <div style="margin: 30px 0;">
-              <a href="${process.env.FRONTEND_URL}/author/dashboard" style="background-color: #4F46E5; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
-                Go to Dashboard
+              <a href="${process.env.FRONTEND_URL}/author/login" style="background-color: #4F46E5; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                Login to Dashboard
               </a>
             </div>
             <p style="color: #666;">Thank you for choosing POVITAL!</p>
@@ -223,6 +231,103 @@ export class EmailService {
     } catch (error) {
       console.error('Error sending royalty payment email:', error);
     }
+  }
+
+  // Send book approval email
+  static async sendBookApprovalEmail(
+    email: string,
+    name: string,
+    bookName: string,
+    bookId: string
+  ): Promise<void> {
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Book Approved!</h2>
+        <p>Dear ${name},</p>
+        <p>Great news! Your book <strong>"${bookName}"</strong> (ID: ${bookId}) has been approved and is now moving to the formatting stage.</p>
+        <p>We will keep you updated as your book progresses through the publishing pipeline.</p>
+        <p>Thank you,<br>POVITAL Team</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+        <p style="color: #999; font-size: 12px;">&copy; ${new Date().getFullYear()} POVITAL. All rights reserved.</p>
+      </div>
+    `;
+    await this.sendRawEmail(email, `Your Book "${bookName}" Has Been Approved - POVITAL`, html);
+  }
+
+  // Send book decline email
+  static async sendBookDeclineEmail(
+    email: string,
+    name: string,
+    bookName: string,
+    bookId: string,
+    reason: string
+  ): Promise<void> {
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Book Submission Update</h2>
+        <p>Dear ${name},</p>
+        <p>Unfortunately, your book <strong>"${bookName}"</strong> (ID: ${bookId}) has been declined.</p>
+        <p><strong>Reason:</strong> ${reason}</p>
+        <p>You may update your submission and resubmit for review.</p>
+        <p>Thank you,<br>POVITAL Team</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+        <p style="color: #999; font-size: 12px;">&copy; ${new Date().getFullYear()} POVITAL. All rights reserved.</p>
+      </div>
+    `;
+    await this.sendRawEmail(email, `Update on Your Book "${bookName}" - POVITAL`, html);
+  }
+
+  // Send book status update email
+  static async sendBookStatusUpdateEmail(
+    email: string,
+    name: string,
+    bookName: string,
+    bookId: string,
+    newStatus: string
+  ): Promise<void> {
+    const statusLabels: Record<string, string> = {
+      formatting: 'Formatting',
+      designing: 'Designing',
+      printing: 'Printing',
+      published: 'Published',
+    };
+    const label = statusLabels[newStatus] || newStatus;
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Book Status Update</h2>
+        <p>Dear ${name},</p>
+        <p>Your book <strong>"${bookName}"</strong> (ID: ${bookId}) has moved to the <strong>${label}</strong> stage.</p>
+        ${newStatus === 'published' ? '<p>Congratulations! Your book is now live and available for readers.</p>' : '<p>We will notify you when the next stage is reached.</p>'}
+        <p>Thank you,<br>POVITAL Team</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+        <p style="color: #999; font-size: 12px;">&copy; ${new Date().getFullYear()} POVITAL. All rights reserved.</p>
+      </div>
+    `;
+    await this.sendRawEmail(email, `Book "${bookName}" - Status Update: ${label} - POVITAL`, html);
+  }
+
+  // Send payment request notification
+  static async sendPaymentRequestNotification(
+    email: string,
+    name: string,
+    bookName: string,
+    amount: number,
+    description: string
+  ): Promise<void> {
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Payment Request</h2>
+        <p>Dear ${name},</p>
+        <p>A new payment request has been created for your book <strong>"${bookName}"</strong>.</p>
+        <p><strong>Amount:</strong> &#8377;${amount}</p>
+        <p><strong>Description:</strong> ${description}</p>
+        <p>Please log in to your dashboard to complete the payment.</p>
+        <p>Thank you,<br>POVITAL Team</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+        <p style="color: #999; font-size: 12px;">&copy; ${new Date().getFullYear()} POVITAL. All rights reserved.</p>
+      </div>
+    `;
+    await this.sendRawEmail(email, `Payment Request for "${bookName}" - POVITAL`, html);
   }
 
   // Send raw HTML email (used by cron reminders)

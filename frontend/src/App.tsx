@@ -28,7 +28,10 @@ const BooksPage = lazy(() => import('./pages/public/BooksPage'));
 // Lazy load author pages
 const AuthorDashboard = lazy(() => import('./pages/author/Dashboard'));
 const AuthorBooks = lazy(() => import('./pages/author/Books'));
+const AuthorBankAccounts = lazy(() => import('./pages/author/BankAccounts'));
+const AuthorReferrals = lazy(() => import('./pages/author/Referrals'));
 const AuthorTickets = lazy(() => import('./pages/author/Tickets'));
+const AuthorReviews = lazy(() => import('./pages/author/Reviews'));
 const AuthorSettings = lazy(() => import('./pages/author/Settings'));
 
 // Lazy load admin pages
@@ -37,6 +40,7 @@ const AdminAuthors = lazy(() => import('./pages/admin/Authors'));
 const AdminBooks = lazy(() => import('./pages/admin/Books'));
 const AdminPaymentConfig = lazy(() => import('./pages/admin/PaymentConfig'));
 const AdminSupport = lazy(() => import('./pages/admin/Support'));
+const AdminReviews = lazy(() => import('./pages/admin/Reviews'));
 const AdminSettings = lazy(() => import('./pages/admin/Settings'));
 
 // 404 Page
@@ -87,7 +91,10 @@ function App() {
                   <Route index element={<Navigate to="/author/dashboard" replace />} />
                   <Route path="dashboard" element={<AuthorDashboard />} />
                   <Route path="books" element={<AuthorBooks />} />
+                  <Route path="bank-accounts" element={<AuthorBankAccounts />} />
+                  <Route path="referrals" element={<AuthorReferrals />} />
                   <Route path="tickets" element={<AuthorTickets />} />
+                  <Route path="reviews" element={<AuthorReviews />} />
                   <Route path="settings" element={<AuthorSettings />} />
                 </Route>
 
@@ -106,6 +113,7 @@ function App() {
                   <Route path="books" element={<AdminBooks />} />
                   <Route path="payment-config" element={<AdminPaymentConfig />} />
                   <Route path="support" element={<AdminSupport />} />
+                  <Route path="reviews" element={<AdminReviews />} />
                   <Route path="settings" element={<AdminSettings />} />
                 </Route>
 

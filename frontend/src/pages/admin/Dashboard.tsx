@@ -127,12 +127,14 @@ const MonthlyActivitiesCard: React.FC = () => (
         ))}
       </div>
 
-      {/* Overlay message */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className="px-4 py-2 rounded-lg bg-neutral-50/90 dark:bg-dark-50/90 text-body-sm text-neutral-500 dark:text-dark-500 font-medium backdrop-blur-sm border border-neutral-200 dark:border-dark-200">
-          Chart data will be available in Phase 2
-        </span>
-      </div>
+      {/* Overlay - shown only when no real data */}
+      {barHeights.every(h => h < 10) && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="px-4 py-2 rounded-lg bg-neutral-50/90 dark:bg-dark-50/90 text-body-sm text-neutral-500 dark:text-dark-500 font-medium backdrop-blur-sm border border-neutral-200 dark:border-dark-200">
+            No activity data yet
+          </span>
+        </div>
+      )}
     </div>
   </div>
 );

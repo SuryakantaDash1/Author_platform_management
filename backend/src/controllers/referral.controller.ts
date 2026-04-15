@@ -3,6 +3,7 @@ import ApiError from '../utils/ApiError';
 import { asyncHandler } from '../utils/asyncHandler';
 import Referral from '../models/Referral.model';
 import Author from '../models/Author.model';
+import User from '../models/User.model';
 import Transaction from '../models/Transaction.model';
 
 export class ReferralController {
@@ -31,11 +32,16 @@ export class ReferralController {
         ]),
       ]);
 
-      // Get referred authors info
+      // Get referred authors info + their user names
       const referredAuthorIds = referrals.map((r) => r.referredAuthorId);
       const referredAuthors = await Author.find({
         authorId: { $in: referredAuthorIds },
-      }).select('authorId totalBooks totalEarnings createdAt');
+      }).select('authorId userId totalBooks totalEarnings createdAt').lean();
+
+      const referredUserIds = referredAuthors.map((a) => a.userId);
+      const referredUsers = await User.find({
+        userId: { $in: referredUserIds },
+      }).select('userId firstName lastName').lean();
 
       res.status(200).json({
         success: true,
@@ -45,12 +51,20 @@ export class ReferralController {
           totalEarnings: totalEarnings[0]?.total || 0,
           pendingEarnings: pendingEarnings[0]?.total || 0,
           referrals: referrals.map((ref) => {
-            const refAuthor = referredAuthors.find(
-              (a) => a.authorId === ref.referredAuthorId
-            );
+            const refAuthor = referredAuthors.find((a) => a.authorId === ref.referredAuthorId);
+            const refUser = refAuthor
+              ? referredUsers.find((u) => u.userId === refAuthor.userId)
+              : null;
             return {
               ...ref.toObject(),
-              referredAuthorDetails: refAuthor,
+              referredAuthorDetails: refAuthor ? {
+                authorId: refAuthor.authorId,
+                firstName: refUser?.firstName || '',
+                lastName: refUser?.lastName || '',
+                totalBooks: refAuthor.totalBooks,
+                totalEarnings: refAuthor.totalEarnings,
+                createdAt: refAuthor.createdAt,
+              } : null,
             };
           }),
         },
@@ -69,7 +83,7 @@ export class ReferralController {
         throw new ApiError(404, 'Referral not found');
       }
 
-      if ((referral as any).status === 'completed') {
+      if (referral.status === 'completed') {
         throw new ApiError(400, 'Commission already processed');
       }
 
@@ -92,18 +106,18 @@ export class ReferralController {
         transactionId,
         authorId: referral.referrerId,
         type: 'referral_commission',
-        amount: (referral as any).commissionAmount,
+        amount: referral.commissionAmount,
         status: 'completed',
         description: `Referral commission for ${referral.referredAuthorId}`,
         completedAt: new Date(),
       });
 
       // Update referral status
-      (referral as any).status = 'completed';
+      referral.status = 'completed';
       await referral.save();
 
       // Update referrer's total earnings
-      referrer.totalEarnings += (referral as any).commissionAmount;
+      referrer.totalEarnings += referral.commissionAmount;
       await referrer.save();
 
       res.status(200).json({
@@ -279,11 +293,11 @@ export class ReferralController {
         throw new ApiError(404, 'Referral not found');
       }
 
-      if ((referral as any).status === 'completed') {
+      if (referral.status === 'completed') {
         throw new ApiError(400, 'Cannot update completed referral commission');
       }
 
-      (referral as any).commissionAmount = commissionAmount;
+      referral.commissionAmount = commissionAmount;
       await referral.save();
 
       res.status(200).json({

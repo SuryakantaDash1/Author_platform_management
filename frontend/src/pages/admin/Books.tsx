@@ -14,6 +14,14 @@ import {
   Check,
   Upload,
   User,
+  ThumbsUp,
+  ThumbsDown,
+  ArrowRight,
+  Star,
+  DollarSign,
+  Clock,
+  Link as LinkIcon,
+  CreditCard,
 } from 'lucide-react';
 import axiosInstance from '../../api/interceptors';
 import toast from 'react-hot-toast';
@@ -25,7 +33,7 @@ import { format } from 'date-fns';
 // Constants
 // ---------------------------------------------------------------------------
 
-const BOOK_STATUSES = ['pending', 'payment_pending', 'in_progress', 'formatting', 'designing', 'published', 'rejected'];
+const BOOK_STATUSES = ['pending', 'payment_pending', 'in_progress', 'formatting', 'designing', 'printing', 'published', 'rejected'];
 const PLATFORMS = ['Amazon', 'Flipkart', 'Meesho', 'Snapdeal', 'Myntra', '150+ Other Sellers', '1200 Offline Channels'];
 
 const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; label: string }> = {
@@ -34,8 +42,25 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; lab
   in_progress:     { bg: 'bg-blue-100 dark:bg-blue-900/30',   text: 'text-blue-700 dark:text-blue-300',   dot: 'bg-blue-500',   label: 'In Progress' },
   formatting:      { bg: 'bg-cyan-100 dark:bg-cyan-900/30',   text: 'text-cyan-700 dark:text-cyan-300',   dot: 'bg-cyan-500',   label: 'Formatting' },
   designing:       { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-700 dark:text-purple-300', dot: 'bg-purple-500', label: 'Designing' },
+  printing:        { bg: 'bg-indigo-100 dark:bg-indigo-900/30', text: 'text-indigo-700 dark:text-indigo-300', dot: 'bg-indigo-500', label: 'Printing' },
   published:       { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-300', dot: 'bg-green-500', label: 'Published' },
   rejected:        { bg: 'bg-red-100 dark:bg-red-900/30',     text: 'text-red-700 dark:text-red-300',     dot: 'bg-red-500',   label: 'Rejected' },
+};
+
+const PIPELINE_STAGES = ['pending', 'formatting', 'designing', 'printing', 'published'] as const;
+
+const PIPELINE_STAGE_LABELS: Record<string, string> = {
+  pending: 'Pending',
+  formatting: 'Formatting',
+  designing: 'Designing',
+  printing: 'Printing',
+  published: 'Published',
+};
+
+const NEXT_STAGE: Record<string, string> = {
+  formatting: 'designing',
+  designing: 'printing',
+  printing: 'published',
 };
 
 const TYPE_CONFIG: Record<string, string> = {
@@ -91,6 +116,11 @@ interface Book {
     pendingAmount?: number;
     installmentOption?: number;
   };
+  paymentPlan?: string;
+  dueDate?: string;
+  productLinks?: Array<{ platform: string; productLink: string; rating: number }>;
+  platformWiseSales?: Record<string, { sellingUnits: number; productLink?: string; rating?: number }>;
+  declineReason?: string;
 }
 
 interface AuthorSuggestion {
@@ -239,6 +269,22 @@ const AdminBooks: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingBook, setDeletingBook] = useState<Book | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // ---- Phase 3: Approval / Pipeline / Product Links / Payment Request / Due Date ----
+  const [approveLoading, setApproveLoading] = useState(false);
+  const [showDeclineModal, setShowDeclineModal] = useState(false);
+  const [declineReason, setDeclineReason] = useState('');
+  const [declineLoading, setDeclineLoading] = useState(false);
+  const [stageLoading, setStageLoading] = useState(false);
+  const [productLinkInputs, setProductLinkInputs] = useState<Record<string, { url: string; rating: number }>>({});
+  const [productLinkSaving, setProductLinkSaving] = useState<string | null>(null);
+  const [showPaymentRequestModal, setShowPaymentRequestModal] = useState(false);
+  const [paymentRequestForm, setPaymentRequestForm] = useState({ serviceType: 'inclusive', amount: '', description: '' });
+  const [paymentRequestLoading, setPaymentRequestLoading] = useState(false);
+  const [showExtendDueDateModal, setShowExtendDueDateModal] = useState(false);
+  const [newDueDate, setNewDueDate] = useState('');
+  const [extendDueDateLoading, setExtendDueDateLoading] = useState(false);
+  const today = new Date().toISOString().split('T')[0];
 
   // ===========================================================================
   // Data fetching
@@ -556,12 +602,13 @@ const AdminBooks: React.FC = () => {
     setSelectedBook(book);
     setShowDetailPanel(true);
     setOpenMenuId(null);
-    // Fetch full detail if needed
+    // Fetch full detail — merge with existing book data to preserve authorName
     try {
       const res = await axiosInstance.get(`/admin/books/${book.bookId}`);
-      setSelectedBook(res.data?.data || book);
+      const fetched = res.data?.data?.book || res.data?.data || {};
+      setSelectedBook({ ...book, ...fetched, authorName: book.authorName || fetched.authorName });
     } catch {
-      // Use existing data
+      // Use existing data from listing
     }
   };
 
@@ -587,6 +634,151 @@ const AdminBooks: React.FC = () => {
   };
 
   const minLaunchDate = (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().split('T')[0]; })();
+
+  // ===========================================================================
+  // Phase 3: Approval / Pipeline / Product Links / Payment / Due Date handlers
+  // ===========================================================================
+
+  const handleApprove = async () => {
+    if (!selectedBook) return;
+    setApproveLoading(true);
+    try {
+      await axiosInstance.put(`/admin/books/${selectedBook.bookId}/approve`);
+      toast.success('Book approved successfully');
+      const res = await axiosInstance.get(`/admin/books/${selectedBook.bookId}`);
+      setSelectedBook(res.data?.data || { ...selectedBook, status: 'formatting' });
+      fetchBooks(pagination.currentPage);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to approve book');
+    } finally {
+      setApproveLoading(false);
+    }
+  };
+
+  const handleDecline = async () => {
+    if (!selectedBook || !declineReason.trim()) {
+      toast.error('Please provide a reason for declining');
+      return;
+    }
+    setDeclineLoading(true);
+    try {
+      await axiosInstance.put(`/admin/books/${selectedBook.bookId}/decline`, { reason: declineReason.trim() });
+      toast.success('Book declined');
+      setShowDeclineModal(false);
+      setDeclineReason('');
+      const res = await axiosInstance.get(`/admin/books/${selectedBook.bookId}`);
+      setSelectedBook(res.data?.data || { ...selectedBook, status: 'rejected' });
+      fetchBooks(pagination.currentPage);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to decline book');
+    } finally {
+      setDeclineLoading(false);
+    }
+  };
+
+  const handleMoveToNextStage = async () => {
+    if (!selectedBook) return;
+    const nextStatus = NEXT_STAGE[selectedBook.status];
+    if (!nextStatus) return;
+    setStageLoading(true);
+    try {
+      await axiosInstance.put(`/admin/books/${selectedBook.bookId}/stage`, { status: nextStatus });
+      toast.success(`Book moved to ${PIPELINE_STAGE_LABELS[nextStatus] || nextStatus}`);
+      const res = await axiosInstance.get(`/admin/books/${selectedBook.bookId}`);
+      setSelectedBook(res.data?.data || { ...selectedBook, status: nextStatus });
+      fetchBooks(pagination.currentPage);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to advance stage');
+    } finally {
+      setStageLoading(false);
+    }
+  };
+
+  const handleSaveProductLink = async (platform: string) => {
+    if (!selectedBook) return;
+    const isOffline = platform === '1200 Offline Channels' || platform === '150+ Other Sellers';
+    const input = productLinkInputs[platform];
+    if (!isOffline && !input?.url?.trim()) {
+      toast.error('Please enter a product URL');
+      return;
+    }
+    setProductLinkSaving(platform);
+    try {
+      const res = await axiosInstance.put(`/admin/books/${selectedBook.bookId}/product-links`, {
+        platform,
+        productLink: isOffline ? '' : input.url.trim(),
+        rating: input?.rating || 0,
+      });
+      toast.success(`Product link saved for ${platform}`);
+      // Use the book returned directly from the PUT response — avoids a second round-trip
+      const updatedBook = res.data?.data?.book;
+      if (updatedBook) setSelectedBook(updatedBook);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to save product link');
+    } finally {
+      setProductLinkSaving(null);
+    }
+  };
+
+  const handlePaymentRequest = async () => {
+    if (!selectedBook) return;
+    if (!paymentRequestForm.amount || Number(paymentRequestForm.amount) <= 0) {
+      toast.error('Please enter a valid amount');
+      return;
+    }
+    setPaymentRequestLoading(true);
+    try {
+      await axiosInstance.post(`/admin/books/${selectedBook.bookId}/payment-request`, {
+        serviceType: paymentRequestForm.serviceType,
+        amount: Number(paymentRequestForm.amount),
+        description: paymentRequestForm.description,
+      });
+      toast.success('Payment request sent successfully');
+      setShowPaymentRequestModal(false);
+      setPaymentRequestForm({ serviceType: 'inclusive', amount: '', description: '' });
+      const res = await axiosInstance.get(`/admin/books/${selectedBook.bookId}`);
+      setSelectedBook(res.data?.data || selectedBook);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to send payment request');
+    } finally {
+      setPaymentRequestLoading(false);
+    }
+  };
+
+  const handleExtendDueDate = async () => {
+    if (!selectedBook || !newDueDate) {
+      toast.error('Please select a new due date');
+      return;
+    }
+    setExtendDueDateLoading(true);
+    try {
+      await axiosInstance.put(`/admin/books/${selectedBook.bookId}/extend-due-date`, { newDueDate });
+      toast.success('Due date extended successfully');
+      setShowExtendDueDateModal(false);
+      setNewDueDate('');
+      const res = await axiosInstance.get(`/admin/books/${selectedBook.bookId}`);
+      setSelectedBook(res.data?.data || selectedBook);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to extend due date');
+    } finally {
+      setExtendDueDateLoading(false);
+    }
+  };
+
+  // Initialize product link inputs when selectedBook changes
+  useEffect(() => {
+    if (selectedBook?.marketplaces && selectedBook.status === 'published') {
+      const existing: Record<string, { url: string; rating: number }> = {};
+      selectedBook.marketplaces.forEach(platform => {
+        const sales = selectedBook.platformWiseSales?.[platform];
+        existing[platform] = {
+          url: sales?.productLink || '',
+          rating: sales?.rating || 0,
+        };
+      });
+      setProductLinkInputs(existing);
+    }
+  }, [selectedBook?.bookId, selectedBook?.status, selectedBook?.platformWiseSales]);
 
   // ===========================================================================
   // Render: Filter Bar
@@ -797,6 +989,33 @@ const AdminBooks: React.FC = () => {
                             >
                               <Edit className="w-4 h-4" /> Edit
                             </button>
+                            {book.status === 'pending' && (
+                              <>
+                                <button
+                                  onClick={() => { setOpenMenuId(null); openDetail(book); }}
+                                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                                >
+                                  <ThumbsUp className="w-4 h-4" /> Approve / Decline
+                                </button>
+                              </>
+                            )}
+                            {['formatting', 'designing', 'printing'].includes(book.status) && (
+                              <button
+                                onClick={async () => {
+                                  setOpenMenuId(null);
+                                  try {
+                                    await axiosInstance.put(`/admin/books/${book.bookId}/stage`);
+                                    toast.success(`Book advanced to next stage`);
+                                    fetchBooks(pagination.currentPage);
+                                  } catch (err: any) {
+                                    toast.error(err?.response?.data?.message || 'Failed to advance stage');
+                                  }
+                                }}
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                              >
+                                <ArrowRight className="w-4 h-4" /> Advance Stage
+                              </button>
+                            )}
                             <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
                             <button
                               onClick={() => { setDeletingBook(book); setShowDeleteConfirm(true); setOpenMenuId(null); }}
@@ -1320,6 +1539,106 @@ const AdminBooks: React.FC = () => {
               )}
             </div>
 
+            {/* ---- Phase 3: Status Pipeline Progress ---- */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Status Pipeline</p>
+              <div className="flex items-center gap-0">
+                {PIPELINE_STAGES.map((stage, idx) => {
+                  const stageIndex = PIPELINE_STAGES.indexOf(selectedBook.status as typeof PIPELINE_STAGES[number]);
+                  const currentIdx = stageIndex >= 0 ? stageIndex : (selectedBook.status === 'rejected' ? -1 : 0);
+                  const isCompleted = idx < currentIdx;
+                  const isCurrent = idx === currentIdx;
+                  return (
+                    <React.Fragment key={stage}>
+                      <div className="flex flex-col items-center flex-shrink-0" style={{ minWidth: 0 }}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-colors ${
+                          isCompleted ? 'border-green-500 bg-green-500 text-white' :
+                          isCurrent ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' :
+                          'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-400'
+                        }`}>
+                          {isCompleted ? <Check className="w-4 h-4" /> : idx + 1}
+                        </div>
+                        <span className={`mt-1 text-[10px] font-medium text-center leading-tight ${
+                          isCompleted ? 'text-green-600 dark:text-green-400' :
+                          isCurrent ? 'text-purple-600 dark:text-purple-400' :
+                          'text-gray-400 dark:text-gray-500'
+                        }`}>
+                          {PIPELINE_STAGE_LABELS[stage]}
+                        </span>
+                      </div>
+                      {idx < PIPELINE_STAGES.length - 1 && (
+                        <div className={`flex-1 h-0.5 mx-1 rounded ${
+                          idx < currentIdx ? 'bg-green-400' : 'bg-gray-200 dark:bg-gray-700'
+                        }`} />
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* payment_pending — info only, author pays via Razorpay */}
+            {selectedBook.status === 'payment_pending' && (
+              <div className="p-4 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800 rounded-lg">
+                <p className="text-xs font-semibold text-orange-700 dark:text-orange-300 uppercase tracking-wide mb-1">Awaiting Payment</p>
+                <p className="text-sm text-orange-600 dark:text-orange-400">
+                  Payment is overdue. The author has been notified and must complete payment to resume publishing.
+                </p>
+              </div>
+            )}
+
+            {/* ---- Phase 3: Approval/Decline Buttons (pending only) ---- */}
+            {selectedBook.status === 'pending' && (
+              <div className="p-4 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <p className="text-xs font-semibold text-yellow-700 dark:text-yellow-300 uppercase tracking-wide mb-3">Pending Approval</p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleApprove}
+                    disabled={approveLoading}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-400 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {approveLoading ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <ThumbsUp className="w-4 h-4" />
+                    )}
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => { setDeclineReason(''); setShowDeclineModal(true); }}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"
+                  >
+                    <ThumbsDown className="w-4 h-4" />
+                    Decline
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ---- Phase 3: Move to Next Stage (formatting / designing / printing) ---- */}
+            {['formatting', 'designing', 'printing'].includes(selectedBook.status) && (
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide mb-2">Advance Pipeline</p>
+                <p className="text-sm text-blue-600 dark:text-blue-400 mb-3">
+                  Current stage: <span className="font-bold">{PIPELINE_STAGE_LABELS[selectedBook.status]}</span>
+                  {' → Next: '}
+                  <span className="font-bold">{PIPELINE_STAGE_LABELS[NEXT_STAGE[selectedBook.status]]}</span>
+                </p>
+                <button
+                  onClick={handleMoveToNextStage}
+                  disabled={stageLoading}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {stageLoading ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <ArrowRight className="w-4 h-4" />
+                  )}
+                  Move to {PIPELINE_STAGE_LABELS[NEXT_STAGE[selectedBook.status]]}
+                </button>
+              </div>
+            )}
+
             {/* Author */}
             <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Author</p>
@@ -1368,21 +1687,28 @@ const AdminBooks: React.FC = () => {
             {/* Uploaded files */}
             {selectedBook.uploadedFiles && selectedBook.uploadedFiles.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Uploaded Files</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Uploaded Files ({selectedBook.uploadedFiles.length})</p>
                 <ul className="space-y-1">
-                  {selectedBook.uploadedFiles.map((f, i) => (
-                    <li key={i}>
-                      <a
-                        href={f.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm text-blue-600 dark:text-blue-400 hover:underline transition-colors"
-                      >
-                        <BookOpen className="w-4 h-4 flex-shrink-0" />
-                        {f.name || f.type || 'File'}
-                      </a>
-                    </li>
-                  ))}
+                  {selectedBook.uploadedFiles.map((f: any, i: number) => {
+                    const url = typeof f === 'string' ? f : f?.url || '';
+                    const fileName = typeof f === 'string'
+                      ? decodeURIComponent(url.split('/').pop()?.split('?')[0] || `File ${i + 1}`)
+                      : (f?.name || `File ${i + 1}`);
+                    return (
+                      <li key={i}>
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm text-blue-600 dark:text-blue-400 hover:underline transition-colors"
+                        >
+                          <BookOpen className="w-4 h-4 flex-shrink-0" />
+                          <span className="truncate">{fileName}</span>
+                          <Eye className="w-3.5 h-3.5 ml-auto flex-shrink-0 text-gray-400" />
+                        </a>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )}
@@ -1404,6 +1730,103 @@ const AdminBooks: React.FC = () => {
                     <p className="text-xs text-red-500 font-medium">Pending</p>
                     <p className="text-sm font-bold text-red-700 dark:text-red-300">Rs {(selectedBook.payment.pendingAmount || 0).toLocaleString('en-IN')}</p>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* ---- Phase 3: Product Links (published books only) ---- */}
+            {selectedBook.status === 'published' && selectedBook.marketplaces && selectedBook.marketplaces.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Product Links</p>
+                <div className="space-y-3">
+                  {selectedBook.marketplaces.map(platform => {
+                    const isOffline = platform === '1200 Offline Channels' || platform === '150+ Other Sellers';
+                    const input = productLinkInputs[platform] || { url: '', rating: 0 };
+                    const isSaving = productLinkSaving === platform;
+                    return (
+                      <div key={platform} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
+                        <div className="flex items-center gap-2">
+                          <LinkIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{platform}</span>
+                          {isOffline && (
+                            <span className="text-xs text-gray-400 dark:text-gray-500 italic">(offline distribution)</span>
+                          )}
+                        </div>
+                        {!isOffline && (
+                          <input
+                            type="url"
+                            value={input.url}
+                            onChange={e => setProductLinkInputs(prev => ({ ...prev, [platform]: { ...prev[platform], url: e.target.value } }))}
+                            placeholder="https://..."
+                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+                          />
+                        )}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-gray-500 dark:text-gray-400 mr-1">Rating:</span>
+                            {[1, 2, 3, 4, 5].map(star => (
+                              <button
+                                key={star}
+                                type="button"
+                                onClick={() => setProductLinkInputs(prev => ({ ...prev, [platform]: { ...prev[platform], rating: star } }))}
+                                className="focus:outline-none transition-colors"
+                              >
+                                <Star
+                                  className={`w-4 h-4 ${star <= (input.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300 dark:text-gray-600'}`}
+                                />
+                              </button>
+                            ))}
+                          </div>
+                          <button
+                            onClick={() => handleSaveProductLink(platform)}
+                            disabled={isSaving}
+                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            {isSaving ? (
+                              <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <Check className="w-3 h-3" />
+                            )}
+                            Save
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ---- Phase 3: Payment Request Button ---- */}
+            <div>
+              <button
+                onClick={() => {
+                  setPaymentRequestForm({ serviceType: 'inclusive', amount: '', description: '' });
+                  setShowPaymentRequestModal(true);
+                }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-400"
+              >
+                <CreditCard className="w-4 h-4" />
+                Request Payment
+              </button>
+            </div>
+
+            {/* ---- Phase 3: Extend Due Date (pay_later books) ---- */}
+            {selectedBook.paymentPlan === 'pay_later' && selectedBook.dueDate && (
+              <div className="p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wide mb-2">Due Date</p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                    <span className="text-sm font-medium text-amber-800 dark:text-amber-200">{formatDate(selectedBook.dueDate)}</span>
+                  </div>
+                  <button
+                    onClick={() => { setNewDueDate(''); setShowExtendDueDateModal(true); }}
+                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  >
+                    <Calendar className="w-3 h-3" />
+                    Extend Due Date
+                  </button>
                 </div>
               </div>
             )}
@@ -1535,6 +1958,205 @@ const AdminBooks: React.FC = () => {
           <span className="font-semibold text-gray-900 dark:text-gray-100">{deletingBook?.bookName}</span>?
           This action cannot be undone.
         </p>
+      </Modal>
+
+      {/* ---- Phase 3: Decline Reason Modal ---- */}
+      <Modal
+        isOpen={showDeclineModal}
+        onClose={() => { setShowDeclineModal(false); setDeclineReason(''); }}
+        title="Decline Book"
+        size="sm"
+        footer={
+          <>
+            <button
+              onClick={() => { setShowDeclineModal(false); setDeclineReason(''); }}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDecline}
+              disabled={declineLoading || !declineReason.trim()}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {declineLoading ? (
+                <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Declining...</>
+              ) : (
+                <><ThumbsDown className="w-4 h-4" /> Decline Book</>
+              )}
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Please provide a reason for declining <span className="font-semibold text-gray-900 dark:text-gray-100">{selectedBook?.bookName}</span>.
+          </p>
+          <textarea
+            value={declineReason}
+            onChange={e => setDeclineReason(e.target.value)}
+            placeholder="Enter reason for declining this book..."
+            rows={4}
+            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors resize-none"
+          />
+          {!declineReason.trim() && (
+            <p className="text-xs text-red-500">Reason is required to decline a book.</p>
+          )}
+        </div>
+      </Modal>
+
+      {/* ---- Phase 3: Payment Request Modal ---- */}
+      <Modal
+        isOpen={showPaymentRequestModal}
+        onClose={() => { setShowPaymentRequestModal(false); setPaymentRequestForm({ serviceType: 'inclusive', amount: '', description: '' }); }}
+        title="Request Payment"
+        size="md"
+        footer={
+          <>
+            <button
+              onClick={() => { setShowPaymentRequestModal(false); setPaymentRequestForm({ serviceType: 'inclusive', amount: '', description: '' }); }}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handlePaymentRequest}
+              disabled={paymentRequestLoading || !paymentRequestForm.amount}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {paymentRequestLoading ? (
+                <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Sending...</>
+              ) : (
+                <><DollarSign className="w-4 h-4" /> Send Payment Request</>
+              )}
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          {/* Book Info (read-only) */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Book ID</label>
+              <input
+                type="text"
+                value={selectedBook?.bookId || ''}
+                readOnly
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 cursor-not-allowed"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Book Name</label>
+              <input
+                type="text"
+                value={selectedBook?.bookName || ''}
+                readOnly
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 cursor-not-allowed"
+              />
+            </div>
+          </div>
+
+          {/* Amount received so far */}
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Amount Received So Far</label>
+            <input
+              type="text"
+              value={`Rs ${(selectedBook?.payment?.paidAmount || 0).toLocaleString('en-IN')}`}
+              readOnly
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 cursor-not-allowed"
+            />
+          </div>
+
+          {/* Service Type */}
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Service Type <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={paymentRequestForm.serviceType}
+              onChange={e => setPaymentRequestForm(p => ({ ...p, serviceType: e.target.value }))}
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
+            >
+              <option value="inclusive">Inclusive Services</option>
+              <option value="exclusive">Exclusive Services</option>
+            </select>
+          </div>
+
+          {/* Amount */}
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Amount (Rs) <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              value={paymentRequestForm.amount}
+              onChange={e => setPaymentRequestForm(p => ({ ...p, amount: e.target.value }))}
+              placeholder="Enter amount"
+              min={1}
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+            <textarea
+              value={paymentRequestForm.description}
+              onChange={e => setPaymentRequestForm(p => ({ ...p, description: e.target.value }))}
+              placeholder="Add a note about this payment request..."
+              rows={3}
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors resize-none"
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* ---- Phase 3: Extend Due Date Modal ---- */}
+      <Modal
+        isOpen={showExtendDueDateModal}
+        onClose={() => { setShowExtendDueDateModal(false); setNewDueDate(''); }}
+        title="Extend Due Date"
+        size="sm"
+        footer={
+          <>
+            <button
+              onClick={() => { setShowExtendDueDateModal(false); setNewDueDate(''); }}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleExtendDueDate}
+              disabled={extendDueDateLoading || !newDueDate}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {extendDueDateLoading ? (
+                <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving...</>
+              ) : (
+                <><Calendar className="w-4 h-4" /> Extend Date</>
+              )}
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Current due date for <span className="font-semibold text-gray-900 dark:text-gray-100">{selectedBook?.bookName}</span>:{' '}
+            <span className="font-semibold text-amber-700 dark:text-amber-300">{formatDate(selectedBook?.dueDate)}</span>
+          </p>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              New Due Date <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              value={newDueDate}
+              min={today}
+              onChange={e => setNewDueDate(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
+            />
+          </div>
+        </div>
       </Modal>
     </div>
   );

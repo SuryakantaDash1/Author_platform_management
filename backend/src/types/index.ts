@@ -1,6 +1,6 @@
 export type UserRole = 'super_admin' | 'sub_admin' | 'author';
 export type AccountTier = 'free' | 'basic' | 'pro' | 'enterprise';
-export type BookStatus = 'draft' | 'pending' | 'payment_pending' | 'in_progress' | 'formatting' | 'designing' | 'published' | 'rejected';
+export type BookStatus = 'draft' | 'pending' | 'payment_pending' | 'in_progress' | 'formatting' | 'designing' | 'printing' | 'published' | 'rejected';
 export type PaymentPlan = 'full' | '2_installments' | '3_installments' | '4_installments' | 'pay_later';
 export type BookType = 'fiction' | 'non-fiction' | 'poetry' | 'children' | 'academic' | 'other';
 export type TicketStatus = 'pending' | 'in_progress' | 'resolved' | 'closed';

@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
+import crypto from 'crypto';
 import User from '../models/User.model';
+import OTPModel from '../models/OTP.model';
 import { AuthService } from '../services/auth.service';
 import { EmailService } from '../services/email.service';
 import { validateAuthorPassword } from '../utils/password.util';
@@ -30,6 +32,41 @@ export const sendSignupOTP = asyncHandler(async (req: Request, res: Response) =>
     success: true,
     message: 'OTP sent successfully to your email',
   });
+});
+
+/**
+ * @desc    Check OTP validity without consuming it (used for step-2 UI confirmation)
+ * @route   POST /api/author/auth/check-otp
+ * @access  Public
+ */
+export const checkOTP = asyncHandler(async (req: Request, res: Response) => {
+  const { email, otp } = req.body;
+  if (!email || !otp) throw new ApiError(400, 'Email and OTP are required');
+
+  const hashedOTP = crypto.createHash('sha256').update(String(otp)).digest('hex');
+
+  const otpRecord = await OTPModel.findOne({
+    email,
+    type: 'signup',
+    otp: hashedOTP,
+    expiresAt: { $gt: new Date() },
+  });
+
+  if (!otpRecord) {
+    // Increment attempts on wrong OTP
+    const existing = await OTPModel.findOne({ email, type: 'signup', expiresAt: { $gt: new Date() } });
+    if (existing) {
+      existing.attempts += 1;
+      await existing.save();
+      if (existing.attempts >= 3) {
+        await OTPModel.deleteOne({ _id: existing._id });
+        throw new ApiError(400, 'Maximum OTP attempts exceeded. Please request a new OTP.');
+      }
+    }
+    throw new ApiError(400, 'Invalid or expired OTP');
+  }
+
+  res.status(200).json({ success: true, message: 'OTP verified' });
 });
 
 /**
@@ -71,7 +108,7 @@ export const verifyOTPAndRegister = asyncHandler(async (req: Request, res: Respo
   // Create author account with password
   const { user } = await AuthService.createAuthor({
     firstName: firstName.trim(),
-    lastName: lastName.trim(),
+    lastName: (lastName || '').trim(),
     email,
     password,
     referralCode: referralCode?.trim(),
@@ -87,8 +124,8 @@ export const verifyOTPAndRegister = asyncHandler(async (req: Request, res: Respo
   // Generate tokens
   const tokens = AuthService.generateTokens(user);
 
-  // Send welcome email
-  await EmailService.sendWelcomeEmail(email, user.getFullName());
+  // Send welcome email with credentials
+  await EmailService.sendWelcomeEmail(email, user.getFullName(), password);
 
   // Return user data
   const userData = {

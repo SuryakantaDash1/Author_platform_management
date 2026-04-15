@@ -21,11 +21,10 @@ export const verifyOTPAndRegisterSchema = Joi.object({
     'string.max': 'First name cannot exceed 50 characters',
     'any.required': 'First name is required',
   }),
-  lastName: Joi.string().min(2).max(50).required().messages({
-    'string.min': 'Last name must be at least 2 characters',
+  lastName: Joi.string().min(1).max(50).optional().allow('').messages({
     'string.max': 'Last name cannot exceed 50 characters',
-    'any.required': 'Last name is required',
   }),
+  mobile: Joi.string().optional().allow(''),
   password: Joi.string().min(4).required().messages({
     'string.min': 'Password must be at least 4 characters',
     'any.required': 'Password is required',

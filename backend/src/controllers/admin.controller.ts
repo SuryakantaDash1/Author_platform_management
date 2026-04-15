@@ -11,6 +11,15 @@ import BankAccount from '../models/BankAccount.model';
 import Ticket from '../models/Ticket.model';
 import PricingConfig from '../models/PricingConfig.model';
 import AuditLog from '../models/AuditLog.model';
+
+// Helper to get author's email and name from authorId
+async function getAuthorUserInfo(authorId: string) {
+  const author = await Author.findOne({ authorId });
+  if (!author) return null;
+  const user = await User.findOne({ userId: author.userId });
+  if (!user) return null;
+  return { author, user, email: user.email!, name: user.firstName };
+}
 export class AdminController {
   // Create author account by admin (with auto-generated password)
   static createAuthor = asyncHandler(
@@ -355,7 +364,7 @@ export class AdminController {
       if (userId) {
         await AuditLog.create({
           userId: userId,
-          action: 'UPDATE_BOOK_STATUS',
+          action: 'status_change',
           resource: 'Book',
           resourceId: bookId,
           details: {
@@ -647,7 +656,7 @@ export class AdminController {
       if (userId) {
         await AuditLog.create({
           userId: userId,
-          action: 'UPDATE_PRICING',
+          action: 'update',
           resource: 'PricingConfig',
           resourceId: config._id.toString(),
           details: {
@@ -819,6 +828,314 @@ export class AdminController {
       res.status(201).json({
         success: true,
         message: 'Book created for author successfully',
+        data: { book },
+      });
+    }
+  );
+
+  // Approve book - move from 'pending' to 'formatting'
+  static approveBook = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const { bookId } = req.params;
+
+      const book = await Book.findOne({ bookId });
+      if (!book) {
+        throw new ApiError(404, 'Book not found');
+      }
+
+      if (book.status !== 'pending') {
+        throw new ApiError(400, 'Only pending books can be approved');
+      }
+
+      const oldStatus = book.status;
+      book.status = 'formatting';
+
+      // Add to status history
+      const adminUserId = req.user?.userId || 'system';
+      book.statusHistory = book.statusHistory || [];
+      book.statusHistory.push({
+        status: 'formatting',
+        changedBy: adminUserId,
+        changedAt: new Date(),
+        note: 'Book approved by admin',
+      });
+
+      await book.save();
+
+      // Send approval email to author
+      const info = await getAuthorUserInfo(book.authorId);
+      if (info) {
+        try {
+          await EmailService.sendBookApprovalEmail(info.email, info.name, book.bookName, bookId);
+        } catch { /* non-critical */ }
+      }
+
+      // Log audit
+      if (adminUserId) {
+        await AuditLog.create({
+          userId: adminUserId,
+          action: 'status_change',
+          resource: 'Book',
+          resourceId: bookId,
+          details: {
+            adminId: adminUserId,
+            oldStatus,
+            newStatus: 'formatting',
+            action: 'approve',
+          },
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Book approved and moved to formatting stage',
+        data: { book },
+      });
+    }
+  );
+
+  // Decline book
+  static declineBook = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const { bookId } = req.params;
+      const { reason } = req.body;
+
+      if (!reason) {
+        throw new ApiError(400, 'Rejection reason is required');
+      }
+
+      const book = await Book.findOne({ bookId });
+      if (!book) {
+        throw new ApiError(404, 'Book not found');
+      }
+
+      if (book.status !== 'pending') {
+        throw new ApiError(400, 'Only pending books can be declined');
+      }
+
+      const oldStatus = book.status;
+      book.status = 'rejected';
+      book.rejectionReason = reason;
+
+      const adminUserId = req.user?.userId || 'system';
+      book.statusHistory = book.statusHistory || [];
+      book.statusHistory.push({
+        status: 'rejected',
+        changedBy: adminUserId,
+        changedAt: new Date(),
+        note: `Declined: ${reason}`,
+      });
+
+      await book.save();
+
+      // Send decline email to author
+      const info = await getAuthorUserInfo(book.authorId);
+      if (info) {
+        try {
+          await EmailService.sendBookDeclineEmail(info.email, info.name, book.bookName, bookId, reason);
+        } catch { /* non-critical */ }
+      }
+
+      // Log audit
+      if (adminUserId) {
+        await AuditLog.create({
+          userId: adminUserId,
+          action: 'status_change',
+          resource: 'Book',
+          resourceId: bookId,
+          details: {
+            adminId: adminUserId,
+            oldStatus,
+            newStatus: 'rejected',
+            reason,
+          },
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Book declined',
+        data: { book },
+      });
+    }
+  );
+
+  // Update book stage through pipeline: formatting -> designing -> printing -> published
+  static updateBookStage = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const { bookId } = req.params;
+
+      const book = await Book.findOne({ bookId });
+      if (!book) {
+        throw new ApiError(404, 'Book not found');
+      }
+
+      const pipeline: Record<string, string> = {
+        formatting: 'designing',
+        designing: 'printing',
+        printing: 'published',
+      };
+
+      const nextStatus = pipeline[book.status];
+      if (!nextStatus) {
+        throw new ApiError(400, `Cannot advance book from '${book.status}' status. Book must be in formatting, designing, or printing stage.`);
+      }
+
+      const oldStatus = book.status;
+      book.status = nextStatus as any;
+
+      if (nextStatus === 'published') {
+        book.actualLaunchDate = new Date();
+
+        // Update author's total books if not already counted
+        const author = await Author.findOne({ authorId: book.authorId });
+        if (author) {
+          author.totalBooks += 1;
+          await author.save();
+        }
+      }
+
+      const adminUserId = req.user?.userId || 'system';
+      book.statusHistory = book.statusHistory || [];
+      book.statusHistory.push({
+        status: nextStatus,
+        changedBy: adminUserId,
+        changedAt: new Date(),
+        note: `Stage advanced from ${oldStatus} to ${nextStatus}`,
+      });
+
+      await book.save();
+
+      // Send status update email
+      const info = await getAuthorUserInfo(book.authorId);
+      if (info) {
+        try {
+          await EmailService.sendBookStatusUpdateEmail(info.email, info.name, book.bookName, bookId, nextStatus);
+        } catch { /* non-critical */ }
+      }
+
+      // Log audit
+      if (adminUserId) {
+        await AuditLog.create({
+          userId: adminUserId,
+          action: 'status_change',
+          resource: 'Book',
+          resourceId: bookId,
+          details: {
+            adminId: adminUserId,
+            oldStatus,
+            newStatus: nextStatus,
+          },
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: `Book moved from ${oldStatus} to ${nextStatus}`,
+        data: { book },
+      });
+    }
+  );
+
+  // Update product links for a book
+  static updateProductLinks = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const { bookId } = req.params;
+      const { platform, productLink, rating } = req.body;
+
+      if (!platform) {
+        throw new ApiError(400, 'Platform is required');
+      }
+
+      const book = await Book.findOne({ bookId });
+      if (!book) {
+        throw new ApiError(404, 'Book not found');
+      }
+
+      const platformData = book.platformWiseSales.get(platform) || { sellingUnits: 0 };
+      if (productLink !== undefined) platformData.productLink = productLink;
+      if (rating !== undefined) platformData.rating = rating;
+      book.platformWiseSales.set(platform, platformData);
+
+      await book.save();
+
+      res.status(200).json({
+        success: true,
+        message: 'Product links updated successfully',
+        data: { book },
+      });
+    }
+  );
+
+  // Create payment request for a book
+  static createPaymentRequest = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const { bookId } = req.params;
+      const { serviceType, amount, description } = req.body;
+
+      if (!serviceType || !amount || !description) {
+        throw new ApiError(400, 'Service type, amount, and description are required');
+      }
+
+      const book = await Book.findOne({ bookId });
+      if (!book) {
+        throw new ApiError(404, 'Book not found');
+      }
+
+      book.paymentRequests = book.paymentRequests || [];
+      book.paymentRequests.push({
+        amount,
+        serviceType,
+        description,
+        status: 'pending',
+        createdAt: new Date(),
+      });
+
+      await book.save();
+
+      // Send email to author
+      const info = await getAuthorUserInfo(book.authorId);
+      if (info) {
+        try {
+          await EmailService.sendPaymentRequestNotification(info.email, info.name, book.bookName, amount, description);
+        } catch { /* non-critical */ }
+      }
+
+      res.status(201).json({
+        success: true,
+        message: 'Payment request created successfully',
+        data: { book },
+      });
+    }
+  );
+
+  // Extend due date for book payment
+  static extendDueDate = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const { bookId } = req.params;
+      const { newDueDate } = req.body;
+
+      if (!newDueDate) {
+        throw new ApiError(400, 'New due date is required');
+      }
+
+      const book = await Book.findOne({ bookId });
+      if (!book) {
+        throw new ApiError(404, 'Book not found');
+      }
+
+      book.paymentStatus.dueDate = new Date(newDueDate);
+      await book.save();
+
+      res.status(200).json({
+        success: true,
+        message: 'Due date extended successfully',
         data: { book },
       });
     }
