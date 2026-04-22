@@ -12,7 +12,6 @@ const PublicLayout = lazy(() => import('./components/layout/PublicLayout'));
 
 // Lazy load public pages
 const HomePage = lazy(() => import('./pages/public/HomePage'));
-const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
 const AdminLoginPage = lazy(() => import('./pages/auth/AdminLoginPage'));
 const AuthorLoginPage = lazy(() => import('./pages/auth/AuthorLoginPage'));
@@ -33,6 +32,7 @@ const AuthorReferrals = lazy(() => import('./pages/author/Referrals'));
 const AuthorTickets = lazy(() => import('./pages/author/Tickets'));
 const AuthorReviews = lazy(() => import('./pages/author/Reviews'));
 const AuthorSettings = lazy(() => import('./pages/author/Settings'));
+const AuthorRoyalties = lazy(() => import('./pages/author/Royalties'));
 
 // Lazy load admin pages
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
@@ -42,6 +42,8 @@ const AdminPaymentConfig = lazy(() => import('./pages/admin/PaymentConfig'));
 const AdminSupport = lazy(() => import('./pages/admin/Support'));
 const AdminReviews = lazy(() => import('./pages/admin/Reviews'));
 const AdminSettings = lazy(() => import('./pages/admin/Settings'));
+const AdminSelling = lazy(() => import('./pages/admin/Selling'));
+const AdminRoyalties = lazy(() => import('./pages/admin/Royalties'));
 
 // 404 Page
 const NotFoundPage = () => (
@@ -61,15 +63,11 @@ function App() {
           <AuthProvider>
             <Suspense fallback={<SuspenseFallback fullScreen />}>
               <Routes>
-                {/* Public Routes */}
+                {/* Public Routes (with header/footer) */}
                 <Route element={<PublicLayout />}>
                   <Route path="/" element={<HomePage />} />
-                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/login" element={<Navigate to="/author/login" replace />} />
                   <Route path="/register" element={<RegisterPage />} />
-                  <Route path="/author/register" element={<AuthorSignupPage />} />
-                  <Route path="/author/signup" element={<AuthorSignupPage />} />
-                  <Route path="/author/login" element={<AuthorLoginPage />} />
-                  <Route path="/admin/login" element={<AdminLoginPage />} />
                   <Route path="/features" element={<FeaturesPage />} />
                   <Route path="/pricing" element={<PricingPage />} />
                   <Route path="/about" element={<AboutPage />} />
@@ -78,6 +76,12 @@ function App() {
                   <Route path="/authors" element={<AuthorsPage />} />
                   <Route path="/books" element={<BooksPage />} />
                 </Route>
+
+                {/* Auth Routes (standalone — no header/footer) */}
+                <Route path="/author/login" element={<AuthorLoginPage />} />
+                <Route path="/author/signup" element={<AuthorSignupPage />} />
+                <Route path="/author/register" element={<AuthorSignupPage />} />
+                <Route path="/admin/login" element={<AdminLoginPage />} />
 
                 {/* Author Routes */}
                 <Route
@@ -93,6 +97,7 @@ function App() {
                   <Route path="books" element={<AuthorBooks />} />
                   <Route path="bank-accounts" element={<AuthorBankAccounts />} />
                   <Route path="referrals" element={<AuthorReferrals />} />
+                  <Route path="royalties" element={<AuthorRoyalties />} />
                   <Route path="tickets" element={<AuthorTickets />} />
                   <Route path="reviews" element={<AuthorReviews />} />
                   <Route path="settings" element={<AuthorSettings />} />
@@ -112,6 +117,8 @@ function App() {
                   <Route path="authors" element={<AdminAuthors />} />
                   <Route path="books" element={<AdminBooks />} />
                   <Route path="payment-config" element={<AdminPaymentConfig />} />
+                  <Route path="selling" element={<AdminSelling />} />
+                  <Route path="royalties" element={<AdminRoyalties />} />
                   <Route path="support" element={<AdminSupport />} />
                   <Route path="reviews" element={<AdminReviews />} />
                   <Route path="settings" element={<AdminSettings />} />

@@ -14,6 +14,7 @@ router.use(checkRole('super_admin', 'sub_admin'));
 router.post('/authors', AdminController.createAuthor);
 router.get('/authors', AdminController.getAllAuthors);
 router.get('/authors/:authorId', AdminController.getAuthorDetails);
+router.get('/authors/:authorId/bank-accounts', AdminController.getAuthorBankAccounts);
 router.put('/authors/:authorId/tier', AdminController.updateAuthorTier);
 router.put('/authors/:authorId/restrict', AdminController.restrictAuthor);
 

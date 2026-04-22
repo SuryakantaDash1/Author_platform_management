@@ -173,13 +173,24 @@ export class AdminController {
 
       // Manually join user data (userId is a string, not ObjectId)
       const userIds = authors.map((a) => a.userId);
-      const users = await User.find({ userId: { $in: userIds } })
-        .select('userId firstName lastName email mobile tier isActive')
-        .lean();
+      const authorIds = authors.map((a) => a.authorId);
+
+      const [users, bookUnitsAgg] = await Promise.all([
+        User.find({ userId: { $in: userIds } })
+          .select('userId firstName lastName email mobile tier isActive')
+          .lean(),
+        Book.aggregate([
+          { $match: { authorId: { $in: authorIds } } },
+          { $group: { _id: '$authorId', totalUnits: { $sum: '$totalSellingUnits' } } },
+        ]),
+      ]);
+
       const userMap = new Map(users.map((u) => [u.userId, u]));
+      const bookUnitsMap = new Map(bookUnitsAgg.map((b: any) => [b._id, b.totalUnits]));
 
       const authorsWithUsers = authors.map((author) => ({
         ...author,
+        totalSoldUnits: bookUnitsMap.get(author.authorId) || 0,
         user: userMap.get(author.userId) || null,
       }));
 
@@ -403,7 +414,11 @@ export class AdminController {
       const filter: any = {};
 
       if (search) {
-        filter.bookName = new RegExp(search as string, 'i');
+        filter.$or = [
+          { bookName: new RegExp(search as string, 'i') },
+          { bookId: new RegExp(search as string, 'i') },
+          { subtitle: new RegExp(search as string, 'i') },
+        ];
       }
 
       if (status) {
@@ -444,6 +459,8 @@ export class AdminController {
           const u = a ? userMap.get(a.userId) : null;
           return u ? `${u.firstName} ${u.lastName}`.trim() : book.authorId;
         })(),
+        sellingUnits: (book as any).totalSellingUnits ?? 0,
+        netEarnings: (book as any).totalRevenue ?? 0,
       }));
 
       res.status(200).json({
@@ -566,25 +583,147 @@ export class AdminController {
     }
   );
 
+  // Get bank accounts for a specific author (admin use — for royalty release modal)
+  static getAuthorBankAccounts = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const { authorId } = req.params;
+
+      const author = await Author.findOne({ authorId });
+      if (!author) throw new ApiError(404, 'Author not found');
+
+      const bankAccounts = await BankAccount.find({ authorId, isActive: true });
+
+      res.status(200).json({
+        success: true,
+        data: { bankAccounts },
+      });
+    }
+  );
+
   // Get platform statistics
   static getPlatformStats = asyncHandler(
     async (_req: Request, res: Response, _next: NextFunction) => {
       const [
         totalAuthors,
-        totalBooks,
+        activeAuthors,
+        publishedBooks,
+        ongoingBooksCount,
         totalRevenue,
         totalTransactions,
         activeTickets,
       ] = await Promise.all([
         Author.countDocuments(),
+        Author.countDocuments({ isRestricted: false }),
         Book.countDocuments({ status: 'published' }),
+        Book.countDocuments({
+          status: { $in: ['pending', 'payment_pending', 'in_progress', 'formatting', 'designing', 'printing'] },
+        }),
         Transaction.aggregate([
           { $match: { status: 'completed' } },
           { $group: { _id: null, total: { $sum: '$amount' } } },
         ]),
         Transaction.countDocuments(),
-        Ticket.countDocuments({ status: { $in: ['open', 'in_progress'] } }),
+        Ticket.countDocuments({ status: { $in: ['pending', 'in_progress'] } }),
       ]);
+
+      // Total selling units across all books
+      const sellingUnitsAgg = await Book.aggregate([
+        { $group: { _id: null, total: { $sum: '$totalSellingUnits' } } },
+      ]);
+      const bookSellingUnits = sellingUnitsAgg[0]?.total || 0;
+
+      // Net profit margin: total revenue from book payments
+      const bookRevenueAgg = await Book.aggregate([
+        { $group: { _id: null, total: { $sum: '$paymentStatus.paidAmount' } } },
+      ]);
+      const totalBookRevenue = bookRevenueAgg[0]?.total || 0;
+      // Net profit margin as total paid amount (in rupees)
+      const netProfitMargin = Math.round(totalBookRevenue);
+
+      // Monthly activities — book registrations + payments per month (last 6 months)
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+      sixMonthsAgo.setDate(1);
+      sixMonthsAgo.setHours(0, 0, 0, 0);
+
+      const monthlyBooks = await Book.aggregate([
+        { $match: { createdAt: { $gte: sixMonthsAgo } } },
+        {
+          $group: {
+            _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { '_id.year': 1, '_id.month': 1 } },
+      ]);
+
+      const monthlyAuthors = await Author.aggregate([
+        { $match: { createdAt: { $gte: sixMonthsAgo } } },
+        {
+          $group: {
+            _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { '_id.year': 1, '_id.month': 1 } },
+      ]);
+
+      // Best seller authors — aggregate selling units from Books (source of truth)
+      const sellingByAuthor = await Book.aggregate([
+        { $group: { _id: '$authorId', totalUnits: { $sum: '$totalSellingUnits' }, totalPaid: { $sum: '$paymentStatus.paidAmount' } } },
+        { $sort: { totalUnits: -1 } },
+        { $limit: 10 },
+      ]);
+
+      const topAuthorIds = sellingByAuthor.map((s: any) => s._id);
+
+      // Fetch all top authors + their users in bulk
+      const [topAuthors, topUsers] = await Promise.all([
+        Author.find({ authorId: { $in: topAuthorIds } }).lean(),
+        User.find({}).lean(), // will be filtered below
+      ]);
+
+      // Also include authors with no sales but enrolled (fill up to 10)
+      const existingIds = new Set(topAuthorIds);
+      if (topAuthorIds.length < 10) {
+        const extra = await Author.find({ authorId: { $nin: Array.from(existingIds) } })
+          .sort({ createdAt: -1 })
+          .limit(10 - topAuthorIds.length)
+          .lean();
+        extra.forEach((a: any) => {
+          if (!existingIds.has(a.authorId)) {
+            topAuthors.push(a);
+            sellingByAuthor.push({ _id: a.authorId, totalUnits: 0, totalPaid: 0 });
+          }
+        });
+      }
+
+      const bestSellers = await Promise.all(
+        topAuthors.map(async (author: any) => {
+          const user = topUsers.find((u: any) => u.userId === author.userId) as any;
+          const salesEntry = sellingByAuthor.find((s: any) => s._id === author.authorId);
+
+          const lastTxn = await Transaction.findOne({
+            authorId: author.authorId,
+            status: 'completed',
+          })
+            .sort({ createdAt: -1 })
+            .lean() as any;
+
+          return {
+            id: author._id?.toString(),
+            name: `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Unknown',
+            authorId: author.authorId,
+            photo: author.profilePicture || '',
+            lastPayment: lastTxn
+              ? `₹${(lastTxn.amount || 0).toLocaleString('en-IN')}`
+              : '—',
+            totalPayment: `₹${((salesEntry?.totalPaid || 0)).toLocaleString('en-IN')}`,
+            bookSellingUnit: salesEntry?.totalUnits || 0,
+            status: author.isRestricted ? 'Inactive' : 'Active',
+          };
+        })
+      );
 
       // Tier distribution
       const tierDistribution = await User.aggregate([
@@ -592,38 +731,22 @@ export class AdminController {
         { $group: { _id: '$tier', count: { $sum: 1 } } },
       ]);
 
-      // Monthly revenue
-      const monthlyRevenue = await Transaction.aggregate([
-        {
-          $match: {
-            status: 'completed',
-            createdAt: { $gte: new Date(Date.now() - 12 * 30 * 24 * 60 * 60 * 1000) },
-          },
-        },
-        {
-          $group: {
-            _id: {
-              year: { $year: '$createdAt' },
-              month: { $month: '$createdAt' },
-            },
-            revenue: { $sum: '$amount' },
-          },
-        },
-        { $sort: { '_id.year': 1, '_id.month': 1 } },
-      ]);
-
       res.status(200).json({
         success: true,
         data: {
-          overview: {
-            totalAuthors,
-            totalBooks,
-            totalRevenue: totalRevenue[0]?.total || 0,
-            totalTransactions,
-            activeTickets,
-          },
+          totalAuthors,
+          activeAuthors,
+          publishedBooks,
+          ongoingBooks: ongoingBooksCount,
+          bookSellingUnits,
+          netProfitMargin,
+          totalRevenue: totalRevenue[0]?.total || 0,
+          totalTransactions,
+          activeTickets,
+          bestSellers,
+          monthlyBooks,
+          monthlyAuthors,
           tierDistribution,
-          monthlyRevenue,
         },
       });
     }

@@ -23,6 +23,7 @@ export const API_ENDPOINTS = {
     GET_AUTHOR_DETAILS: (authorId: string) => `/admin/authors/${authorId}`,
     UPDATE_AUTHOR_TIER: (authorId: string) => `/admin/authors/${authorId}/tier`,
     RESTRICT_AUTHOR: (authorId: string) => `/admin/authors/${authorId}/restrict`,
+    GET_AUTHOR_BANK_ACCOUNTS: (authorId: string) => `/admin/authors/${authorId}/bank-accounts`,
     // Books
     GET_ALL_BOOKS: '/admin/books',
     CREATE_BOOK: '/admin/books',
@@ -78,6 +79,7 @@ export const API_ENDPOINTS = {
     SUBMIT_FOR_REVIEW: (bookId: string) => `/books/${bookId}/submit`,
     DELETE_BOOK: (bookId: string) => `/books/${bookId}`,
     UPDATE_SALES_DATA: (bookId: string) => `/books/${bookId}/sales`,
+    GET_FILE_URL: (bookId: string) => `/books/${bookId}/file-url`,
   },
 
   // Financial endpoints
@@ -146,5 +148,33 @@ export const API_ENDPOINTS = {
     GET_REFERRAL_STATS: '/referrals/stats',
     PROCESS_COMMISSION: (referralId: string) => `/referrals/${referralId}/process`,
     UPDATE_COMMISSION: (referralId: string) => `/referrals/${referralId}/commission`,
+  },
+
+  // Selling (Phase 4) — admin
+  SELLING: {
+    SUBMIT: '/admin/selling',
+    PREVIEW: '/admin/selling/preview',
+    GET_ALL_RECORDS: '/admin/selling',
+    GET_HISTORY: (bookId: string) => `/admin/selling/${bookId}`,
+  },
+
+  // Royalty (Phase 4)
+  ROYALTY: {
+    // Author
+    GET_MY_ROYALTIES: '/author/royalties',
+    GET_MY_MONTH_DETAIL: (year: number, month: number) => `/author/royalties/${year}/${month}`,
+    // Admin
+    ADMIN_LISTING: '/admin/royalties',
+    ADMIN_AUTHOR_DETAIL: (authorId: string) => `/admin/royalties/author/${authorId}`,
+    ADMIN_BOOK_RECORDS: (bookId: string) => `/admin/royalties/book/${bookId}`,
+    ADMIN_RELEASE: '/admin/royalties/release',
+  },
+
+  // Public (Phase 4) — no auth
+  PUBLIC: {
+    GET_AUTHORS: '/public/authors',
+    GET_AUTHOR_DETAIL: (authorId: string) => `/public/authors/${authorId}`,
+    GET_BOOKS: '/public/books',
+    GET_BOOK_DETAIL: (bookId: string) => `/public/books/${bookId}`,
   },
 };

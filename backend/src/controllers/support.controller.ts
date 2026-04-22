@@ -4,6 +4,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import Ticket from '../models/Ticket.model';
 import Message from '../models/Message.model';
 import Author from '../models/Author.model';
+import { UploadService } from '../services/upload.service';
 
 export class SupportController {
   // Create a new support ticket
@@ -185,12 +186,19 @@ export class SupportController {
         throw new ApiError(400, 'Cannot add message to a closed ticket');
       }
 
+      // Handle attachment upload
+      let attachmentUrl: string | undefined;
+      if (req.file) {
+        attachmentUrl = await UploadService.uploadToCloudinary(req.file.path, 'povital/support/attachments');
+      }
+
       // Create message
       const newMessage = await Message.create({
         ticketId,
         senderId,
         senderRole,
         message,
+        attachments: attachmentUrl ? [attachmentUrl] : [],
       });
 
       // Update ticket's last response time and status

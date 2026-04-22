@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Button from './Button';
 
 export interface ModalProps {
   isOpen: boolean;

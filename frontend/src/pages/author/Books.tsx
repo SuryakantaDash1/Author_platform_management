@@ -53,7 +53,8 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; lab
   rejected:        { bg: 'bg-red-100 dark:bg-red-900/30',       text: 'text-red-700 dark:text-red-300',       dot: 'bg-red-500',     label: 'Rejected' },
 };
 
-const SALE_PLATFORMS = ['Amazon', 'Flipkart', 'Meesho', 'Offline'];
+// Must match the exact keys used by admin when recording sales
+const SALE_PLATFORMS = ['Amazon', 'Flipkart', 'Meesho', 'Snapdeal', 'Myntra', '150+ Other Sellers', '1200 Offline Channels'];
 
 // ---------------------------------------------------------------------------
 // Types
@@ -95,11 +96,13 @@ interface BookData {
     installmentOption?: number;
     lastPaymentDate?: string;
   };
+  paymentPlan?: string;
   paymentStatus?: {
     totalAmount: number;
     paidAmount: number;
     pendingAmount: number;
     paymentCompletionPercentage: number;
+    installments?: { amount: number; status: string; paidAt?: string; _id?: string }[];
   };
   platformWiseSales?: Record<string, { sellingUnits: number; productLink?: string; rating?: number }>;
 }
@@ -147,6 +150,41 @@ type ViewMode = 'listing' | 'detail' | 'add';
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
+
+// Opens a book file via backend-generated signed URL (bypasses Cloudinary restriction)
+const OpenFileButton: React.FC<{ bookId: string; fileUrl: string }> = ({ bookId, fileUrl }) => {
+  const [loading, setLoading] = React.useState(false);
+
+  const handleOpen = async () => {
+    setLoading(true);
+    try {
+      const res = await axiosInstance.get(API_ENDPOINTS.BOOKS.GET_FILE_URL(bookId), {
+        params: { fileUrl },
+      });
+      const signedUrl = res.data?.data?.url;
+      if (signedUrl) {
+        window.open(signedUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        toast.error('Could not generate file URL');
+      }
+    } catch {
+      toast.error('Failed to open file. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleOpen}
+      disabled={loading}
+      className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 disabled:opacity-50"
+      title="Open file"
+    >
+      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
+    </button>
+  );
+};
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
@@ -670,9 +708,13 @@ const Books: React.FC = () => {
               bookId: book.bookId,
             });
             toast.success('Payment successful! Book submitted for approval.');
-            fetchBooks();
+            setPayingBook(null);
+            setPaymentLoading(false);
+            await fetchBooks();
           } catch {
             toast.error('Payment verification failed. Contact support.');
+            setPayingBook(null);
+            setPaymentLoading(false);
           }
         },
         prefill: { name: authorName },
@@ -695,9 +737,9 @@ const Books: React.FC = () => {
 
       const rzp = new (window as any).Razorpay(options);
       rzp.open();
+      // Note: do NOT reset state in finally — handler/ondismiss manage state after rzp.open()
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Failed to initiate payment');
-    } finally {
       setPaymentLoading(false);
       setPayingBook(null);
     }
@@ -730,6 +772,21 @@ const Books: React.FC = () => {
     const paid = payment.paidAmount || 0;
     const pending = payment.pendingAmount || total - paid;
     return { isPaid: pending <= 0, paidAmount: paid, pendingAmount: pending, totalAmount: total };
+  };
+
+  const getInstallmentInfo = (book: BookData) => {
+    const plan = book.paymentPlan || 'full';
+    const totalCount = plan === '4_installments' ? 4
+      : plan === '3_installments' ? 3
+      : plan === '2_installments' ? 2
+      : 1;
+    const installments = book.paymentStatus?.installments || [];
+    const paidEntries = installments.filter(i => i.status === 'paid');
+    const paidCount = paidEntries.length;
+    const totalAmount = book.paymentStatus?.totalAmount || 0;
+    const perInstallment = totalCount > 1 ? Math.ceil(totalAmount / totalCount) : totalAmount;
+    const isFullyPaid = (book.paymentStatus?.pendingAmount || (book.payment?.pendingAmount ?? totalAmount)) <= 0;
+    return { plan, totalCount, paidCount, paidEntries, perInstallment, isFullyPaid };
   };
 
   const minLaunchDate = (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().split('T')[0]; })();
@@ -812,7 +869,6 @@ const Books: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-neutral-100 dark:divide-dark-200">
                   {books.map((book) => {
-                    const payInfo = getPaymentInfo(book);
                     return (
                       <React.Fragment key={book._id || book.bookId}>
                         {/* Main row */}
@@ -849,24 +905,64 @@ const Books: React.FC = () => {
                             </span>
                           </td>
                           <td className="px-4 py-3">
-                            {payInfo.isPaid ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
-                                <CheckCircle2 className="w-3 h-3" />
-                                Paid
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => handlePayNow(book)}
-                                disabled={paymentLoading && payingBook?.bookId === book.bookId}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white transition-colors"
-                              >
-                                {paymentLoading && payingBook?.bookId === book.bookId
-                                  ? <Loader2 className="w-3 h-3 animate-spin" />
-                                  : <IndianRupee className="w-3 h-3" />
-                                }
-                                Pay Now
-                              </button>
-                            )}
+                            {(() => {
+                              const instInfo = getInstallmentInfo(book);
+                              if (instInfo.isFullyPaid) {
+                                return (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                                    <CheckCircle2 className="w-3 h-3" />
+                                    Paid
+                                  </span>
+                                );
+                              }
+                              if (instInfo.totalCount > 1) {
+                                return (
+                                  <div className="flex flex-col gap-1.5 min-w-[120px]">
+                                    <div className="flex items-center gap-1">
+                                      {Array.from({ length: instInfo.totalCount }).map((_, i) => (
+                                        <div
+                                          key={i}
+                                          className={`w-3 h-3 rounded-full border-2 flex-shrink-0 ${
+                                            i < instInfo.paidCount
+                                              ? 'bg-green-500 border-green-500'
+                                              : i === instInfo.paidCount
+                                              ? 'bg-white border-orange-400 dark:bg-dark-100'
+                                              : 'bg-white border-neutral-300 dark:bg-dark-100 dark:border-dark-400'
+                                          }`}
+                                        />
+                                      ))}
+                                      <span className="text-xs text-neutral-500 dark:text-dark-500 ml-0.5 whitespace-nowrap">
+                                        {instInfo.paidCount}/{instInfo.totalCount} paid
+                                      </span>
+                                    </div>
+                                    <button
+                                      onClick={() => handlePayNow(book)}
+                                      disabled={paymentLoading && payingBook?.bookId === book.bookId}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white transition-colors"
+                                    >
+                                      {paymentLoading && payingBook?.bookId === book.bookId
+                                        ? <Loader2 className="w-3 h-3 animate-spin" />
+                                        : <IndianRupee className="w-3 h-3" />
+                                      }
+                                      Pay Rs {instInfo.perInstallment.toLocaleString('en-IN')}
+                                    </button>
+                                  </div>
+                                );
+                              }
+                              return (
+                                <button
+                                  onClick={() => handlePayNow(book)}
+                                  disabled={paymentLoading && payingBook?.bookId === book.bookId}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white transition-colors"
+                                >
+                                  {paymentLoading && payingBook?.bookId === book.bookId
+                                    ? <Loader2 className="w-3 h-3 animate-spin" />
+                                    : <IndianRupee className="w-3 h-3" />
+                                  }
+                                  Pay Now
+                                </button>
+                              );
+                            })()}
                           </td>
                         </tr>
                         {/* Platform sales sub-row */}
@@ -874,19 +970,23 @@ const Books: React.FC = () => {
                           <td colSpan={7} className="px-4 py-2">
                             <div className="flex flex-wrap items-center gap-4 text-body-xs text-neutral-500 dark:text-dark-500">
                               <span className="font-medium text-neutral-400 dark:text-dark-400">Platform Sales:</span>
-                              {SALE_PLATFORMS.map((platform) => {
-                                const sales =
-                                  book.platformWiseSales &&
-                                  typeof book.platformWiseSales === 'object'
-                                    ? (book.platformWiseSales as any)[platform]?.sellingUnits || 0
-                                    : 0;
-                                return (
-                                  <span key={platform} className="inline-flex items-center gap-1">
-                                    <span className="font-medium">{platform}</span>
-                                    <span className="text-neutral-400 dark:text-dark-400">{sales}</span>
-                                  </span>
-                                );
-                              })}
+                              {(() => {
+                                const salesObj = book.platformWiseSales && typeof book.platformWiseSales === 'object'
+                                  ? (book.platformWiseSales as any)
+                                  : {};
+                                const allKeys = Array.from(new Set([...SALE_PLATFORMS, ...Object.keys(salesObj)]));
+                                return allKeys.map((platform) => {
+                                  const units = salesObj[platform]?.sellingUnits || 0;
+                                  return (
+                                    <span key={platform} className="inline-flex items-center gap-1">
+                                      <span className="font-medium">{platform}:</span>
+                                      <span className={units > 0 ? 'text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-neutral-400 dark:text-dark-400'}>
+                                        {units}
+                                      </span>
+                                    </span>
+                                  );
+                                });
+                              })()}
                             </div>
                           </td>
                         </tr>
@@ -1117,7 +1217,7 @@ const Books: React.FC = () => {
               <div className="mt-3 space-y-2">
                 {book.uploadedFiles && book.uploadedFiles.length > 0 ? (
                   book.uploadedFiles.map((file, idx) => {
-                    const fileUrl = typeof file === 'string' ? file : file.url;
+                    const rawUrl = typeof file === 'string' ? file : file.url;
                     const fileName = typeof file === 'string' ? `File ${idx + 1}` : file.name || `File ${idx + 1}`;
                     return (
                       <div
@@ -1128,15 +1228,8 @@ const Books: React.FC = () => {
                         <span className="text-body-sm text-neutral-700 dark:text-dark-700 flex-1 truncate">
                           {fileName}
                         </span>
-                        {fileUrl && (
-                          <a
-                            href={fileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
+                        {rawUrl && (
+                          <OpenFileButton bookId={book.bookId} fileUrl={rawUrl} />
                         )}
                       </div>
                     );
@@ -1199,9 +1292,81 @@ const Books: React.FC = () => {
             </table>
           </div>
 
+          {/* Installment breakdown */}
+          {(() => {
+            const instInfo = getInstallmentInfo(book);
+            if (instInfo.totalCount <= 1) return null;
+            return (
+              <div className="mt-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-100 dark:border-indigo-800/30">
+                <h4 className="text-body-sm font-semibold text-indigo-700 dark:text-indigo-300 mb-3">
+                  Installment Plan ({instInfo.totalCount} installments)
+                </h4>
+                <div className="space-y-2">
+                  {Array.from({ length: instInfo.totalCount }).map((_, i) => {
+                    const isPaid = i < instInfo.paidCount;
+                    const isNext = i === instInfo.paidCount;
+                    const paidEntry = instInfo.paidEntries[i];
+                    return (
+                      <div
+                        key={i}
+                        className={`flex items-center justify-between p-3 rounded-lg border ${
+                          isPaid
+                            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/30'
+                            : isNext
+                            ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800/30'
+                            : 'bg-neutral-50 dark:bg-dark-200 border-neutral-200 dark:border-dark-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                            isPaid ? 'bg-green-500 text-white'
+                              : isNext ? 'bg-orange-400 text-white'
+                              : 'bg-neutral-300 dark:bg-dark-400 text-neutral-600 dark:text-dark-600'
+                          }`}>
+                            {isPaid ? '✓' : i + 1}
+                          </div>
+                          <div>
+                            <p className="text-body-sm font-medium text-neutral-800 dark:text-dark-800">
+                              Installment {i + 1}
+                            </p>
+                            {isPaid && paidEntry?.paidAt && (
+                              <p className="text-body-xs text-green-600 dark:text-green-400">
+                                Paid on {formatDate(paidEntry.paidAt)}
+                              </p>
+                            )}
+                            {isNext && (
+                              <p className="text-body-xs text-orange-600 dark:text-orange-400">
+                                Next payment due
+                              </p>
+                            )}
+                            {!isPaid && !isNext && (
+                              <p className="text-body-xs text-neutral-400 dark:text-dark-400">Upcoming</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className={`text-body-sm font-semibold ${
+                            isPaid ? 'text-green-600 dark:text-green-400'
+                              : isNext ? 'text-orange-600 dark:text-orange-400'
+                              : 'text-neutral-500 dark:text-dark-500'
+                          }`}>
+                            Rs {instInfo.perInstallment.toLocaleString('en-IN')}
+                          </p>
+                          <p className="text-body-xs text-neutral-400 dark:text-dark-400 capitalize">
+                            {isPaid ? 'Paid' : isNext ? 'Due now' : 'Pending'}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Last Payment info */}
           {book.payment?.lastPaymentDate && (
-            <p className="text-body-xs text-neutral-500 dark:text-dark-500 mb-4">
+            <p className="text-body-xs text-neutral-500 dark:text-dark-500 mt-3 mb-1">
               Last Payment: {formatDate(book.payment.lastPaymentDate)} - Rs{' '}
               {formatCurrency(book.payment.paidAmount || 0)}
             </p>
@@ -1209,9 +1374,22 @@ const Books: React.FC = () => {
 
           {/* Pay button */}
           {!payInfo.isPaid && payInfo.pendingAmount > 0 && (
-            <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-body-sm font-medium rounded-lg shadow-sm transition-colors duration-200">
-              <IndianRupee className="w-4 h-4" />
-              Pay Rs {formatCurrency(payInfo.pendingAmount)}
+            <button
+              onClick={() => handlePayNow(book)}
+              disabled={paymentLoading && payingBook?.bookId === book.bookId}
+              className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-body-sm font-medium rounded-lg shadow-sm transition-colors duration-200"
+            >
+              {paymentLoading && payingBook?.bookId === book.bookId
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <IndianRupee className="w-4 h-4" />
+              }
+              {(() => {
+                const instInfo = getInstallmentInfo(book);
+                if (instInfo.totalCount > 1) {
+                  return `Pay Installment ${instInfo.paidCount + 1} – Rs ${instInfo.perInstallment.toLocaleString('en-IN')}`;
+                }
+                return `Pay Rs ${formatCurrency(payInfo.pendingAmount)}`;
+              })()}
             </button>
           )}
         </div>
@@ -1221,26 +1399,55 @@ const Books: React.FC = () => {
           <h3 className="text-h5 font-semibold text-neutral-900 dark:text-dark-900 mb-4">
             Platform Selling Stats
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {SALE_PLATFORMS.map((platform) => {
-              const sales =
-                book.platformWiseSales && typeof book.platformWiseSales === 'object'
-                  ? (book.platformWiseSales as any)[platform]?.sellingUnits || 0
-                  : 0;
-              return (
-                <div
-                  key={platform}
-                  className="p-4 bg-neutral-50 dark:bg-dark-100 rounded-xl text-center"
-                >
-                  <p className="text-body-xs text-neutral-500 dark:text-dark-500 font-medium mb-1">
-                    {platform}
-                  </p>
-                  <p className="text-h4 font-bold text-neutral-900 dark:text-dark-900">{sales}</p>
-                  <p className="text-body-xs text-neutral-400 dark:text-dark-400">units sold</p>
-                </div>
-              );
-            })}
-          </div>
+          {(() => {
+            const salesObj = book.platformWiseSales && typeof book.platformWiseSales === 'object'
+              ? (book.platformWiseSales as any)
+              : {};
+            // Merge SALE_PLATFORMS + any extra keys actually present in the data
+            const allKeys = Array.from(new Set([
+              ...SALE_PLATFORMS,
+              ...Object.keys(salesObj),
+            ]));
+            // Only show platforms that have data, or all if none have data yet
+            const withData = allKeys.filter(k => (salesObj[k]?.sellingUnits || 0) > 0);
+            const displayKeys = withData.length > 0 ? allKeys : SALE_PLATFORMS;
+            return (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {displayKeys.map((platform) => {
+                  const units = salesObj[platform]?.sellingUnits || 0;
+                  const link  = salesObj[platform]?.productLink;
+                  return (
+                    <div
+                      key={platform}
+                      className={`p-4 rounded-xl text-center transition-colors ${
+                        units > 0
+                          ? 'bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30'
+                          : 'bg-neutral-50 dark:bg-dark-100'
+                      }`}
+                    >
+                      <p className="text-body-xs text-neutral-500 dark:text-dark-500 font-medium mb-1 truncate" title={platform}>
+                        {platform}
+                      </p>
+                      <p className={`text-h4 font-bold ${units > 0 ? 'text-indigo-700 dark:text-indigo-300' : 'text-neutral-900 dark:text-dark-900'}`}>
+                        {units}
+                      </p>
+                      <p className="text-body-xs text-neutral-400 dark:text-dark-400">units sold</p>
+                      {link && (
+                        <a
+                          href={link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1 text-body-xs text-indigo-600 dark:text-indigo-400 hover:underline block truncate"
+                        >
+                          View listing
+                        </a>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       </div>
     );

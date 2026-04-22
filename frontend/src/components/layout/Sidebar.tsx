@@ -12,6 +12,8 @@ import {
   CreditCard,
   Gift,
   Star,
+  TrendingUp,
+  BarChart3,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -25,25 +27,27 @@ const Sidebar: React.FC<SidebarProps> = ({
   onClose,
   userRole = 'Author'
 }) => {
-  // Author menu items (Phase 3: Dashboard + Books + Bank Accounts + Referrals + Support)
+  // Author menu items (Phase 4)
   const authorMenuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/author/dashboard' },
     { icon: Book, label: 'My Books', path: '/author/books' },
+    { icon: TrendingUp, label: 'Royalties', path: '/author/royalties' },
     { icon: CreditCard, label: 'Bank Accounts', path: '/author/bank-accounts' },
     { icon: Gift, label: 'Referrals', path: '/author/referrals' },
     { icon: MessageSquare, label: 'Help Desk', path: '/author/tickets' },
     { icon: Star, label: 'Reviews', path: '/author/reviews' },
   ];
 
-  // Admin menu items (Phase 2: Dashboard + Authors + Books + Pricing + Support + Settings)
+  // Admin menu items (Phase 4)
   const adminMenuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
     { icon: Users, label: 'Authors', path: '/admin/authors' },
     { icon: Book, label: 'Books', path: '/admin/books' },
+    { icon: BarChart3, label: 'Selling', path: '/admin/selling' },
+    { icon: TrendingUp, label: 'Royalties', path: '/admin/royalties' },
     { icon: DollarSign, label: 'Pricing Config', path: '/admin/payment-config' },
     { icon: MessageSquare, label: 'Help Center', path: '/admin/support' },
     { icon: Star, label: 'Reviews', path: '/admin/reviews' },
-    { icon: Settings, label: 'Settings', path: '/admin/settings' },
   ];
 
   const menuItems = userRole === 'Author' ? authorMenuItems : adminMenuItems;
@@ -115,26 +119,28 @@ const Sidebar: React.FC<SidebarProps> = ({
             ))}
           </nav>
 
-          {/* Bottom Navigation */}
-          <nav className="p-4 space-y-1 border-t border-neutral-200 dark:border-dark-300">
-            {bottomMenuItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                onClick={onClose}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-3 rounded-lg text-body-sm font-medium transition-all duration-200 ${
-                    isActive
-                      ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
-                      : 'text-neutral-700 dark:text-dark-700 hover:bg-neutral-100 dark:hover:bg-dark-200'
-                  }`
-                }
-              >
-                <item.icon className="w-5 h-5" />
-                <span>{item.label}</span>
-              </NavLink>
-            ))}
-          </nav>
+          {/* Bottom Navigation — author only */}
+          {userRole === 'Author' && (
+            <nav className="p-4 space-y-1 border-t border-neutral-200 dark:border-dark-300">
+              {bottomMenuItems.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  onClick={onClose}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-3 rounded-lg text-body-sm font-medium transition-all duration-200 ${
+                      isActive
+                        ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
+                        : 'text-neutral-700 dark:text-dark-700 hover:bg-neutral-100 dark:hover:bg-dark-200'
+                    }`
+                  }
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+            </nav>
+          )}
         </div>
       </aside>
     </>

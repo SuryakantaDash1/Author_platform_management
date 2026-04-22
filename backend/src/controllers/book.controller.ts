@@ -287,7 +287,7 @@ export class BookController {
       // Upload to Cloudinary
       const url = await UploadService.uploadToCloudinary(
         req.file.path,
-        'povital/covers'
+        'povital/books/covers'
       );
 
       // Delete old cover if exists
@@ -336,7 +336,7 @@ export class BookController {
       // Upload all files to Cloudinary
       const urls = await UploadService.uploadMultipleFiles(
         filePaths,
-        'povital/books'
+        'povital/books/manuscripts'
       );
 
       book.uploadedFiles = [...book.uploadedFiles, ...urls];
@@ -510,6 +510,48 @@ export class BookController {
       res.status(200).json({
         success: true,
         data: { config },
+      });
+    }
+  );
+
+  // Generate a signed URL for a book file (PDF access bypass for Cloudinary restrictions)
+  static getFileUrl = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const { bookId } = req.params;
+      const { fileUrl } = req.query;
+
+      if (!fileUrl || typeof fileUrl !== 'string') {
+        throw new ApiError(400, 'fileUrl query parameter is required');
+      }
+
+      const book = await Book.findOne({ bookId });
+      if (!book) throw new ApiError(404, 'Book not found');
+
+      const userId = req.user?.userId;
+      if (!userId) throw new ApiError(401, 'Unauthorized');
+
+      // Authors can only access their own books; admins can access any
+      if (req.user?.role === 'author') {
+        const author = await Author.findOne({ userId });
+        if (!author || book.authorId !== author.authorId) {
+          throw new ApiError(403, 'Access denied');
+        }
+      }
+
+      // Verify the requested URL belongs to this book
+      const isBookFile =
+        book.uploadedFiles.includes(fileUrl) || book.coverPage === fileUrl;
+
+      if (!isBookFile) {
+        throw new ApiError(403, 'File does not belong to this book');
+      }
+
+      // Generate a signed delivery URL (account has "Delivery URL Security" enabled)
+      const signedUrl = UploadService.generateSignedUrl(fileUrl);
+
+      res.status(200).json({
+        success: true,
+        data: { url: signedUrl },
       });
     }
   );

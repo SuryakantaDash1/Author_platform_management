@@ -6,10 +6,8 @@ import {
   Plus,
   Edit,
   Trash2,
-  IndianRupee,
   Globe,
   Gift,
-  CheckCircle,
   Tag,
   Percent,
   X,
@@ -35,23 +33,6 @@ const SERVICE_KEYS = [
 
 type ServiceKey = (typeof SERVICE_KEYS)[number];
 
-const SERVICE_LABELS: Record<ServiceKey, string> = {
-  publishing: 'Book Publishing',
-  coverDesign: 'Cover Design',
-  distribution: 'Distribution',
-  copyright: 'Copyright',
-  formatting: 'Formatting',
-  perBookCopy: 'Per Book Copy',
-};
-
-const DISPLAY_SERVICE_KEYS: ServiceKey[] = [
-  'publishing',
-  'coverDesign',
-  'distribution',
-  'copyright',
-  'formatting',
-  'perBookCopy',
-];
 
 const DEFAULT_PLATFORMS = [
   'Amazon',
@@ -120,14 +101,6 @@ function calcFinalPrice(price: number, discount: number): number {
   return Math.round(price - price * (discount / 100));
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 const emptyFormServices = (): Record<ServiceKey, FormService> => {
   const s: Record<string, FormService> = {};
@@ -487,25 +460,6 @@ const PaymentConfig: React.FC = () => {
         return n;
       });
     }
-  };
-
-  const updateBenefit = (index: number, value: string) => {
-    setForm((prev) => {
-      const benefits = [...prev.benefits];
-      benefits[index] = value;
-      return { ...prev, benefits };
-    });
-  };
-
-  const addBenefit = () => {
-    setForm((prev) => ({ ...prev, benefits: [...prev.benefits, ''] }));
-  };
-
-  const removeBenefit = (index: number) => {
-    setForm((prev) => ({
-      ...prev,
-      benefits: prev.benefits.filter((_, i) => i !== index),
-    }));
   };
 
   // =========================================================================

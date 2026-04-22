@@ -13,6 +13,7 @@ router.use(verifyToken);
 
 // Public authenticated routes
 router.get('/pricing-suggestions', BookController.getPricingSuggestions);
+router.get('/:bookId/file-url', BookController.getFileUrl);
 
 // Author-only routes
 router.post('/', checkRole('author'), validate(bookValidation.createBook), BookController.createBook);

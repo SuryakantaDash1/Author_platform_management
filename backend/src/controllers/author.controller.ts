@@ -81,7 +81,7 @@ export class AuthorController {
       // Upload to Cloudinary
       const url = await UploadService.uploadToCloudinary(
         req.file.path,
-        'povital/profiles'
+        'povital/authors/profiles'
       );
 
       const userId = req.user?.userId;

@@ -1101,53 +1101,61 @@ const Authors: React.FC = () => {
 
               {/* Info Cards */}
               <div className="space-y-3">
-                {/* Published Articles */}
-                {author.publishedArticles && author.publishedArticles.length > 0 && (
-                  <div className="rounded-lg overflow-hidden border border-emerald-200 dark:border-emerald-800">
-                    <button type="button" onClick={() => setShowArticlesPanel(prev => !prev)}
-                      className="flex items-center justify-between gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 w-full text-left hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <BookOpen className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                        <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">Published Books/Articles</p>
-                          <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
-                            {author.publishedArticles.length} {author.publishedArticles.length === 1 ? 'book' : 'books'} published
-                          </p>
+                {/* Published Books — from actual Book collection via authorDetail */}
+                {(() => {
+                  const publishedBooks = (authorDetail?.books || []).filter((b: any) => b.status === 'published');
+                  if (publishedBooks.length === 0) return null;
+                  return (
+                    <div className="rounded-lg overflow-hidden border border-emerald-200 dark:border-emerald-800">
+                      <button type="button" onClick={() => setShowArticlesPanel(prev => !prev)}
+                        className="flex items-center justify-between gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 w-full text-left hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <BookOpen className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                          <div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Published Books</p>
+                            <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                              {publishedBooks.length} {publishedBooks.length === 1 ? 'book' : 'books'} published
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      <span className="text-xs text-emerald-500">{showArticlesPanel ? '▲' : '▼'}</span>
-                    </button>
-                    {showArticlesPanel && (
-                      <div className="p-3 space-y-2 bg-white dark:bg-gray-900">
-                        {author.publishedArticles.map((article: any, idx: number) => (
-                          <div key={idx} className="flex gap-3 p-2.5 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                            {article.bookPhoto ? (
-                              <img src={article.bookPhoto} alt={article.bookName} className="w-12 h-16 object-cover rounded flex-shrink-0" />
-                            ) : (
+                        <span className="text-xs text-emerald-500">{showArticlesPanel ? '▲' : '▼'}</span>
+                      </button>
+                      {showArticlesPanel && (
+                        <div className="p-3 space-y-2 bg-white dark:bg-gray-900">
+                          {publishedBooks.map((book: any) => (
+                            <div key={book.bookId} className="flex gap-3 p-2.5 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                               <div className="w-12 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 rounded flex items-center justify-center flex-shrink-0">
                                 <BookOpen className="w-5 h-5 text-indigo-400" />
                               </div>
-                            )}
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{article.bookName}</p>
-                              {article.isbn && <p className="text-xs text-gray-500 dark:text-gray-400">ISBN: {article.isbn}</p>}
-                              {article.links && article.links.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mt-1">
-                                  {article.links.map((link: any, lIdx: number) => (
-                                    <a key={lIdx} href={link.url} target="_blank" rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-0.5 text-[10px] font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors">
-                                      {link.platform} ↗
-                                    </a>
-                                  ))}
-                                </div>
-                              )}
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{book.bookName}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{book.bookId}</p>
+                                {/* Product links from platformWiseSales */}
+                                {book.platformWiseSales && (
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {Object.entries(book.platformWiseSales as Record<string, any>)
+                                      .filter(([, v]) => v?.productLink)
+                                      .map(([platform, v]: [string, any]) => {
+                                        const href = !/^https?:\/\//i.test(v.productLink)
+                                          ? `https://${v.productLink}`
+                                          : v.productLink;
+                                        return (
+                                          <a key={platform} href={href} target="_blank" rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-0.5 text-[10px] font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors">
+                                            {platform} ↗
+                                          </a>
+                                        );
+                                      })}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Address */}
                 <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
@@ -1196,29 +1204,73 @@ const Authors: React.FC = () => {
                 <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
                   Books written by this author
                 </h4>
-                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-6 text-center">
-                  <BookOpen className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    No books published yet
-                  </p>
-                </div>
+                {(authorDetail?.books || []).length === 0 ? (
+                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-6 text-center">
+                    <BookOpen className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      No books yet
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {(authorDetail.books as any[]).map((book: any) => {
+                      const statusColors: Record<string, string> = {
+                        published: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+                        ongoing: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+                        pending: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+                        rejected: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                      };
+                      const colorClass = statusColors[book.status] || 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
+                      return (
+                        <div key={book._id} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 rounded-lg px-3 py-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                              {book.bookName || book.title || 'Untitled'}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {book.bookId || book._id?.toString().slice(-6).toUpperCase()}
+                            </p>
+                          </div>
+                          <span className={`ml-2 shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${colorClass}`}>
+                            {book.status || 'unknown'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Stats Grid */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 text-center">
                   <p className="text-2xl font-bold text-purple-700 dark:text-purple-400">
-                    {author.totalBooks || 0}
+                    {authorDetail?.books?.length ?? author.totalBooks ?? 0}
                   </p>
                   <p className="text-xs text-purple-600 dark:text-purple-500 mt-1">Total Books</p>
                 </div>
                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center">
-                  <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">0</p>
+                  <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">
+                    {(authorDetail?.books || []).filter((b: any) => !['pending', 'published', 'rejected'].includes(b.status)).length}
+                  </p>
                   <p className="text-xs text-blue-600 dark:text-blue-500 mt-1">Ongoing Books</p>
                 </div>
                 <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center">
                   <p className="text-2xl font-bold text-green-700 dark:text-green-400">
-                    {formatCurrency(0)}
+                    {(() => {
+                      const prevMonth = new Date();
+                      prevMonth.setMonth(prevMonth.getMonth() - 1);
+                      const pm = prevMonth.getMonth();
+                      const py = prevMonth.getFullYear();
+                      const total = (authorDetail?.recentTransactions || [])
+                        .filter((t: any) => {
+                          if (t.type !== 'royalty_payment') return false;
+                          const d = new Date(t.createdAt);
+                          return d.getMonth() === pm && d.getFullYear() === py;
+                        })
+                        .reduce((sum: number, t: any) => sum + (t.amount || 0), 0);
+                      return formatCurrency(total);
+                    })()}
                   </p>
                   <p className="text-xs text-green-600 dark:text-green-500 mt-1">
                     Last Month Revenue
@@ -1226,7 +1278,15 @@ const Authors: React.FC = () => {
                 </div>
                 <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4 text-center">
                   <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">
-                    50-70%
+                    {(() => {
+                      const percentages = (authorDetail?.books || [])
+                        .map((b: any) => b.royaltyPercentage)
+                        .filter((v: any) => typeof v === 'number');
+                      if (percentages.length === 0) return '—';
+                      const min = Math.min(...percentages);
+                      const max = Math.max(...percentages);
+                      return min === max ? `${min}%` : `${min}-${max}%`;
+                    })()}
                   </p>
                   <p className="text-xs text-amber-600 dark:text-amber-500 mt-1">
                     Author Royalty

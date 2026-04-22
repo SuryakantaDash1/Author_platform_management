@@ -11,7 +11,6 @@ import {
   Phone,
   Mail,
   MapPin,
-  GraduationCap,
   Clock,
   CalendarDays,
   ChevronDown,
@@ -23,6 +22,15 @@ import {
 import Badge from '../../components/common/Badge';
 
 // ── Types ──────────────────────────────────────────────────────────────
+interface AuthorAddress {
+  housePlot?: string;
+  city?: string;
+  district?: string;
+  state?: string;
+  country?: string;
+  pinCode?: string;
+}
+
 interface AuthorProfile {
   authorId?: string;
   firstName?: string;
@@ -30,7 +38,7 @@ interface AuthorProfile {
   email?: string;
   mobile?: string;
   profilePicture?: string;
-  address?: string;
+  address?: AuthorAddress | string;
   city?: string;
   state?: string;
   pincode?: string;
@@ -415,11 +423,12 @@ const Tickets: React.FC = () => {
                 </h2>
               </div>
 
-              {/* Chat Center button (disabled for Phase 1) */}
+              {/* Chat Center button */}
               <button
-                disabled
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-500 text-white text-body-sm font-medium rounded-lg opacity-50 cursor-not-allowed"
-                title="Chat Center will be available in a future update"
+                onClick={() => tickets.length > 0 && setExpandedTicket(expandedTicket === tickets[0].ticketId ? null : (tickets[0].ticketId ?? null))}
+                disabled={tickets.length === 0}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-500 hover:bg-green-600 text-white text-body-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title={tickets.length === 0 ? 'Submit a ticket to start chatting' : 'Open chat for latest ticket'}
               >
                 <MessageSquare className="w-4 h-4" />
                 Chat Center
@@ -573,7 +582,7 @@ const Tickets: React.FC = () => {
                   <div
                     key={ticket._id}
                     className="border border-neutral-200 dark:border-dark-300 rounded-xl p-4 hover:shadow-md transition-all duration-200 bg-neutral-50/50 dark:bg-dark-100/50 cursor-pointer"
-                    onClick={() => setExpandedTicket(expandedTicket === ticket.ticketId ? null : ticket.ticketId)}
+                    onClick={() => setExpandedTicket(expandedTicket === ticket.ticketId ? null : (ticket.ticketId ?? null))}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                       <div className="flex-1 min-w-0">

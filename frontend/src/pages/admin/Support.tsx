@@ -158,7 +158,7 @@ const TicketDetailModal: React.FC<{
           <div><p className="text-xs text-gray-500">Description</p><p className="text-sm text-gray-700 dark:text-gray-300">{ticket.description || '—'}</p></div>
           <div className="grid grid-cols-3 gap-3">
             <div><p className="text-xs text-gray-500">Discussion Day</p><p className="text-sm">{ticket.discussionDay ? new Date(ticket.discussionDay).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</p></div>
-            <div><p className="text-xs text-gray-500">Time</p><p className="text-sm">{ticket.discussionTime || ticket.discussionTimeSlot1 || '—'}</p></div>
+            <div><p className="text-xs text-gray-500">Time</p><p className="text-sm">{ticket.discussionTimeSlot1 || '—'}</p></div>
             <div><p className="text-xs text-gray-500">Created</p><p className="text-sm">{new Date(ticket.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p></div>
           </div>
           {/* Status buttons */}
@@ -499,15 +499,14 @@ const Support: React.FC = () => {
             </button>
           </div>
 
-          {/* Chat with Author Button (Disabled Phase 1) */}
+          {/* Refresh Button */}
           <div className="lg:col-span-1">
             <button
-              disabled
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-lg opacity-50 cursor-not-allowed"
-              title="Coming soon in Phase 2"
+              onClick={() => fetchTickets(pagination.currentPage)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors"
             >
-              <MessageSquare className="w-4 h-4" />
-              Chat with Author
+              <RefreshCw className="w-4 h-4" />
+              Refresh
             </button>
           </div>
         </div>

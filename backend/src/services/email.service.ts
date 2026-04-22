@@ -330,6 +330,132 @@ export class EmailService {
     await this.sendRawEmail(email, `Payment Request for "${bookName}" - POVITAL`, html);
   }
 
+  // Send book payment confirmation email
+  static async sendBookPaymentConfirmationEmail(
+    email: string,
+    name: string,
+    bookName: string,
+    bookId: string,
+    paidAmount: number,
+    totalAmount: number,
+    pendingAmount: number,
+    paymentId: string,
+    installmentNumber: number,
+    totalInstallments: number
+  ): Promise<void> {
+    const isFullyPaid = pendingAmount <= 0;
+    const pct = Math.round((( totalAmount - pendingAmount) / totalAmount) * 100);
+
+    const statusBlock = isFullyPaid
+      ? `<div style="background:#f0fdf4;border-left:4px solid #22c55e;padding:16px 20px;border-radius:6px;margin:20px 0;">
+           <p style="margin:0;font-weight:bold;color:#15803d;font-size:15px;">✅ Payment Complete — Full Amount Received</p>
+           <p style="margin:6px 0 0;color:#166534;font-size:13px;">Your book is now under review. We'll notify you on every stage update.</p>
+         </div>`
+      : `<div style="background:#fff7ed;border-left:4px solid #f97316;padding:16px 20px;border-radius:6px;margin:20px 0;">
+           <p style="margin:0;font-weight:bold;color:#c2410c;font-size:15px;">⏳ Partial Payment Received</p>
+           <p style="margin:6px 0 0;color:#9a3412;font-size:13px;">Remaining amount of <strong>₹${pendingAmount.toLocaleString('en-IN')}</strong> is due. Please pay from your Books dashboard.</p>
+         </div>`;
+
+    const progressBar = `
+      <div style="margin:20px 0;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:13px;color:#555;">Payment Progress</span>
+          <span style="font-size:13px;font-weight:bold;color:#4F46E5;">${pct}%</span>
+        </div>
+        <div style="background:#e5e7eb;border-radius:999px;height:10px;">
+          <div style="background:${isFullyPaid ? '#22c55e' : '#4F46E5'};width:${pct}%;height:10px;border-radius:999px;"></div>
+        </div>
+      </div>`;
+
+    const html = `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;">
+        <!-- Header -->
+        <div style="background:linear-gradient(135deg,#4F46E5,#7C3AED);padding:28px 32px;">
+          <h1 style="margin:0;color:#fff;font-size:22px;">Payment ${isFullyPaid ? 'Successful' : 'Received'}</h1>
+          <p style="margin:6px 0 0;color:rgba(255,255,255,0.8);font-size:14px;">POVITAL Author Platform</p>
+        </div>
+
+        <!-- Body -->
+        <div style="padding:28px 32px;">
+          <p style="color:#374151;font-size:15px;">Dear <strong>${name}</strong>,</p>
+          <p style="color:#6b7280;font-size:14px;">We have received your payment for the book listed below.</p>
+
+          ${statusBlock}
+
+          <!-- Book Details -->
+          <table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;">
+            <tr style="background:#f9fafb;">
+              <td style="padding:10px 14px;color:#6b7280;border:1px solid #e5e7eb;">Book Name</td>
+              <td style="padding:10px 14px;color:#111827;font-weight:bold;border:1px solid #e5e7eb;">${bookName}</td>
+            </tr>
+            <tr>
+              <td style="padding:10px 14px;color:#6b7280;border:1px solid #e5e7eb;">Book ID</td>
+              <td style="padding:10px 14px;color:#111827;border:1px solid #e5e7eb;">${bookId}</td>
+            </tr>
+            <tr style="background:#f9fafb;">
+              <td style="padding:10px 14px;color:#6b7280;border:1px solid #e5e7eb;">Installment</td>
+              <td style="padding:10px 14px;color:#111827;border:1px solid #e5e7eb;">${installmentNumber} of ${totalInstallments}</td>
+            </tr>
+            <tr>
+              <td style="padding:10px 14px;color:#6b7280;border:1px solid #e5e7eb;">Amount Paid Now</td>
+              <td style="padding:10px 14px;color:#22c55e;font-weight:bold;font-size:16px;border:1px solid #e5e7eb;">₹${paidAmount.toLocaleString('en-IN')}</td>
+            </tr>
+            <tr style="background:#f9fafb;">
+              <td style="padding:10px 14px;color:#6b7280;border:1px solid #e5e7eb;">Total Amount</td>
+              <td style="padding:10px 14px;color:#111827;border:1px solid #e5e7eb;">₹${totalAmount.toLocaleString('en-IN')}</td>
+            </tr>
+            <tr>
+              <td style="padding:10px 14px;color:#6b7280;border:1px solid #e5e7eb;">Remaining Due</td>
+              <td style="padding:10px 14px;color:${isFullyPaid ? '#22c55e' : '#f97316'};font-weight:bold;border:1px solid #e5e7eb;">
+                ${isFullyPaid ? '₹0 — Fully Paid' : '₹' + pendingAmount.toLocaleString('en-IN')}
+              </td>
+            </tr>
+            <tr style="background:#f9fafb;">
+              <td style="padding:10px 14px;color:#6b7280;border:1px solid #e5e7eb;">Transaction ID</td>
+              <td style="padding:10px 14px;color:#111827;font-family:monospace;font-size:13px;border:1px solid #e5e7eb;">${paymentId}</td>
+            </tr>
+            <tr>
+              <td style="padding:10px 14px;color:#6b7280;border:1px solid #e5e7eb;">Date</td>
+              <td style="padding:10px 14px;color:#111827;border:1px solid #e5e7eb;">${new Date().toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'short' })}</td>
+            </tr>
+          </table>
+
+          ${progressBar}
+
+          ${!isFullyPaid ? `
+          <div style="text-align:center;margin:24px 0;">
+            <a href="${process.env.FRONTEND_URL}/author/books"
+               style="background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;padding:13px 32px;text-decoration:none;border-radius:8px;font-weight:bold;font-size:14px;display:inline-block;">
+              Pay Remaining Amount
+            </a>
+          </div>` : ''}
+
+          <p style="color:#9ca3af;font-size:13px;margin-top:24px;">If you have any questions, reply to this email or contact us at <a href="mailto:support@povital.com" style="color:#4F46E5;">support@povital.com</a></p>
+        </div>
+
+        <!-- Footer -->
+        <div style="background:#f9fafb;padding:16px 32px;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;color:#9ca3af;font-size:12px;text-align:center;">© ${new Date().getFullYear()} POVITAL Author Platform. All rights reserved.</p>
+        </div>
+      </div>
+    `;
+
+    try {
+      await this.transporter.sendMail({
+        from: `"POVITAL" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+        to: email,
+        subject: isFullyPaid
+          ? `✅ Payment Complete for "${bookName}" — POVITAL`
+          : `💳 Payment Received for "${bookName}" (₹${pendingAmount.toLocaleString('en-IN')} remaining) — POVITAL`,
+        html,
+      });
+      console.log(`✅ Payment confirmation email sent to ${email}`);
+    } catch (error) {
+      console.error('❌ Error sending payment confirmation email:', error);
+      // Non-critical — don't throw
+    }
+  }
+
   // Send raw HTML email (used by cron reminders)
   static async sendRawEmail(to: string, subject: string, html: string): Promise<void> {
     try {

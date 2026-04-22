@@ -7,6 +7,7 @@ import Book from '../models/Book.model';
 import Author from '../models/Author.model';
 import User from '../models/User.model';
 import Transaction from '../models/Transaction.model';
+import { EmailService } from '../services/email.service';
 
 const getRazorpay = () => {
   const keyId = process.env.RAZORPAY_KEY_ID;
@@ -129,12 +130,13 @@ export class PaymentController {
         (book.paymentStatus.paidAmount / book.paymentStatus.totalAmount) * 100
       );
 
-      // Mark one installment as paid
-      const unpaidInstallment = book.paymentStatus.installments.find(i => i.status === 'pending');
-      if (unpaidInstallment) {
-        unpaidInstallment.status = 'paid';
-        unpaidInstallment.paidAt = new Date();
-      }
+      // Add a new paid installment entry for this payment
+      // (each Pay Now click = one installment record)
+      book.paymentStatus.installments.push({
+        amount: paidAmountRupees,
+        status: 'paid',
+        paidAt: new Date(),
+      } as any);
 
       // Move book to pending approval if fully/partially paid
       if (book.status === 'payment_pending' || book.status === 'draft') {
@@ -142,6 +144,30 @@ export class PaymentController {
       }
 
       await book.save();
+
+      // Send payment confirmation email
+      const user = await User.findOne({ userId: author.userId }).select('firstName lastName email').lean() as any;
+      if (user?.email) {
+        const paidInstallments = book.paymentStatus.installments.filter((i: any) => i.status === 'paid').length;
+        const totalInstallments = book.paymentPlan === 'full' ? 1
+          : book.paymentPlan === '2_installments' ? 2
+          : book.paymentPlan === '4_installments' ? 4
+          : book.paymentPlan === '3_installments' ? 3
+          : 1;
+
+        EmailService.sendBookPaymentConfirmationEmail(
+          user.email,
+          `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Author',
+          book.bookName,
+          book.bookId,
+          paidAmountRupees,
+          book.paymentStatus.totalAmount,
+          book.paymentStatus.pendingAmount,
+          razorpay_payment_id,
+          paidInstallments,
+          totalInstallments
+        );
+      }
 
       // Log transaction
       await Transaction.create({

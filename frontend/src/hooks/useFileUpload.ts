@@ -22,7 +22,7 @@ export const useFileUpload = (options: UseFileUploadOptions = {}): UseFileUpload
   const { maxSize = 10 * 1024 * 1024, allowedTypes, multiple = false } = options;
 
   const [files, setFiles] = useState<File[]>([]);
-  const [uploading, setUploading] = useState(false);
+  const [uploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 

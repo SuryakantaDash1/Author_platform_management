@@ -14,20 +14,18 @@ const Footer: React.FC = () => {
   ];
 
   return (
-    <footer className="bg-indigo-950 dark:bg-dark-50 text-white mt-auto">
+    <footer className="text-white mt-auto" style={{ background: '#0f172a' }}>
       <div className="container-custom py-14 lg:py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Brand */}
           <div>
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-secondary-400 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #84CC16, #65a30d)' }}>
                 <Book className="w-6 h-6 text-white" />
               </div>
-              <span className="text-h4 font-bold text-white">
-                POVITAL
-              </span>
+              <span className="text-h4 font-bold text-white">Povital</span>
             </Link>
-            <p className="text-body-sm text-indigo-300 max-w-xs leading-relaxed">
+            <p className="text-body-sm max-w-xs leading-relaxed" style={{ color: '#94a3b8' }}>
               Empowering authors with powerful tools to manage, publish, and track their books across multiple platforms.
             </p>
           </div>
@@ -38,10 +36,7 @@ const Footer: React.FC = () => {
             <ul className="space-y-3">
               {importantLinks.map((link) => (
                 <li key={link.path}>
-                  <Link
-                    to={link.path}
-                    className="text-body-sm text-indigo-300 hover:text-white transition-colors"
-                  >
+                  <Link to={link.path} className="text-body-sm transition-colors hover:text-white" style={{ color: '#94a3b8' }}>
                     {link.label}
                   </Link>
                 </li>
@@ -54,15 +49,15 @@ const Footer: React.FC = () => {
             <h3 className="text-h5 font-bold text-white mb-5">Offices</h3>
             <div className="space-y-4">
               <div className="flex items-start gap-3">
-                <Building2 className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0" />
-                <p className="text-body-sm text-indigo-300 leading-relaxed">
+                <Building2 className="w-5 h-5 mt-0.5 shrink-0" style={{ color: '#84CC16' }} />
+                <p className="text-body-sm leading-relaxed" style={{ color: '#94a3b8' }}>
                   123, MG Road, Connaught Place,<br />
                   New Delhi, India - 110001
                 </p>
               </div>
               <div className="flex items-start gap-3">
-                <Building2 className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0" />
-                <p className="text-body-sm text-indigo-300 leading-relaxed">
+                <Building2 className="w-5 h-5 mt-0.5 shrink-0" style={{ color: '#84CC16' }} />
+                <p className="text-body-sm leading-relaxed" style={{ color: '#94a3b8' }}>
                   45, Sector 62, Noida,<br />
                   Uttar Pradesh, India - 201301
                 </p>
@@ -74,27 +69,19 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="text-h5 font-bold text-white mb-5">Get in Touch</h3>
             <div className="space-y-3">
-              <a
-                href="mailto:support@povital.com"
-                className="flex items-center gap-3 text-body-sm text-indigo-300 hover:text-white transition-colors"
-              >
-                <Mail className="w-5 h-5 shrink-0" />
+              <a href="mailto:support@povital.com"
+                className="flex items-center gap-3 text-body-sm transition-colors hover:text-white" style={{ color: '#94a3b8' }}>
+                <Mail className="w-5 h-5 shrink-0" style={{ color: '#84CC16' }} />
                 support@povital.com
               </a>
-              <a
-                href="tel:+919876543210"
-                className="flex items-center gap-3 text-body-sm text-indigo-300 hover:text-white transition-colors"
-              >
-                <Phone className="w-5 h-5 shrink-0" />
+              <a href="tel:+919876543210"
+                className="flex items-center gap-3 text-body-sm transition-colors hover:text-white" style={{ color: '#94a3b8' }}>
+                <Phone className="w-5 h-5 shrink-0" style={{ color: '#84CC16' }} />
                 +91 98765 43210
               </a>
-              <a
-                href="https://wa.me/919876543210"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 text-body-sm text-indigo-300 hover:text-white transition-colors"
-              >
-                <MessageSquare className="w-5 h-5 shrink-0" />
+              <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-3 text-body-sm transition-colors hover:text-white" style={{ color: '#94a3b8' }}>
+                <MessageSquare className="w-5 h-5 shrink-0" style={{ color: '#84CC16' }} />
                 +91 98765 43210 (WhatsApp)
               </a>
             </div>
@@ -103,10 +90,10 @@ const Footer: React.FC = () => {
       </div>
 
       {/* Copyright */}
-      <div className="border-t border-indigo-800 dark:border-dark-300">
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="container-custom py-5">
-          <p className="text-body-xs text-indigo-400 text-center">
-            &copy; {currentYear} POVITAL Author Platform. All rights reserved.
+          <p className="text-body-xs text-center" style={{ color: '#64748b' }}>
+            &copy; {currentYear} Povital Author Platform. All rights reserved.
           </p>
         </div>
       </div>
