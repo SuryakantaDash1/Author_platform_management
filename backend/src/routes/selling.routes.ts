@@ -17,25 +17,21 @@ import { uploadSingle } from '../middlewares/upload.middleware';
 
 const router = Router();
 
-router.use(verifyToken);
-
-// ── Author routes ──
-router.get('/author/royalties', checkRole('author'), getMyRoyalties);
-router.get('/author/royalties/:year/:month', checkRole('author'), getMyRoyaltyMonthDetail);
+// ── Author routes ── (auth applied per-route, not globally)
+router.get('/author/royalties', verifyToken, checkRole('author'), getMyRoyalties);
+router.get('/author/royalties/:year/:month', verifyToken, checkRole('author'), getMyRoyaltyMonthDetail);
 
 // ── Admin routes ──
-router.use(checkRole('super_admin', 'sub_admin'));
+const adminAuth = [verifyToken, checkRole('super_admin', 'sub_admin')];
 
-// Selling data
-router.post('/admin/selling', submitSellingData);
-router.get('/admin/selling', getAllSellingRecords);
-router.post('/admin/selling/preview', previewFinancials);
-router.get('/admin/selling/:bookId', getSellingHistory);
+router.post('/admin/selling', ...adminAuth, submitSellingData);
+router.get('/admin/selling', ...adminAuth, getAllSellingRecords);
+router.post('/admin/selling/preview', ...adminAuth, previewFinancials);
+router.get('/admin/selling/:bookId', ...adminAuth, getSellingHistory);
 
-// Royalty management
-router.get('/admin/royalties', getAdminRoyaltyListing);
-router.get('/admin/royalties/author/:authorId', getAuthorRoyaltyDetail);
-router.get('/admin/royalties/book/:bookId', getBookRoyaltyRecords);
-router.post('/admin/royalties/release', uploadSingle('paymentProof'), releaseRoyaltyPayment);
+router.get('/admin/royalties', ...adminAuth, getAdminRoyaltyListing);
+router.get('/admin/royalties/author/:authorId', ...adminAuth, getAuthorRoyaltyDetail);
+router.get('/admin/royalties/book/:bookId', ...adminAuth, getBookRoyaltyRecords);
+router.post('/admin/royalties/release', ...adminAuth, uploadSingle('paymentProof'), releaseRoyaltyPayment);
 
 export default router;

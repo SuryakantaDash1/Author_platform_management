@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { calculatorService } from '../../services/calculatorService';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import {
   BookOpen, Users, Award, Globe, TrendingUp, Building2,
   Star, ShoppingCart, MapPin, Calendar, Plus, X as XIcon,
-  ArrowRight, ChevronLeft, ChevronRight, Check, Send, MessageSquare,
+  ArrowRight, ChevronLeft, ChevronRight, Check, Send, MessageSquare, Calculator,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -438,6 +439,317 @@ const HeroImageCard: React.FC = () => {
 };
 
 /* ================================================================== */
+/*  ROYALTY CALCULATOR                                                 */
+/* ================================================================== */
+type BookTab = 'paperback' | 'ebook' | 'magazine';
+
+interface CalcConfig {
+  paperConfigs: { paperName: string; paperSize: string; pricePerPage: number }[];
+  mspPercent: number;
+  mrpPercent: number;
+  royaltyFromMrpPercent: number;
+  offlineExpensesPercent: number;
+  onlineExpensesPercent: number;
+  ebookRoyaltyPercent: number;
+  ebookOnlineExpensesPercent: number;
+  magazineRoyaltyOverride: number | null;
+}
+
+const RoyaltyCalculator: React.FC = () => {
+  const [config, setConfig] = useState<CalcConfig | null>(null);
+  const [configLoading, setConfigLoading] = useState(true);
+
+  const [tab, setTab] = useState<BookTab>('paperback');
+  const [step, setStep] = useState<1 | 2>(1);
+
+  /* Step 1 inputs */
+  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedQuality, setSelectedQuality] = useState('');
+  const [pages, setPages] = useState('');
+  const [mrp, setMrp] = useState('');
+  const [mrpError, setMrpError] = useState('');
+
+  /* Step 2 inputs */
+  const [estimateUnits, setEstimateUnits] = useState('');
+
+  /* Reset on tab change */
+  useEffect(() => {
+    setStep(1);
+    setSelectedSize(''); setSelectedQuality(''); setPages(''); setMrp(''); setMrpError(''); setEstimateUnits('');
+  }, [tab]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await calculatorService.getPublicConfig();
+        if (data) setConfig(data);
+      } catch { /* no config yet */ } finally {
+        setConfigLoading(false);
+      }
+    })();
+  }, []);
+
+  /* ── Unique options from paper configs ── */
+  const paperSizes = config ? [...new Set(config.paperConfigs.map(p => p.paperSize))] : [];
+  const paperQualities = config
+    ? [...new Set(config.paperConfigs.filter(p => !selectedSize || p.paperSize === selectedSize).map(p => p.paperName))]
+    : [];
+
+  /* ── Auto-calculations ── */
+  const pricePerPage = config?.paperConfigs.find(
+    p => p.paperSize === selectedSize && p.paperName === selectedQuality
+  )?.pricePerPage ?? 0;
+  const printingCost = pricePerPage && pages ? Math.ceil(pricePerPage * Number(pages)) : 0;
+  const msp = config && printingCost ? Math.ceil(printingCost * (1 + config.mspPercent / 100)) : 0;
+  const mrpMin = config && msp ? Math.ceil(msp * (1 + config.mrpPercent / 100)) : 0;
+
+  const royaltyPct = tab === 'ebook'
+    ? (config?.ebookRoyaltyPercent ?? 0)
+    : tab === 'magazine' && config?.magazineRoyaltyOverride != null
+    ? config.magazineRoyaltyOverride
+    : (config?.royaltyFromMrpPercent ?? 0);
+
+  const offlinePct = tab === 'ebook' ? 0 : (config?.offlineExpensesPercent ?? 0);
+  const onlinePct = tab === 'ebook' ? (config?.ebookOnlineExpensesPercent ?? 0) : (config?.onlineExpensesPercent ?? 0);
+
+  const mrpVal = Number(mrp) || 0;
+  const royaltyOffline = mrpVal ? Math.round(mrpVal * (royaltyPct - offlinePct) / 100) : 0;
+  const royaltyOnline  = mrpVal ? Math.round(mrpVal * (royaltyPct - onlinePct)  / 100) : 0;
+  const avgRoyalty = tab === 'ebook' ? royaltyOnline : Math.round((royaltyOffline + royaltyOnline) / 2);
+  const estimateRoyalty = avgRoyalty && estimateUnits ? avgRoyalty * Number(estimateUnits) : 0;
+
+  const handleGetResult = () => {
+    if (!mrpVal || mrpVal <= 0) { setMrpError('Please enter a valid MRP'); return; }
+    if (tab !== 'ebook' && mrpMin && mrpVal < mrpMin) {
+      setMrpError(`MRP must be at least Rs ${mrpMin.toLocaleString('en-IN')} (${config?.mrpPercent}% above MSP)`);
+      return;
+    }
+    setMrpError('');
+    setStep(2);
+  };
+
+  const tabs: { key: BookTab; label: string }[] = [
+    { key: 'paperback', label: 'Paperback' },
+    { key: 'ebook',     label: 'E-Book'    },
+    { key: 'magazine',  label: 'Magazine'  },
+  ];
+
+  const fieldCls = 'w-full px-4 py-3 text-sm border border-neutral-200 dark:border-neutral-700 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-violet-400/40 placeholder-neutral-400 dark:placeholder-neutral-500 transition-all';
+  const readonlyCls = `${fieldCls} bg-neutral-50 dark:bg-neutral-700/60 cursor-default`;
+
+  const authorImages = [
+    'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&q=85',
+    'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400&q=85',
+  ];
+
+  return (
+    <section id="calculator" className="py-16 lg:py-24 bg-white dark:bg-neutral-950">
+      <div className="container-custom">
+        <RevealBlock>
+          <div className="text-center mb-10">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-4"
+              style={{ background: 'rgba(132,204,22,0.12)', color: LIME_DARK }}>
+              <Calculator style={{ width: 13, height: 13 }} /> Royalty Estimator
+            </span>
+            <h2 className="text-3xl lg:text-4xl font-extrabold text-neutral-900 dark:text-white">
+              Royalty <span style={{ color: LIME_DARK }}>Calculator</span>
+            </h2>
+            <p className="mt-3 text-neutral-500 dark:text-neutral-400 text-sm max-w-md mx-auto">
+              Estimate your royalty before publishing your book
+            </p>
+          </div>
+        </RevealBlock>
+
+        <RevealBlock delay={0.1}>
+          <div className="max-w-4xl mx-auto rounded-2xl border border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-xl overflow-hidden">
+            {/* ── Tab bar ── */}
+            <div className="flex items-center justify-end gap-6 px-8 py-4 border-b border-neutral-100 dark:border-neutral-800">
+              {tabs.map(t => (
+                <button key={t.key} onClick={(e) => { e.currentTarget.blur(); setTab(t.key); }}
+                  className={`text-sm font-medium pb-0.5 transition-all outline-none focus:outline-none ${
+                    tab === t.key
+                      ? 'border-b-2 font-semibold'
+                      : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200'
+                  }`}
+                  style={tab === t.key ? { borderColor: LIME_DARK, color: LIME_DARK } : {}}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {configLoading ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="w-6 h-6 border-2 border-lime-400 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : !config ? (
+              <div className="flex flex-col items-center justify-center h-64 text-neutral-400 dark:text-neutral-500">
+                <Calculator style={{ width: 40, height: 40, marginBottom: 12, opacity: 0.4 }} />
+                <p className="text-sm">Calculator coming soon</p>
+              </div>
+            ) : (
+              <div className="grid lg:grid-cols-[280px_1fr]">
+                {/* ── Left illustration ── */}
+                <div className="hidden lg:flex flex-col items-center justify-center p-8 border-r border-neutral-100 dark:border-neutral-800 bg-gradient-to-b from-lime-50/60 to-white dark:from-neutral-800/40 dark:to-neutral-900">
+                  <div className="relative w-44 h-52 mb-4">
+                    <img
+                      src={step === 1 ? authorImages[0] : authorImages[1]}
+                      alt="Author"
+                      className="w-full h-full object-cover object-center rounded-2xl"
+                      style={{ maskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)' }}
+                    />
+                  </div>
+                  <p className="text-xs text-center text-neutral-400 dark:text-neutral-500 leading-relaxed">
+                    {step === 1 ? 'Enter your book details to see estimated royalty' : 'Your estimated royalty breakdown'}
+                  </p>
+                </div>
+
+                {/* ── Right form ── */}
+                <div className="p-8">
+                  <AnimatePresence mode="wait">
+                    {step === 1 ? (
+                      <motion.div key="step1"
+                        initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {tab !== 'ebook' ? (
+                            <>
+                              {/* Book Size */}
+                              <div>
+                                <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">Select Book Size</label>
+                                <select value={selectedSize} onChange={e => { setSelectedSize(e.target.value); setSelectedQuality(''); }}
+                                  className={fieldCls}>
+                                  <option value="">-- Select --</option>
+                                  {paperSizes.map(s => <option key={s} value={s}>{s}</option>)}
+                                </select>
+                              </div>
+                              {/* Paper Quality */}
+                              <div>
+                                <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">Book Paper Quality</label>
+                                <select value={selectedQuality} onChange={e => setSelectedQuality(e.target.value)}
+                                  className={fieldCls} disabled={!selectedSize}>
+                                  <option value="">-- Select --</option>
+                                  {paperQualities.map(q => <option key={q} value={q}>{q}</option>)}
+                                </select>
+                              </div>
+                              {/* Pages */}
+                              <div>
+                                <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">Enter Book Pages</label>
+                                <input type="number" min="1" value={pages} onChange={e => setPages(e.target.value)}
+                                  placeholder="e.g. 100" className={fieldCls} />
+                              </div>
+                              {/* Printing Cost */}
+                              <div>
+                                <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">Printing Cost (Auto Calculate)</label>
+                                <input readOnly value={printingCost > 0 ? `Rs ${printingCost.toLocaleString('en-IN')}` : ''}
+                                  placeholder="Auto calculated" className={readonlyCls} />
+                              </div>
+                              {/* MSP */}
+                              <div>
+                                <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">Minimum Selling Price (MSP)</label>
+                                <input readOnly value={msp > 0 ? `Rs ${msp.toLocaleString('en-IN')}` : ''}
+                                  placeholder="Auto calculated" className={readonlyCls} />
+                              </div>
+                              {/* MRP */}
+                              <div>
+                                <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">
+                                  Book MRP {config.mrpPercent > 0 ? `(Min ${config.mrpPercent}% above MSP)` : ''}
+                                </label>
+                                <input type="number" min="0" value={mrp}
+                                  onChange={e => { setMrp(e.target.value); setMrpError(''); }}
+                                  placeholder={mrpMin > 0 ? `Min Rs ${mrpMin.toLocaleString('en-IN')}` : 'Enter MRP'}
+                                  className={`${fieldCls} ${mrpError ? 'border-red-400' : ''}`} />
+                                {mrpError && <p className="text-xs text-red-500 mt-1">{mrpError}</p>}
+                              </div>
+                            </>
+                          ) : (
+                            /* E-Book: only MRP */
+                            <div className="sm:col-span-2">
+                              <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">Book MRP (Rs)</label>
+                              <input type="number" min="0" value={mrp}
+                                onChange={e => { setMrp(e.target.value); setMrpError(''); }}
+                                placeholder="Enter your book MRP"
+                                className={`${fieldCls} ${mrpError ? 'border-red-400' : ''}`} />
+                              {mrpError && <p className="text-xs text-red-500 mt-1">{mrpError}</p>}
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-7">
+                          <button onClick={handleGetResult}
+                            className="px-8 py-3 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 hover:shadow-lg"
+                            style={{ background: `linear-gradient(135deg, #7c3aed, #6d28d9)`, boxShadow: '0 4px 14px rgba(124,58,237,0.35)' }}>
+                            Get Result
+                          </button>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.div key="step2"
+                        initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {/* Offline royalty (hidden for ebook) */}
+                          {tab !== 'ebook' && (
+                            <div>
+                              <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">
+                                Royalty on Offline Distributor Selling (Auto)
+                              </label>
+                              <input readOnly value={`Rs ${royaltyOffline.toLocaleString('en-IN')} / unit`}
+                                className={readonlyCls} />
+                            </div>
+                          )}
+                          {/* Online royalty */}
+                          <div>
+                            <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">
+                              Royalty on Online Selling (Auto)
+                            </label>
+                            <input readOnly value={`Rs ${royaltyOnline.toLocaleString('en-IN')} / unit`}
+                              className={readonlyCls} />
+                          </div>
+                          {/* Estimate units */}
+                          <div>
+                            <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">
+                              Enter Estimate Unit Selling
+                            </label>
+                            <input type="number" min="0" value={estimateUnits}
+                              onChange={e => setEstimateUnits(e.target.value)}
+                              placeholder="e.g. 500"
+                              className={fieldCls} />
+                          </div>
+                          {/* Estimate royalty */}
+                          <div>
+                            <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">
+                              Estimate Royalty (Auto Calculate)
+                            </label>
+                            <input readOnly
+                              value={estimateRoyalty > 0 ? `Rs ${estimateRoyalty.toLocaleString('en-IN')}` : ''}
+                              placeholder="Auto calculated"
+                              className={`${readonlyCls} ${estimateRoyalty > 0 ? 'text-lime-700 dark:text-lime-400 font-semibold' : ''}`} />
+                          </div>
+                        </div>
+                        <div className="mt-7 flex items-center gap-3 flex-wrap">
+                          <Link to="/author/signup"
+                            className="px-6 py-3 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 hover:shadow-lg"
+                            style={{ background: `linear-gradient(135deg, #7c3aed, #6d28d9)`, boxShadow: '0 4px 14px rgba(124,58,237,0.35)' }}>
+                            Get free Consultation
+                          </Link>
+                          <button onClick={() => { setStep(1); setEstimateUnits(''); }}
+                            className="px-6 py-3 rounded-xl text-sm font-semibold border border-neutral-200 dark:border-neutral-600 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
+                            Back
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+            )}
+          </div>
+        </RevealBlock>
+      </div>
+    </section>
+  );
+};
+
+/* ================================================================== */
 /*  HOME PAGE                                                          */
 /* ================================================================== */
 const HomePage: React.FC = () => {
@@ -630,6 +942,11 @@ const HomePage: React.FC = () => {
           ))}
         </motion.div>
       </div>
+
+      {/* ============================================================ */}
+      {/*  ROYALTY CALCULATOR                                          */}
+      {/* ============================================================ */}
+      <RoyaltyCalculator />
 
       {/* ============================================================ */}
       {/*  STATS                                                       */}

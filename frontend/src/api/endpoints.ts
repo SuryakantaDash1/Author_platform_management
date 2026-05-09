@@ -177,4 +177,11 @@ export const API_ENDPOINTS = {
     GET_BOOKS: '/public/books',
     GET_BOOK_DETAIL: (bookId: string) => `/public/books/${bookId}`,
   },
+
+  // Royalty Calculator (Phase 5)
+  CALCULATOR: {
+    GET_PUBLIC_CONFIG: '/public/calculator-config',
+    GET_ADMIN_CONFIG: '/admin/calculator',
+    SAVE_CONFIG: '/admin/calculator',
+  },
 };

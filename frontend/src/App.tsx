@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ErrorBoundary, SuspenseFallback } from './components/common';
@@ -44,6 +45,7 @@ const AdminReviews = lazy(() => import('./pages/admin/Reviews'));
 const AdminSettings = lazy(() => import('./pages/admin/Settings'));
 const AdminSelling = lazy(() => import('./pages/admin/Selling'));
 const AdminRoyalties = lazy(() => import('./pages/admin/Royalties'));
+const AdminCalculatorConfig = lazy(() => import('./pages/admin/CalculatorConfig'));
 
 // 404 Page
 const NotFoundPage = () => (
@@ -59,6 +61,14 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 3500,
+            style: { fontSize: '14px', fontWeight: 500 },
+            success: { iconTheme: { primary: '#65a30d', secondary: '#fff' } },
+          }}
+        />
         <BrowserRouter>
           <AuthProvider>
             <Suspense fallback={<SuspenseFallback fullScreen />}>
@@ -122,6 +132,7 @@ function App() {
                   <Route path="support" element={<AdminSupport />} />
                   <Route path="reviews" element={<AdminReviews />} />
                   <Route path="settings" element={<AdminSettings />} />
+                  <Route path="calculator-config" element={<AdminCalculatorConfig />} />
                 </Route>
 
                 {/* 404 Route */}

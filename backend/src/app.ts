@@ -21,6 +21,7 @@ import reviewRoutes from './routes/review.routes';
 import paymentRoutes from './routes/payment.routes';
 import sellingRoutes from './routes/selling.routes';
 import publicRoutes from './routes/public.routes';
+import calculatorRoutes from './routes/calculator.routes';
 
 const app: Application = express();
 
@@ -75,6 +76,8 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api', sellingRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/api/calculator', calculatorRoutes);
+app.use('/api/admin/calculator', calculatorRoutes);
 
 // Root endpoint
 app.get('/', (_req: Request, res: Response) => {

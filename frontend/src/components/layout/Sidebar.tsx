@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
 import {
   LayoutDashboard, Book, Users, MessageSquare, Settings, X,
-  DollarSign, CreditCard, Gift, Star, TrendingUp, BarChart3,
+  DollarSign, CreditCard, Gift, Star, TrendingUp, BarChart3, Calculator,
 } from 'lucide-react';
 
 const LIME = '#84CC16';
@@ -35,10 +35,11 @@ const adminSections: { title: string; items: NavItem[] }[] = [
   {
     title: 'CONFIGURE',
     items: [
-      { icon: DollarSign,    label: 'Pricing Config', path: '/admin/payment-config' },
-      { icon: MessageSquare, label: 'Help Center',    path: '/admin/support' },
-      { icon: Star,          label: 'Reviews',        path: '/admin/reviews' },
-      { icon: Settings,      label: 'Settings',       path: '/admin/settings' },
+      { icon: DollarSign,    label: 'Pricing Config',     path: '/admin/payment-config' },
+      { icon: Calculator,    label: 'Calculator Config',  path: '/admin/calculator-config' },
+      { icon: MessageSquare, label: 'Help Center',         path: '/admin/support' },
+      { icon: Star,          label: 'Reviews',             path: '/admin/reviews' },
+      { icon: Settings,      label: 'Settings',            path: '/admin/settings' },
     ],
   },
 ];
