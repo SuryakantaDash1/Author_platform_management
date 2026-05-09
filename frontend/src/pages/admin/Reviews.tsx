@@ -28,12 +28,15 @@ interface Review {
   updatedAt: string;
 }
 
+const LIME = '#84CC16';
+const LIME_DARK = '#65a30d';
+
 const StarDisplay: React.FC<{ value: number }> = ({ value }) => (
   <div className="flex gap-0.5">
     {[1, 2, 3, 4, 5].map(s => (
       <Star
         key={s}
-        className={`w-4 h-4 ${s <= value ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300 dark:text-gray-600'}`}
+        className={`w-4 h-4 ${s <= value ? 'text-yellow-400 fill-yellow-400' : 'text-neutral-300 dark:text-neutral-600'}`}
       />
     ))}
   </div>
@@ -133,14 +136,14 @@ const AdminReviews: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Reviews</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Reviews</h1>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
             Manage author reviews shown on the public website
           </p>
         </div>
         <button
           onClick={() => fetchReviews(1)}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 border border-neutral-300 dark:border-neutral-600 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Refresh
@@ -150,19 +153,19 @@ const AdminReviews: React.FC = () => {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
           <input
             type="text"
             placeholder="Search review text..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full pl-9 pr-4 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/40 focus:border-lime-400"
           />
         </div>
         <select
           value={ratingFilter}
           onChange={e => setRatingFilter(e.target.value)}
-          className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/40 focus:border-lime-400"
         >
           <option value="">All Ratings</option>
           {[5, 4, 3, 2, 1].map(r => (
@@ -181,7 +184,7 @@ const AdminReviews: React.FC = () => {
       {loading ? (
         <Loader />
       ) : reviews.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 dark:text-gray-500">
+        <div className="text-center py-16 text-neutral-400 dark:text-neutral-500">
           <Star className="w-10 h-10 mx-auto mb-3 opacity-40" />
           <p>No reviews found</p>
         </div>
@@ -190,10 +193,10 @@ const AdminReviews: React.FC = () => {
           {reviews.map(review => (
             <div
               key={review._id}
-              className={`bg-white dark:bg-gray-800 rounded-xl border ${
+              className={`bg-white dark:bg-neutral-800 rounded-xl border ${
                 review.isVisible
-                  ? 'border-gray-200 dark:border-gray-700'
-                  : 'border-gray-100 dark:border-gray-800 opacity-60'
+                  ? 'border-neutral-200 dark:border-neutral-700'
+                  : 'border-neutral-100 dark:border-neutral-800 opacity-60'
               } p-5`}
             >
               <div className="flex items-start justify-between gap-4">
@@ -201,15 +204,15 @@ const AdminReviews: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <StarDisplay value={review.rating} />
                     {!review.isVisible && (
-                      <span className="inline-flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+                      <span className="inline-flex items-center gap-1 text-xs text-neutral-400 dark:text-neutral-500">
                         <EyeOff className="w-3 h-3" />
                         Hidden
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{review.reviewText}</p>
-                  <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
-                    <span>Author: <span className="font-medium text-gray-600 dark:text-gray-400">{review.authorId}</span></span>
+                  <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">{review.reviewText}</p>
+                  <div className="flex items-center gap-3 text-xs text-neutral-400 dark:text-neutral-500">
+                    <span>Author: <span className="font-medium text-neutral-600 dark:text-neutral-400">{review.authorId}</span></span>
                     <span>•</span>
                     <span>{new Date(review.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                   </div>
@@ -218,20 +221,20 @@ const AdminReviews: React.FC = () => {
                   <button
                     onClick={() => toggleVisibility(review)}
                     title={review.isVisible ? 'Hide review' : 'Show review'}
-                    className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    className="p-2 text-neutral-400 hover:text-lime-700 dark:hover:text-lime-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
                   >
                     {review.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                   <button
                     onClick={() => openEdit(review)}
-                    className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    className="p-2 text-neutral-400 hover:text-lime-700 dark:hover:text-lime-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(review)}
                     disabled={deletingId === review.reviewId}
-                    className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+                    className="p-2 text-neutral-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg transition-colors disabled:opacity-50"
                   >
                     {deletingId === review.reviewId
                       ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -254,9 +257,10 @@ const AdminReviews: React.FC = () => {
               onClick={() => fetchReviews(p)}
               className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
                 pagination.page === p
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'text-white'
+                  : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700'
               }`}
+              style={pagination.page === p ? { background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` } : undefined}
             >
               {p}
             </button>
@@ -267,57 +271,58 @@ const AdminReviews: React.FC = () => {
       {/* Edit Modal */}
       {editingReview && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg">
-            <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Edit Review</h3>
-              <button onClick={() => setEditingReview(null)} className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg">
+          <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-lg">
+            <div className="flex items-center justify-between p-5 border-b border-neutral-200 dark:border-neutral-700">
+              <h3 className="font-semibold text-neutral-900 dark:text-neutral-100">Edit Review</h3>
+              <button onClick={() => setEditingReview(null)} className="p-1.5 text-neutral-400 hover:text-neutral-600 rounded-lg">
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="p-5 space-y-4">
               {/* Rating */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rating</label>
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">Rating</label>
                 <div className="flex gap-1">
                   {[1, 2, 3, 4, 5].map(s => (
                     <button key={s} type="button" onClick={() => setEditRating(s)}>
-                      <Star className={`w-6 h-6 ${s <= editRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300 dark:text-gray-600'}`} />
+                      <Star className={`w-6 h-6 ${s <= editRating ? 'text-yellow-400 fill-yellow-400' : 'text-neutral-300 dark:text-neutral-600'}`} />
                     </button>
                   ))}
                 </div>
               </div>
               {/* Text */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Review Text</label>
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">Review Text</label>
                 <textarea
                   value={editText}
                   onChange={e => setEditText(e.target.value)}
                   rows={5}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                  className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/40 focus:border-lime-400 resize-none"
                 />
               </div>
               {/* Visibility toggle */}
               <label className="flex items-center gap-3 cursor-pointer">
                 <div
                   onClick={() => setEditVisible(!editVisible)}
-                  className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 ${editVisible ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                  className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 ${editVisible ? 'bg-green-500' : 'bg-neutral-300 dark:bg-neutral-600'}`}
                 >
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${editVisible ? 'translate-x-5' : 'translate-x-0'}`} />
                 </div>
-                <span className="text-sm text-gray-700 dark:text-gray-300">Visible on public website</span>
+                <span className="text-sm text-neutral-700 dark:text-neutral-300">Visible on public website</span>
               </label>
             </div>
-            <div className="flex justify-end gap-3 p-5 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex justify-end gap-3 p-5 border-t border-neutral-200 dark:border-neutral-700">
               <button
                 onClick={() => setEditingReview(null)}
-                className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={saveEdit}
                 disabled={editSaving}
-                className="inline-flex items-center gap-2 px-5 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white disabled:opacity-50 rounded-lg transition-colors"
+                style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
               >
                 {editSaving && <Loader2 className="w-4 h-4 animate-spin" />}
                 Save Changes

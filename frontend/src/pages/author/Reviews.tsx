@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Star, Edit2, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
+import { Star, Edit2, AlertCircle, Loader2, CheckCircle2, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/interceptors';
 import { API_ENDPOINTS } from '../../api/endpoints';
 import Loader from '../../components/common/Loader';
+
+const LIME = '#84CC16';
+const LIME_DARK = '#65a30d';
 
 interface Review {
   _id: string;
@@ -34,7 +37,7 @@ const StarRating: React.FC<{ value: number; onChange?: (v: number) => void; size
             className={`${size} transition-colors ${
               star <= (hovered || value)
                 ? 'text-yellow-400 fill-yellow-400'
-                : 'text-gray-300 dark:text-gray-600'
+                : 'text-neutral-300 dark:text-neutral-600'
             }`}
           />
         </button>
@@ -112,11 +115,11 @@ const AuthorReviews: React.FC = () => {
   if (loading) return <Loader />;
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Platform Rating & Review</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Platform Rating & Review</h1>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
           Share your experience with the POVITAL platform. Your review appears on our public website.
         </p>
       </div>
@@ -130,36 +133,44 @@ const AuthorReviews: React.FC = () => {
 
       {/* Existing review display */}
       {myReview && !isEditing && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Your Review</p>
-              <StarRating value={myReview.rating} size="w-5 h-5" />
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+          {/* Lime accent top bar */}
+          <div className="h-1" style={{ background: `linear-gradient(90deg, ${LIME}, ${LIME_DARK})` }} />
+          <div className="p-6 space-y-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2">Your Review</p>
+                <StarRating value={myReview.rating} size="w-5 h-5" />
+              </div>
+              <button
+                onClick={openForm}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors hover:bg-lime-50 dark:hover:bg-lime-900/20"
+                style={{ color: LIME_DARK }}
+              >
+                <Edit2 className="w-4 h-4" />
+                Edit
+              </button>
             </div>
-            <button
-              onClick={openForm}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
-            >
-              <Edit2 className="w-4 h-4" />
-              Edit
-            </button>
-          </div>
-          <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">{myReview.reviewText}</p>
-          <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            Published on {new Date(myReview.updatedAt || myReview.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+            <p className="text-neutral-700 dark:text-neutral-300 text-sm leading-relaxed">{myReview.reviewText}</p>
+            <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Published on {new Date(myReview.updatedAt || myReview.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </div>
           </div>
         </div>
       )}
 
       {/* No review yet */}
       {!myReview && !isEditing && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 p-10 text-center">
-          <Star className="w-10 h-10 text-yellow-300 mx-auto mb-3" />
-          <p className="text-gray-600 dark:text-gray-400 mb-4">You haven't shared a review yet.</p>
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border-2 border-dashed border-neutral-200 dark:border-neutral-700 p-10 text-center">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(132,204,22,0.10)' }}>
+            <Star className="w-8 h-8 text-yellow-400 fill-yellow-400" />
+          </div>
+          <p className="text-neutral-600 dark:text-neutral-400 mb-5 text-sm">You haven't shared a review yet.</p>
           <button
             onClick={openForm}
-            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
+            className="px-5 py-2.5 text-white text-sm font-semibold rounded-xl transition-all hover:opacity-90"
+            style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
           >
             Write a Review
           </button>
@@ -168,64 +179,72 @@ const AuthorReviews: React.FC = () => {
 
       {/* Review form */}
       {isEditing && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-5">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-            {myReview ? 'Edit Your Review' : 'Write a Review'}
-          </h2>
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+          {/* Lime accent top bar */}
+          <div className="h-1" style={{ background: `linear-gradient(90deg, ${LIME}, ${LIME_DARK})` }} />
+          <div className="p-6 space-y-5">
+            <h2 className="text-base font-semibold text-neutral-900 dark:text-white">
+              {myReview ? 'Edit Your Review' : 'Write a Review'}
+            </h2>
 
-          {/* Star rating */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Your Rating <span className="text-red-500">*</span>
-            </label>
-            <StarRating value={formRating} onChange={setFormRating} size="w-7 h-7" />
-          </div>
-
-          {/* Review text */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Your Review <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              value={formText}
-              onChange={e => { setFormText(e.target.value); setFormError(''); }}
-              rows={5}
-              placeholder="Share your experience with POVITAL — the publishing process, support, quality..."
-              className="w-full px-4 py-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors resize-none"
-            />
-            <div className="flex items-center justify-between mt-1">
-              {formError
-                ? <p className="text-xs text-red-500">{formError}</p>
-                : <span />
-              }
-              <span className="text-xs text-gray-400">{formText.length} chars</span>
+            {/* Star rating */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                Your Rating <span className="text-red-500">*</span>
+              </label>
+              <StarRating value={formRating} onChange={setFormRating} size="w-7 h-7" />
             </div>
-          </div>
 
-          {/* Actions */}
-          <div className="flex gap-3 justify-end pt-1">
-            <button
-              onClick={() => setIsEditing(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={saving}
-              className="inline-flex items-center gap-2 px-5 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg transition-colors"
-            >
-              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-              {myReview ? 'Update Review' : 'Submit Review'}
-            </button>
+            {/* Review text */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                Your Review <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={formText}
+                onChange={e => { setFormText(e.target.value); setFormError(''); }}
+                rows={5}
+                placeholder="Share your experience with POVITAL — the publishing process, support, quality..."
+                className="w-full px-4 py-3 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-lime-400/40 focus:border-lime-400 transition-colors resize-none"
+              />
+              <div className="flex items-center justify-between mt-1">
+                {formError
+                  ? <p className="text-xs text-red-500">{formError}</p>
+                  : <span />
+                }
+                <span className="text-xs text-neutral-400">{formText.length} chars</span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 justify-end pt-1">
+              <button
+                onClick={() => setIsEditing(false)}
+                className="px-4 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white rounded-lg transition-all hover:opacity-90 disabled:opacity-50"
+                style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
+              >
+                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {myReview ? 'Update Review' : 'Submit Review'}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Info note */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm text-blue-700 dark:text-blue-300">
-        <p className="font-medium mb-1">About reviews</p>
-        <ul className="list-disc list-inside space-y-0.5 text-blue-600 dark:text-blue-400">
+      <div className="rounded-xl p-4 text-sm" style={{ background: 'rgba(132,204,22,0.07)', border: '1px solid rgba(132,204,22,0.25)' }}>
+        <div className="flex items-center gap-2 mb-2">
+          <Info className="w-4 h-4 flex-shrink-0" style={{ color: LIME_DARK }} />
+          <p className="font-semibold" style={{ color: LIME_DARK }}>About reviews</p>
+        </div>
+        <ul className="list-disc list-inside space-y-0.5 text-neutral-600 dark:text-neutral-400 ml-1">
           <li>You can submit one review per account</li>
           <li>Reviews are immediately visible on the POVITAL public website</li>
           <li>You can edit your review at any time</li>

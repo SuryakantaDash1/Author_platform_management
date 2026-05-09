@@ -62,6 +62,9 @@ interface BankAccount {
   accountType: string;
 }
 
+const LIME = '#84CC16';
+const LIME_DARK = '#65a30d';
+
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const fmt = (n: number) => new Intl.NumberFormat('en-IN').format(Math.round(n));
 const fmtDate = (d?: string) =>
@@ -455,7 +458,7 @@ const AdminRoyalties: React.FC = () => {
     <div className="space-y-6 animate-fadeIn">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-h1 font-bold text-neutral-900 dark:text-dark-900">Royalty Management</h1>
-        <button onClick={fetchAuthors} className="inline-flex items-center gap-2 px-4 py-2 text-body-sm font-medium text-neutral-600 dark:text-dark-600 hover:text-primary-600 hover:bg-neutral-100 dark:hover:bg-dark-200 rounded-lg transition-colors">
+        <button onClick={fetchAuthors} className="inline-flex items-center gap-2 px-4 py-2 text-body-sm font-medium text-neutral-600 dark:text-dark-600 hover:bg-neutral-100 dark:hover:bg-dark-200 rounded-lg transition-colors">
           <RefreshCw className="w-4 h-4" />
           Refresh
         </button>
@@ -479,7 +482,8 @@ const AdminRoyalties: React.FC = () => {
           <option value="pending">Pending</option>
           <option value="paid">Paid</option>
         </select>
-        <button onClick={fetchAuthors} className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-body-sm font-medium transition-colors">
+        <button onClick={fetchAuthors} className="px-4 py-2 text-white rounded-xl text-body-sm font-semibold transition-opacity hover:opacity-90"
+          style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}>
           Search
         </button>
       </div>
@@ -507,7 +511,7 @@ const AdminRoyalties: React.FC = () => {
                 <tbody className="divide-y divide-neutral-100 dark:divide-dark-300">
                   {authors.map((a) => (
                     <tr key={a.authorId} className="hover:bg-neutral-50/50 dark:hover:bg-dark-200/30 transition-colors">
-                      <td className="px-5 py-4 font-mono text-body-sm text-primary-600 dark:text-primary-400 cursor-pointer hover:underline" onClick={() => openAuthorDetail(a)}>
+                      <td className="px-5 py-4 font-mono text-body-sm cursor-pointer hover:underline" style={{ color: LIME_DARK }} onClick={() => openAuthorDetail(a)}>
                         {a.authorId}
                       </td>
                       <td className="px-5 py-4 font-medium text-neutral-900 dark:text-dark-900">
@@ -530,7 +534,8 @@ const AdminRoyalties: React.FC = () => {
                       <td className="px-5 py-4">
                         <button
                           onClick={() => openAuthorDetail(a)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-body-xs font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 rounded-lg transition-colors"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-body-xs font-semibold rounded-lg transition-opacity hover:opacity-80"
+                          style={{ color: LIME_DARK, background: 'rgba(132,204,22,0.10)' }}
                         >
                           View <ChevronRight className="w-3.5 h-3.5" />
                         </button>

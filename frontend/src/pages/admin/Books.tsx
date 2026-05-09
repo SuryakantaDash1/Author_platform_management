@@ -36,6 +36,9 @@ import { format } from 'date-fns';
 // Constants
 // ---------------------------------------------------------------------------
 
+const LIME = '#84CC16';
+const LIME_DARK = '#65a30d';
+
 const BOOK_STATUSES = ['pending', 'payment_pending', 'in_progress', 'formatting', 'designing', 'printing', 'published', 'rejected'];
 const PLATFORMS = ['Amazon', 'Flipkart', 'Meesho', 'Snapdeal', 'Myntra', '150+ Other Sellers', '1200 Offline Channels'];
 
@@ -216,6 +219,17 @@ const initialForm: BookFormData = {
 // Sub-components
 // ---------------------------------------------------------------------------
 
+const LimeBtn: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { loading?: boolean }> = ({ children, loading, className = '', ...props }) => (
+  <button {...props} className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white rounded-xl shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
+    style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}>
+    {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin flex-shrink-0" />}
+    {children}
+  </button>
+);
+
+const inputCls = (err?: boolean) =>
+  `w-full px-3 py-2.5 text-sm border rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors ${err ? 'border-red-400' : 'border-neutral-300 dark:border-neutral-600'}`;
+
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
   return (
@@ -227,7 +241,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 };
 
 const TypeBadge: React.FC<{ type: string }> = ({ type }) => (
-  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${TYPE_CONFIG[type] || 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}>
+  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${TYPE_CONFIG[type] || 'bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300'}`}>
     {type}
   </span>
 );
@@ -259,11 +273,12 @@ const OpenFileButton: React.FC<{ bookId: string; fileUrl: string; label?: string
     <button
       onClick={handleOpen}
       disabled={loading}
-      className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm text-blue-600 dark:text-blue-400 hover:underline transition-colors w-full text-left disabled:opacity-50"
+      className="flex items-center gap-2 px-3 py-2 bg-neutral-50 dark:bg-neutral-800 rounded-lg text-sm hover:underline transition-colors w-full text-left disabled:opacity-50"
+      style={{ color: LIME_DARK }}
     >
       <BookOpen className="w-4 h-4 flex-shrink-0" />
       <span className="truncate flex-1">{label || 'Open File'}</span>
-      {loading ? <Loader2 className="w-3.5 h-3.5 ml-auto flex-shrink-0 animate-spin" /> : <ExternalLink className="w-3.5 h-3.5 ml-auto flex-shrink-0 text-gray-400" />}
+      {loading ? <Loader2 className="w-3.5 h-3.5 ml-auto flex-shrink-0 animate-spin" /> : <ExternalLink className="w-3.5 h-3.5 ml-auto flex-shrink-0 text-neutral-400" />}
     </button>
   );
 };
@@ -838,47 +853,47 @@ const AdminBooks: React.FC = () => {
   // ===========================================================================
 
   const renderFilterBar = () => (
-    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
+    <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-700 p-4 mb-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-3 items-end">
         {/* Author Name */}
         <div className="xl:col-span-1">
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Author Name</label>
+          <label className="block text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1 uppercase tracking-wide">Author Name</label>
           <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
             <input
               type="text"
               value={filters.authorName}
               onChange={e => setFilters(p => ({ ...p, authorName: e.target.value }))}
               onKeyDown={e => e.key === 'Enter' && handleSearch()}
               placeholder="Author name..."
-              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors"
             />
           </div>
         </div>
 
         {/* Book Name */}
         <div className="xl:col-span-1">
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Book Name</label>
+          <label className="block text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1 uppercase tracking-wide">Book Name</label>
           <div className="relative">
-            <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
             <input
               type="text"
               value={filters.bookName}
               onChange={e => setFilters(p => ({ ...p, bookName: e.target.value }))}
               onKeyDown={e => e.key === 'Enter' && handleSearch()}
               placeholder="Book name..."
-              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors"
             />
           </div>
         </div>
 
         {/* Book Type */}
         <div className="xl:col-span-1">
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Book Type</label>
+          <label className="block text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1 uppercase tracking-wide">Book Type</label>
           <select
             value={filters.bookType}
             onChange={e => setFilters(p => ({ ...p, bookType: e.target.value }))}
-            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+            className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors"
           >
             <option value="">All Types</option>
             {dynamicBookTypes.map(t => <option key={t} value={t}>{t}</option>)}
@@ -888,11 +903,11 @@ const AdminBooks: React.FC = () => {
 
         {/* Status */}
         <div className="xl:col-span-1">
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Status</label>
+          <label className="block text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1 uppercase tracking-wide">Status</label>
           <select
             value={filters.status}
             onChange={e => setFilters(p => ({ ...p, status: e.target.value }))}
-            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+            className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors"
           >
             <option value="">All Statuses</option>
             {BOOK_STATUSES.map(s => <option key={s} value={s}>{STATUS_CONFIG[s]?.label || s}</option>)}
@@ -901,48 +916,42 @@ const AdminBooks: React.FC = () => {
 
         {/* From Date */}
         <div className="xl:col-span-1">
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">From Date</label>
+          <label className="block text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1 uppercase tracking-wide">From Date</label>
           <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
             <input
               type="date"
               value={filters.fromDate}
               onChange={e => setFilters(p => ({ ...p, fromDate: e.target.value }))}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors"
             />
           </div>
         </div>
 
         {/* To Date */}
         <div className="xl:col-span-1">
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">To Date</label>
+          <label className="block text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1 uppercase tracking-wide">To Date</label>
           <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
             <input
               type="date"
               value={filters.toDate}
               onChange={e => setFilters(p => ({ ...p, toDate: e.target.value }))}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors"
             />
           </div>
         </div>
 
         {/* Buttons */}
         <div className="xl:col-span-2 flex gap-2">
-          <button
-            onClick={handleSearch}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-red-400"
-          >
+          <LimeBtn onClick={handleSearch} className="flex-1 py-2 px-4 text-sm">
             <Search className="w-4 h-4" />
             Search
-          </button>
-          <button
-            onClick={openAddModal}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-green-400"
-          >
+          </LimeBtn>
+          <LimeBtn onClick={openAddModal} className="flex-1 py-2 px-4 text-sm">
             <Plus className="w-4 h-4" />
             Book
-          </button>
+          </LimeBtn>
         </div>
       </div>
     </div>
@@ -955,10 +964,10 @@ const AdminBooks: React.FC = () => {
   const renderTable = () => {
     if (loading) {
       return (
-        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-12">
+        <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700 p-12">
           <div className="flex flex-col items-center justify-center gap-3">
-            <div className="w-10 h-10 border-4 border-gray-200 border-t-purple-600 rounded-full animate-spin" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">Loading books...</p>
+            <div className="w-10 h-10 border-4 border-neutral-200 border-t-lime-500 rounded-full animate-spin" />
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Loading books...</p>
           </div>
         </div>
       );
@@ -966,8 +975,8 @@ const AdminBooks: React.FC = () => {
 
     if (books.length === 0) {
       return (
-        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-12">
-          <div className="flex flex-col items-center justify-center gap-3 text-gray-500 dark:text-gray-400">
+        <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700 p-12">
+          <div className="flex flex-col items-center justify-center gap-3 text-neutral-500 dark:text-neutral-400">
             <BookOpen className="w-12 h-12 opacity-40" />
             <p className="text-base font-medium">No books found</p>
             <p className="text-sm">Try adjusting your filters or add a new book</p>
@@ -977,68 +986,69 @@ const AdminBooks: React.FC = () => {
     }
 
     return (
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-700 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-800">
+          <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">
+            <thead className="bg-neutral-50 dark:bg-neutral-800">
               <tr>
                 {['No', 'Book ID', 'Book Name', 'Author Name', 'Book Type', 'Status', 'Selling Units', 'Net Earnings', 'Entry Date', 'Actions'].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider whitespace-nowrap">
                     {h}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {books.map((book, idx) => {
                 const rowNum = (pagination.currentPage - 1) * pagination.limit + idx + 1;
                 return (
-                  <tr key={book._id || book.bookId} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">{rowNum}</td>
+                  <tr key={book._id || book.bookId} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                    <td className="px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">{rowNum}</td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <button
                         onClick={() => openDetail(book)}
-                        className="text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline focus:outline-none transition-colors"
+                        className="text-sm font-semibold hover:underline focus:outline-none transition-colors"
+                        style={{ color: LIME_DARK }}
                       >
                         {book.bookId}
                       </button>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 max-w-[160px] truncate whitespace-nowrap">
+                    <td className="px-4 py-3 text-sm text-neutral-900 dark:text-neutral-100 max-w-[160px] truncate whitespace-nowrap">
                       {book.bookName}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">{book.authorName || '—'}</td>
+                    <td className="px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300 whitespace-nowrap">{book.authorName || '—'}</td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <TypeBadge type={book.bookType} />
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <StatusBadge status={book.status} />
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap text-right">
+                    <td className="px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap text-right">
                       {(book.sellingUnits ?? 0).toLocaleString('en-IN')}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap font-medium">
+                    <td className="px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300 whitespace-nowrap font-medium">
                       Rs {(book.netEarnings ?? 0).toLocaleString('en-IN')}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">{formatDate(book.createdAt)}</td>
+                    <td className="px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">{formatDate(book.createdAt)}</td>
                     <td className="px-4 py-3 text-sm relative">
                       <div ref={openMenuId === (book._id || book.bookId) ? menuRef : null}>
                         <button
                           onClick={() => setOpenMenuId(prev => prev === (book._id || book.bookId) ? null : (book._id || book.bookId))}
-                          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
                         >
-                          <MoreVertical className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                          <MoreVertical className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
                         </button>
                         {openMenuId === (book._id || book.bookId) && (
-                          <div className="absolute right-4 top-10 z-20 w-44 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1">
+                          <div className="absolute right-4 top-10 z-20 w-44 bg-white dark:bg-neutral-800 rounded-xl shadow-xl border border-neutral-200 dark:border-neutral-700 py-1">
                             <button
                               onClick={() => openDetail(book)}
-                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700"
                             >
                               <Eye className="w-4 h-4" /> View
                             </button>
                             <button
                               onClick={() => openEditModal(book)}
-                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-lime-700 dark:text-lime-400 hover:bg-lime-50 dark:hover:bg-lime-900/10"
                             >
                               <Edit className="w-4 h-4" /> Edit
                             </button>
@@ -1064,12 +1074,12 @@ const AdminBooks: React.FC = () => {
                                     toast.error(err?.response?.data?.message || 'Failed to advance stage');
                                   }
                                 }}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-lime-700 dark:text-lime-400 hover:bg-lime-50 dark:hover:bg-lime-900/10"
                               >
                                 <ArrowRight className="w-4 h-4" /> Advance Stage
                               </button>
                             )}
-                            <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
+                            <div className="border-t border-neutral-200 dark:border-neutral-700 my-1" />
                             <button
                               onClick={() => { setDeletingBook(book); setShowDeleteConfirm(true); setOpenMenuId(null); }}
                               className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
@@ -1089,8 +1099,8 @@ const AdminBooks: React.FC = () => {
 
         {/* Pagination */}
         {pagination.totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50">
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">
               Showing <span className="font-medium">{(pagination.currentPage - 1) * pagination.limit + 1}</span>
               {' '}to{' '}
               <span className="font-medium">{Math.min(pagination.currentPage * pagination.limit, pagination.totalItems)}</span>
@@ -1115,11 +1125,11 @@ const AdminBooks: React.FC = () => {
     <div className="flex items-center gap-2 mb-6">
       {[1, 2, 3].map((s, i) => (
         <React.Fragment key={s}>
-          <div className={`flex items-center gap-2 ${step === s ? 'text-purple-600 dark:text-purple-400' : step > s ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}`}>
+          <div className={`flex items-center gap-2 ${step === s ? 'text-lime-700 dark:text-lime-400' : step > s ? 'text-green-600 dark:text-green-400' : 'text-neutral-400'}`}>
             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-colors ${
-              step === s ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' :
+              step === s ? 'border-lime-500 bg-lime-50 dark:bg-lime-900/30 text-lime-700 dark:text-lime-400' :
               step > s  ? 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
-                          'border-gray-300 dark:border-gray-600 text-gray-400'
+                          'border-neutral-300 dark:border-neutral-600 text-neutral-400'
             }`}>
               {step > s ? <Check className="w-3.5 h-3.5" /> : s}
             </div>
@@ -1127,7 +1137,7 @@ const AdminBooks: React.FC = () => {
               {s === 1 ? 'Author & Book' : s === 2 ? 'Services & Files' : 'Price Summary'}
             </span>
           </div>
-          {i < 2 && <div className={`flex-1 h-0.5 rounded ${step > s ? 'bg-green-400' : 'bg-gray-200 dark:bg-gray-700'}`} />}
+          {i < 2 && <div className={`flex-1 h-0.5 rounded ${step > s ? 'bg-green-400' : 'bg-neutral-200 dark:bg-neutral-700'}`} />}
         </React.Fragment>
       ))}
     </div>
@@ -1137,32 +1147,32 @@ const AdminBooks: React.FC = () => {
     <div className="space-y-4">
       {/* Author typeahead */}
       <div className="relative">
-        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
           Author ID / Name <span className="text-red-500">*</span>
         </label>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
           <input
             type="text"
             value={form.authorSearch}
             onChange={e => handleAuthorSearch(e.target.value)}
             placeholder="Type 2+ chars to search authors..."
-            className={`w-full pl-9 pr-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${formErrors.authorId ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'}`}
+            className={`w-full pl-9 pr-3 py-2 text-sm border rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors ${formErrors.authorId ? 'border-red-400' : 'border-neutral-300 dark:border-neutral-600'}`}
           />
-          {authorLoading && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />}
+          {authorLoading && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-lime-500 border-t-transparent rounded-full animate-spin" />}
         </div>
         {formErrors.authorId && <p className="mt-1 text-xs text-red-500">{formErrors.authorId}</p>}
         {authorSuggestions.length > 0 && (
-          <div className="absolute top-full left-0 right-0 z-30 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
+          <div className="absolute top-full left-0 right-0 z-30 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
             {authorSuggestions.map(s => (
               <button
                 key={s.authorId}
                 onClick={() => selectAuthor(s)}
-                className="w-full text-left px-4 py-2 text-sm hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+                className="w-full text-left px-4 py-2 text-sm hover:bg-lime-50 dark:hover:bg-lime-900/10 transition-colors"
               >
-                <span className="font-medium text-gray-900 dark:text-gray-100">{s.name}</span>
-                <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">{s.authorId}</span>
-                {s.email && <span className="ml-2 text-xs text-gray-400 dark:text-gray-500">{s.email}</span>}
+                <span className="font-medium text-neutral-900 dark:text-neutral-100">{s.name}</span>
+                <span className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">{s.authorId}</span>
+                {s.email && <span className="ml-2 text-xs text-neutral-400 dark:text-neutral-500">{s.email}</span>}
               </button>
             ))}
           </div>
@@ -1172,12 +1182,12 @@ const AdminBooks: React.FC = () => {
       {/* Author Name (read-only after selection) */}
       {form.authorId && (
         <div>
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Author Name</label>
+          <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Author Name</label>
           <input
             type="text"
             value={form.authorName}
             readOnly
-            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 cursor-not-allowed"
+            className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-neutral-50 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 cursor-not-allowed"
           />
         </div>
       )}
@@ -1185,13 +1195,13 @@ const AdminBooks: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Language */}
         <div>
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
             Book Language <span className="text-red-500">*</span>
           </label>
           <select
             value={form.language}
             onChange={e => setForm(p => ({ ...p, language: e.target.value }))}
-            className={`w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${formErrors.language ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'}`}
+            className={`w-full px-3 py-2 text-sm border rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors ${formErrors.language ? 'border-red-400' : 'border-neutral-300 dark:border-neutral-600'}`}
           >
             <option value="">Select Language</option>
             {dynamicLanguages.map(l => <option key={l} value={l}>{l}</option>)}
@@ -1201,13 +1211,13 @@ const AdminBooks: React.FC = () => {
 
         {/* Book Type */}
         <div>
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
             Book Type <span className="text-red-500">*</span>
           </label>
           <select
             value={form.bookType}
             onChange={e => setForm(p => ({ ...p, bookType: e.target.value }))}
-            className={`w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${formErrors.bookType ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'}`}
+            className={`w-full px-3 py-2 text-sm border rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors ${formErrors.bookType ? 'border-red-400' : 'border-neutral-300 dark:border-neutral-600'}`}
           >
             <option value="">Select Type</option>
             {dynamicBookTypes.map(t => <option key={t} value={t}>{t}</option>)}
@@ -1220,7 +1230,7 @@ const AdminBooks: React.FC = () => {
               value={form.customBookType || ''}
               onChange={e => setForm(p => ({ ...p, customBookType: e.target.value }))}
               placeholder="Enter custom book type"
-              className="w-full mt-2 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full mt-2 px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400"
             />
           )}
         </div>
@@ -1228,7 +1238,7 @@ const AdminBooks: React.FC = () => {
 
       {/* Book Name */}
       <div>
-        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
           Book Name <span className="text-red-500">*</span>
         </label>
         <input
@@ -1236,39 +1246,39 @@ const AdminBooks: React.FC = () => {
           value={form.bookName}
           onChange={e => setForm(p => ({ ...p, bookName: e.target.value }))}
           placeholder="Enter book name"
-          className={`w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${formErrors.bookName ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'}`}
+          className={`w-full px-3 py-2 text-sm border rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors ${formErrors.bookName ? 'border-red-400' : 'border-neutral-300 dark:border-neutral-600'}`}
         />
         {formErrors.bookName && <p className="mt-1 text-xs text-red-500">{formErrors.bookName}</p>}
       </div>
 
       {/* Subtitle */}
       <div>
-        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Book Title / Subtitle</label>
+        <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Book Title / Subtitle</label>
         <input
           type="text"
           value={form.subtitle}
           onChange={e => setForm(p => ({ ...p, subtitle: e.target.value }))}
           placeholder="Optional subtitle"
-          className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+          className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors"
         />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Target Audience */}
         <div>
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Target Audience</label>
+          <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Target Audience</label>
           <input
             type="text"
             value={form.targetAudience}
             onChange={e => setForm(p => ({ ...p, targetAudience: e.target.value }))}
             placeholder="e.g. Young Adults, Students"
-            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+            className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors"
           />
         </div>
 
         {/* Expected Launch Date */}
         <div>
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
             Expected Launch Date <span className="text-red-500">*</span>
           </label>
           <input
@@ -1276,7 +1286,7 @@ const AdminBooks: React.FC = () => {
             value={form.expectedLaunchDate}
             min={minLaunchDate}
             onChange={e => setForm(p => ({ ...p, expectedLaunchDate: e.target.value }))}
-            className={`w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${formErrors.expectedLaunchDate ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'}`}
+            className={`w-full px-3 py-2 text-sm border rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors ${formErrors.expectedLaunchDate ? 'border-red-400' : 'border-neutral-300 dark:border-neutral-600'}`}
           />
           {formErrors.expectedLaunchDate && <p className="mt-1 text-xs text-red-500">{formErrors.expectedLaunchDate}</p>}
         </div>
@@ -1285,7 +1295,7 @@ const AdminBooks: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Physical Copies */}
         <div>
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
             Physical Copies <span className="text-red-500">*</span>
           </label>
           <input
@@ -1293,7 +1303,7 @@ const AdminBooks: React.FC = () => {
             value={form.physicalCopies}
             min={2}
             onChange={e => setForm(p => ({ ...p, physicalCopies: parseInt(e.target.value) || 2 }))}
-            className={`w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${formErrors.physicalCopies ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'}`}
+            className={`w-full px-3 py-2 text-sm border rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors ${formErrors.physicalCopies ? 'border-red-400' : 'border-neutral-300 dark:border-neutral-600'}`}
           />
           <p className="mt-1 text-xs text-green-600 dark:text-green-400">2 copies free. Extra copies will be charged.</p>
           {form.physicalCopies > 2 && (
@@ -1306,7 +1316,7 @@ const AdminBooks: React.FC = () => {
 
         {/* Royalty % */}
         <div>
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
             Author Royalty % <span className="text-red-500">*</span>
           </label>
           <input
@@ -1315,7 +1325,7 @@ const AdminBooks: React.FC = () => {
             min={0}
             max={100}
             onChange={e => setForm(p => ({ ...p, royaltyPercentage: parseFloat(e.target.value) || 0 }))}
-            className={`w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${formErrors.royaltyPercentage ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'}`}
+            className={`w-full px-3 py-2 text-sm border rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors ${formErrors.royaltyPercentage ? 'border-red-400' : 'border-neutral-300 dark:border-neutral-600'}`}
           />
           {formErrors.royaltyPercentage && <p className="mt-1 text-xs text-red-500">{formErrors.royaltyPercentage}</p>}
         </div>
@@ -1327,7 +1337,7 @@ const AdminBooks: React.FC = () => {
     <div className="space-y-6">
       {/* Services */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">Add-on Services</h3>
+        <h3 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 mb-3">Add-on Services</h3>
         <div className="grid grid-cols-2 gap-3">
           {([
             { key: 'coverPage', label: 'Cover Page Design' },
@@ -1340,12 +1350,12 @@ const AdminBooks: React.FC = () => {
               onClick={() => setForm(p => ({ ...p, services: { ...p.services, [key]: !p.services[key] } }))}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
                 form.services[key]
-                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
-                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                  ? 'border-lime-500 bg-lime-50 dark:bg-lime-900/20 text-lime-700 dark:text-lime-400'
+                  : 'border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600'
               }`}
             >
               <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors ${
-                form.services[key] ? 'border-purple-500 bg-purple-500' : 'border-gray-300 dark:border-gray-600'
+                form.services[key] ? 'border-lime-500 bg-lime-500' : 'border-neutral-300 dark:border-neutral-600'
               }`}>
                 {form.services[key] && <Check className="w-3 h-3 text-white" />}
               </div>
@@ -1357,18 +1367,18 @@ const AdminBooks: React.FC = () => {
 
       {/* File Upload */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">Upload Files</h3>
+        <h3 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 mb-3">Upload Files</h3>
 
         {/* Already-saved files (edit mode) */}
         {existingFiles.length > 0 && (
           <div className="mb-3">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 font-medium">Already uploaded</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1.5 font-medium">Already uploaded</p>
             <ul className="space-y-1">
               {existingFiles.map((url, i) => {
                 const fileName = decodeURIComponent(url.split('/').pop()?.split('?')[0] || `File ${i + 1}`);
                 return (
-                  <li key={i} className="flex items-center justify-between px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/30 rounded-lg text-sm text-gray-700 dark:text-gray-300">
-                    <a href={url} target="_blank" rel="noopener noreferrer" className="truncate max-w-[80%] text-indigo-600 dark:text-indigo-400 hover:underline">
+                  <li key={i} className="flex items-center justify-between px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/30 rounded-lg text-sm text-neutral-700 dark:text-neutral-300">
+                    <a href={url} target="_blank" rel="noopener noreferrer" className="truncate max-w-[80%] hover:underline" style={{ color: LIME_DARK }}>
                       {fileName}
                     </a>
                     <button
@@ -1386,10 +1396,10 @@ const AdminBooks: React.FC = () => {
           </div>
         )}
 
-        <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-          <Upload className="w-6 h-6 text-gray-400 mb-2" />
-          <span className="text-sm text-gray-500 dark:text-gray-400">Click to upload manuscript / cover</span>
-          <span className="text-xs text-gray-400 mt-1">PDF, DOC, DOCX, PNG, JPG (max 50MB each)</span>
+        <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-neutral-300 dark:border-neutral-600 rounded-lg cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+          <Upload className="w-6 h-6 text-neutral-400 mb-2" />
+          <span className="text-sm text-neutral-500 dark:text-neutral-400">Click to upload manuscript / cover</span>
+          <span className="text-xs text-neutral-400 mt-1">PDF, DOC, DOCX, PNG, JPG (max 50MB each)</span>
           <input
             type="file"
             className="hidden"
@@ -1407,7 +1417,7 @@ const AdminBooks: React.FC = () => {
         {form.uploadedFiles.length > 0 && (
           <ul className="mt-3 space-y-1">
             {form.uploadedFiles.map((f, i) => (
-              <li key={i} className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300">
+              <li key={i} className="flex items-center justify-between px-3 py-2 bg-neutral-50 dark:bg-neutral-800 rounded-lg text-sm text-neutral-700 dark:text-neutral-300">
                 <span className="truncate max-w-[80%]">{f.name}</span>
                 <button
                   type="button"
@@ -1424,7 +1434,7 @@ const AdminBooks: React.FC = () => {
 
       {/* Platforms */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">Distribution Platforms</h3>
+        <h3 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 mb-3">Distribution Platforms</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {PLATFORMS.map(platform => (
             <label key={platform} className="flex items-center gap-2 cursor-pointer">
@@ -1439,9 +1449,9 @@ const AdminBooks: React.FC = () => {
                       : p.platforms.filter(pl => pl !== platform),
                   }));
                 }}
-                className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                className="w-4 h-4 accent-lime-500 border-neutral-300 rounded"
               />
-              <span className="text-sm text-gray-700 dark:text-gray-300">{platform}</span>
+              <span className="text-sm text-neutral-700 dark:text-neutral-300">{platform}</span>
             </label>
           ))}
         </div>
@@ -1470,8 +1480,8 @@ const AdminBooks: React.FC = () => {
     return (
       <div className="space-y-4">
         {pricingLoading && (
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+          <div className="flex items-center gap-2 text-sm text-neutral-500">
+            <div className="w-4 h-4 border-2 border-lime-500 border-t-transparent rounded-full animate-spin" />
             Loading pricing...
           </div>
         )}
@@ -1484,23 +1494,23 @@ const AdminBooks: React.FC = () => {
 
         {pricingConfig && (
           <>
-            <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-800">
+            <div className="overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-700">
+              <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">
+                <thead className="bg-neutral-50 dark:bg-neutral-800">
                   <tr>
-                    <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400">Service</th>
-                    <th className="px-4 py-2 text-right text-xs font-semibold text-gray-500 dark:text-gray-400">Original</th>
-                    <th className="px-4 py-2 text-right text-xs font-semibold text-gray-500 dark:text-gray-400">Discount</th>
-                    <th className="px-4 py-2 text-right text-xs font-semibold text-gray-500 dark:text-gray-400">You Pay</th>
+                    <th className="px-4 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400">Service</th>
+                    <th className="px-4 py-2 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400">Original</th>
+                    <th className="px-4 py-2 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400">Discount</th>
+                    <th className="px-4 py-2 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400">You Pay</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                   {rows.map((row, i) => (
-                    <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                      <td className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">{row.label}</td>
-                      <td className="px-4 py-2 text-sm text-right text-gray-400 line-through">Rs {row.original.toLocaleString('en-IN')}</td>
+                    <tr key={i} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+                      <td className="px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300">{row.label}</td>
+                      <td className="px-4 py-2 text-sm text-right text-neutral-400 line-through">Rs {row.original.toLocaleString('en-IN')}</td>
                       <td className="px-4 py-2 text-sm text-right text-green-600 dark:text-green-400">{row.discountPct}%</td>
-                      <td className="px-4 py-2 text-sm text-right font-medium text-gray-900 dark:text-gray-100">Rs {row.you_pay.toLocaleString('en-IN')}</td>
+                      <td className="px-4 py-2 text-sm text-right font-medium text-neutral-900 dark:text-neutral-100">Rs {row.you_pay.toLocaleString('en-IN')}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1508,9 +1518,9 @@ const AdminBooks: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                <p className="text-xs text-purple-600 dark:text-purple-400 font-medium">Total Amount</p>
-                <p className="text-lg font-bold text-purple-700 dark:text-purple-300 mt-1">Rs {total.toLocaleString('en-IN')}</p>
+              <div className="p-3 rounded-lg" style={{ background: 'rgba(132,204,22,0.10)' }}>
+                <p className="text-xs font-medium" style={{ color: LIME_DARK }}>Total Amount</p>
+                <p className="text-lg font-bold mt-1" style={{ color: LIME_DARK }}>Rs {total.toLocaleString('en-IN')}</p>
               </div>
               <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                 <p className="text-xs text-green-600 dark:text-green-400 font-medium">Author Royalty ({form.royaltyPercentage}%)</p>
@@ -1520,7 +1530,7 @@ const AdminBooks: React.FC = () => {
 
             {/* Payment Plan Selection */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">Payment Plan</h3>
+              <h3 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 mb-3">Payment Plan</h3>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { value: 1, label: 'Full Payment', desc: '100% at once', icon: '💳' },
@@ -1534,14 +1544,14 @@ const AdminBooks: React.FC = () => {
                     onClick={() => setForm(p => ({ ...p, paymentInstallment: opt.value }))}
                     className={`flex items-start gap-3 p-3 rounded-lg border-2 text-left transition-all duration-200 ${
                       form.paymentInstallment === opt.value
-                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 shadow-sm'
-                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-purple-300 dark:hover:border-purple-700'
+                        ? 'border-lime-500 bg-lime-50 dark:bg-lime-900/20 shadow-sm'
+                        : 'border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:border-lime-400 dark:hover:border-lime-600'
                     }`}
                   >
                     <span className="text-xl mt-0.5">{opt.icon}</span>
                     <div className="min-w-0">
-                      <p className={`text-sm font-semibold ${form.paymentInstallment === opt.value ? 'text-purple-700 dark:text-purple-300' : 'text-gray-800 dark:text-gray-200'}`}>{opt.label}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{opt.desc}</p>
+                      <p className={`text-sm font-semibold ${form.paymentInstallment === opt.value ? 'text-lime-700 dark:text-lime-400' : 'text-neutral-800 dark:text-neutral-200'}`}>{opt.label}</p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{opt.desc}</p>
                     </div>
                   </button>
                 ))}
@@ -1549,8 +1559,8 @@ const AdminBooks: React.FC = () => {
             </div>
 
             {installments > 1 && (
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <p className="text-sm text-blue-700 dark:text-blue-300">
+              <div className="p-3 rounded-xl border" style={{ background: 'rgba(132,204,22,0.07)', borderColor: 'rgba(132,204,22,0.20)' }}>
+                <p className="text-sm" style={{ color: LIME_DARK }}>
                   <span className="font-semibold">Payment Plan:</span> {installments} installments of approx.{' '}
                   <span className="font-bold">Rs {perInstallment.toLocaleString('en-IN')}</span> each
                 </p>
@@ -1571,17 +1581,17 @@ const AdminBooks: React.FC = () => {
 
     return (
       <div
-        className={`fixed inset-y-0 right-0 z-40 w-full sm:w-[480px] bg-white dark:bg-gray-900 shadow-2xl transform transition-transform duration-300 ${showDetailPanel ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed inset-y-0 right-0 z-40 w-full sm:w-[480px] bg-white dark:bg-neutral-900 shadow-2xl transform transition-transform duration-300 ${showDetailPanel ? 'translate-x-0' : 'translate-x-full'}`}
       >
         <div className="flex flex-col h-full">
           {/* Panel header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Book Details</h2>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800">
+            <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Book Details</h2>
             <button
               onClick={() => { setShowDetailPanel(false); setSelectedBook(null); }}
-              className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              className="p-2 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
             >
-              <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <X className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
             </button>
           </div>
 
@@ -1589,17 +1599,17 @@ const AdminBooks: React.FC = () => {
             {/* Top: Book ID + Entry Date */}
             <div className="flex items-start justify-between">
               <div>
-                <span className="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-semibold">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold" style={{ background: 'rgba(132,204,22,0.12)', color: LIME_DARK }}>
                   {selectedBook.bookId}
                 </span>
-                <h1 className="mt-3 text-xl font-bold text-gray-900 dark:text-white">{selectedBook.bookName}</h1>
+                <h1 className="mt-3 text-xl font-bold text-neutral-900 dark:text-white">{selectedBook.bookName}</h1>
                 {selectedBook.subtitle && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 italic">{selectedBook.subtitle}</p>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1 italic">{selectedBook.subtitle}</p>
                 )}
               </div>
               <div className="text-right flex-shrink-0 ml-4">
-                <p className="text-xs text-gray-500 dark:text-gray-400">Entry Date</p>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{formatDate(selectedBook.createdAt)}</p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">Entry Date</p>
+                <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{formatDate(selectedBook.createdAt)}</p>
               </div>
             </div>
 
@@ -1608,7 +1618,7 @@ const AdminBooks: React.FC = () => {
               <TypeBadge type={selectedBook.bookType} />
               <StatusBadge status={selectedBook.status} />
               {selectedBook.language && (
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
                   {selectedBook.language}
                 </span>
               )}
@@ -1616,7 +1626,7 @@ const AdminBooks: React.FC = () => {
 
             {/* ---- Phase 3: Status Pipeline Progress ---- */}
             <div>
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Status Pipeline</p>
+              <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-3">Status Pipeline</p>
               <div className="flex items-center gap-0">
                 {PIPELINE_STAGES.map((stage, idx) => {
                   const stageIndex = PIPELINE_STAGES.indexOf(selectedBook.status as typeof PIPELINE_STAGES[number]);
@@ -1628,22 +1638,22 @@ const AdminBooks: React.FC = () => {
                       <div className="flex flex-col items-center flex-shrink-0" style={{ minWidth: 0 }}>
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-colors ${
                           isCompleted ? 'border-green-500 bg-green-500 text-white' :
-                          isCurrent ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' :
-                          'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-400'
+                          isCurrent ? 'border-lime-500 bg-lime-50 dark:bg-lime-900/30 text-lime-700 dark:text-lime-400' :
+                          'border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-400'
                         }`}>
                           {isCompleted ? <Check className="w-4 h-4" /> : idx + 1}
                         </div>
                         <span className={`mt-1 text-[10px] font-medium text-center leading-tight ${
                           isCompleted ? 'text-green-600 dark:text-green-400' :
-                          isCurrent ? 'text-purple-600 dark:text-purple-400' :
-                          'text-gray-400 dark:text-gray-500'
+                          isCurrent ? 'text-lime-700 dark:text-lime-400' :
+                          'text-neutral-400 dark:text-neutral-500'
                         }`}>
                           {PIPELINE_STAGE_LABELS[stage]}
                         </span>
                       </div>
                       {idx < PIPELINE_STAGES.length - 1 && (
                         <div className={`flex-1 h-0.5 mx-1 rounded ${
-                          idx < currentIdx ? 'bg-green-400' : 'bg-gray-200 dark:bg-gray-700'
+                          idx < currentIdx ? 'bg-green-400' : 'bg-neutral-200 dark:bg-neutral-700'
                         }`} />
                       )}
                     </React.Fragment>
@@ -1692,9 +1702,9 @@ const AdminBooks: React.FC = () => {
 
             {/* ---- Phase 3: Move to Next Stage (formatting / designing / printing) ---- */}
             {['formatting', 'designing', 'printing'].includes(selectedBook.status) && (
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide mb-2">Advance Pipeline</p>
-                <p className="text-sm text-blue-600 dark:text-blue-400 mb-3">
+              <div className="p-4 rounded-xl border" style={{ background: 'rgba(132,204,22,0.06)', borderColor: 'rgba(132,204,22,0.25)' }}>
+                <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: LIME_DARK }}>Advance Pipeline</p>
+                <p className="text-sm mb-3 text-neutral-600 dark:text-neutral-400">
                   Current stage: <span className="font-bold">{PIPELINE_STAGE_LABELS[selectedBook.status]}</span>
                   {' → Next: '}
                   <span className="font-bold">{PIPELINE_STAGE_LABELS[NEXT_STAGE[selectedBook.status]]}</span>
@@ -1702,7 +1712,8 @@ const AdminBooks: React.FC = () => {
                 <button
                   onClick={handleMoveToNextStage}
                   disabled={stageLoading}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white rounded-xl transition-opacity hover:opacity-90 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                  style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
                 >
                   {stageLoading ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -1715,17 +1726,17 @@ const AdminBooks: React.FC = () => {
             )}
 
             {/* Author */}
-            <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Author</p>
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{selectedBook.authorName || '—'}</p>
+            <div className="p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg">
+              <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-1">Author</p>
+              <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{selectedBook.authorName || '—'}</p>
               {selectedBook.authorId && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">{selectedBook.authorId}</p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">{selectedBook.authorId}</p>
               )}
             </div>
 
             {/* Services */}
             <div>
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Services</p>
+              <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-2">Services</p>
               <div className="flex flex-wrap gap-2">
                 {([
                   { key: 'coverPage', label: 'Cover Page' },
@@ -1735,7 +1746,7 @@ const AdminBooks: React.FC = () => {
                 ] as { key: keyof typeof selectedBook.services; label: string }[]).map(({ key, label }) => {
                   const active = selectedBook.services?.[key];
                   return (
-                    <span key={key} className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${active ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'}`}>
+                    <span key={key} className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${active ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400'}`}>
                       {active ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
                       {label}
                     </span>
@@ -1752,9 +1763,9 @@ const AdminBooks: React.FC = () => {
                 { label: 'Launch Date', value: formatDate(selectedBook.expectedLaunchDate) },
                 { label: 'Installments', value: selectedBook.paymentInstallment ? `${selectedBook.paymentInstallment}x` : '—' },
               ].map(({ label, value }) => (
-                <div key={label} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{label}</p>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mt-1">{value}</p>
+                <div key={label} className="p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">{label}</p>
+                  <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mt-1">{value}</p>
                 </div>
               ))}
             </div>
@@ -1762,7 +1773,7 @@ const AdminBooks: React.FC = () => {
             {/* Uploaded files */}
             {selectedBook.uploadedFiles && selectedBook.uploadedFiles.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Uploaded Files ({selectedBook.uploadedFiles.length})</p>
+                <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-2">Uploaded Files ({selectedBook.uploadedFiles.length})</p>
                 <ul className="space-y-1">
                   {selectedBook.uploadedFiles.map((f: any, i: number) => {
                     const rawUrl = typeof f === 'string' ? f : f?.url || '';
@@ -1782,7 +1793,7 @@ const AdminBooks: React.FC = () => {
             {/* Payment summary */}
             {(selectedBook.paymentStatus || selectedBook.payment) && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Payment Summary</p>
+                <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-2">Payment Summary</p>
                 {(() => {
                   const ps = selectedBook.paymentStatus || selectedBook.payment;
                   const totalAmount = ps?.totalAmount || 0;
@@ -1799,9 +1810,9 @@ const AdminBooks: React.FC = () => {
                   return (
                     <>
                       <div className="grid grid-cols-3 gap-2 mb-3">
-                        <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                          <p className="text-xs text-purple-500 font-medium">Total</p>
-                          <p className="text-sm font-bold text-purple-700 dark:text-purple-300">Rs {totalAmount.toLocaleString('en-IN')}</p>
+                        <div className="p-3 rounded-lg" style={{ background: 'rgba(132,204,22,0.10)' }}>
+                          <p className="text-xs font-medium" style={{ color: LIME_DARK }}>Total</p>
+                          <p className="text-sm font-bold" style={{ color: LIME_DARK }}>Rs {totalAmount.toLocaleString('en-IN')}</p>
                         </div>
                         <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                           <p className="text-xs text-green-500 font-medium">Paid</p>
@@ -1813,8 +1824,8 @@ const AdminBooks: React.FC = () => {
                         </div>
                       </div>
                       {totalCount > 1 && (
-                        <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-100 dark:border-indigo-800/30">
-                          <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 mb-2">
+                        <div className="p-3 rounded-lg border" style={{ background: 'rgba(132,204,22,0.07)', borderColor: 'rgba(132,204,22,0.20)' }}>
+                          <p className="text-xs font-semibold mb-2" style={{ color: LIME_DARK }}>
                             Installment Plan — {paidCount}/{totalCount} paid
                           </p>
                           <div className="space-y-1.5">
@@ -1826,7 +1837,7 @@ const AdminBooks: React.FC = () => {
                                 <div key={i} className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs ${
                                   isPaid ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                                     : isNext ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
-                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                                    : 'bg-neutral-100 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400'
                                 }`}>
                                   <span className="font-medium">
                                     {isPaid ? '✓ ' : isNext ? '→ ' : '○ '}
@@ -1849,19 +1860,19 @@ const AdminBooks: React.FC = () => {
             {/* ---- Phase 3: Product Links (published books only) ---- */}
             {selectedBook.status === 'published' && selectedBook.marketplaces && selectedBook.marketplaces.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Product Links</p>
+                <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-3">Product Links</p>
                 <div className="space-y-3">
                   {selectedBook.marketplaces.map(platform => {
                     const isOffline = platform === '1200 Offline Channels' || platform === '150+ Other Sellers';
                     const input = productLinkInputs[platform] || { url: '', rating: 0 };
                     const isSaving = productLinkSaving === platform;
                     return (
-                      <div key={platform} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
+                      <div key={platform} className="p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg space-y-2">
                         <div className="flex items-center gap-2">
-                          <LinkIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{platform}</span>
+                          <LinkIcon className="w-4 h-4 text-neutral-400 flex-shrink-0" />
+                          <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{platform}</span>
                           {isOffline && (
-                            <span className="text-xs text-gray-400 dark:text-gray-500 italic">(offline distribution)</span>
+                            <span className="text-xs text-neutral-400 dark:text-neutral-500 italic">(offline distribution)</span>
                           )}
                         </div>
                         {!isOffline && (
@@ -1870,12 +1881,12 @@ const AdminBooks: React.FC = () => {
                             value={input.url}
                             onChange={e => setProductLinkInputs(prev => ({ ...prev, [platform]: { ...prev[platform], url: e.target.value } }))}
                             placeholder="https://..."
-                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+                            className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors"
                           />
                         )}
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1">
-                            <span className="text-xs text-gray-500 dark:text-gray-400 mr-1">Rating:</span>
+                            <span className="text-xs text-neutral-500 dark:text-neutral-400 mr-1">Rating:</span>
                             {[1, 2, 3, 4, 5].map(star => (
                               <button
                                 key={star}
@@ -1884,7 +1895,7 @@ const AdminBooks: React.FC = () => {
                                 className="focus:outline-none transition-colors"
                               >
                                 <Star
-                                  className={`w-4 h-4 ${star <= (input.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300 dark:text-gray-600'}`}
+                                  className={`w-4 h-4 ${star <= (input.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-neutral-300 dark:text-neutral-600'}`}
                                 />
                               </button>
                             ))}
@@ -1916,7 +1927,8 @@ const AdminBooks: React.FC = () => {
                   setPaymentRequestForm({ serviceType: 'inclusive', amount: '', description: '' });
                   setShowPaymentRequestModal(true);
                 }}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white rounded-xl transition-opacity hover:opacity-90 focus:outline-none"
+                style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
               >
                 <CreditCard className="w-4 h-4" />
                 Request Payment
@@ -1945,10 +1957,11 @@ const AdminBooks: React.FC = () => {
           </div>
 
           {/* Edit button at bottom */}
-          <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="px-6 py-4 border-t border-neutral-200 dark:border-neutral-700">
             <button
               onClick={() => { setShowDetailPanel(false); openEditModal(selectedBook); }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-white text-sm font-semibold rounded-xl transition-opacity hover:opacity-90 focus:outline-none"
+              style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
             >
               <Edit className="w-4 h-4" />
               Edit Book
@@ -1976,13 +1989,13 @@ const AdminBooks: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Manage Books</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Manage Books</h1>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
             View, manage and create books for all authors on the platform
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm font-medium">
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium" style={{ background: 'rgba(132,204,22,0.12)', color: LIME_DARK }}>
             <BookOpen className="w-4 h-4" />
             {pagination.totalItems} Total Books
           </span>
@@ -2004,7 +2017,7 @@ const AdminBooks: React.FC = () => {
           <div className="flex items-center justify-between w-full">
             <button
               onClick={() => step > 1 ? handlePrevStep() : setShowAddModal(false)}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-600 rounded-xl transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
               {step > 1 ? 'Back' : 'Cancel'}
@@ -2012,7 +2025,8 @@ const AdminBooks: React.FC = () => {
             {step < 3 ? (
               <button
                 onClick={handleNextStep}
-                className="flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400"
+                className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white rounded-xl transition-opacity hover:opacity-90 focus:outline-none"
+                style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
               >
                 Next
                 <ChevronRight className="w-4 h-4" />
@@ -2051,7 +2065,7 @@ const AdminBooks: React.FC = () => {
           <>
             <button
               onClick={() => { setShowDeleteConfirm(false); setDeletingBook(null); }}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-600 rounded-xl transition-colors"
             >
               Cancel
             </button>
@@ -2065,9 +2079,9 @@ const AdminBooks: React.FC = () => {
           </>
         }
       >
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
           Are you sure you want to delete{' '}
-          <span className="font-semibold text-gray-900 dark:text-gray-100">{deletingBook?.bookName}</span>?
+          <span className="font-semibold text-neutral-900 dark:text-neutral-100">{deletingBook?.bookName}</span>?
           This action cannot be undone.
         </p>
       </Modal>
@@ -2082,7 +2096,7 @@ const AdminBooks: React.FC = () => {
           <>
             <button
               onClick={() => { setShowDeclineModal(false); setDeclineReason(''); }}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-600 rounded-xl transition-colors"
             >
               Cancel
             </button>
@@ -2101,15 +2115,15 @@ const AdminBooks: React.FC = () => {
         }
       >
         <div className="space-y-3">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Please provide a reason for declining <span className="font-semibold text-gray-900 dark:text-gray-100">{selectedBook?.bookName}</span>.
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            Please provide a reason for declining <span className="font-semibold text-neutral-900 dark:text-neutral-100">{selectedBook?.bookName}</span>.
           </p>
           <textarea
             value={declineReason}
             onChange={e => setDeclineReason(e.target.value)}
             placeholder="Enter reason for declining this book..."
             rows={4}
-            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors resize-none"
+            className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors resize-none"
           />
           {!declineReason.trim() && (
             <p className="text-xs text-red-500">Reason is required to decline a book.</p>
@@ -2127,7 +2141,7 @@ const AdminBooks: React.FC = () => {
           <>
             <button
               onClick={() => { setShowPaymentRequestModal(false); setPaymentRequestForm({ serviceType: 'inclusive', amount: '', description: '' }); }}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-600 rounded-xl transition-colors"
             >
               Cancel
             </button>
@@ -2149,45 +2163,45 @@ const AdminBooks: React.FC = () => {
           {/* Book Info (read-only) */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Book ID</label>
+              <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Book ID</label>
               <input
                 type="text"
                 value={selectedBook?.bookId || ''}
                 readOnly
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 cursor-not-allowed"
+                className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-neutral-50 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 cursor-not-allowed"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Book Name</label>
+              <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Book Name</label>
               <input
                 type="text"
                 value={selectedBook?.bookName || ''}
                 readOnly
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 cursor-not-allowed"
+                className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-neutral-50 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 cursor-not-allowed"
               />
             </div>
           </div>
 
           {/* Amount received so far */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Amount Received So Far</label>
+            <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Amount Received So Far</label>
             <input
               type="text"
               value={`Rs ${(selectedBook?.payment?.paidAmount || 0).toLocaleString('en-IN')}`}
               readOnly
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 cursor-not-allowed"
+              className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-neutral-50 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 cursor-not-allowed"
             />
           </div>
 
           {/* Service Type */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
               Service Type <span className="text-red-500">*</span>
             </label>
             <select
               value={paymentRequestForm.serviceType}
               onChange={e => setPaymentRequestForm(p => ({ ...p, serviceType: e.target.value }))}
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
+              className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
             >
               <option value="inclusive">Inclusive Services</option>
               <option value="exclusive">Exclusive Services</option>
@@ -2196,7 +2210,7 @@ const AdminBooks: React.FC = () => {
 
           {/* Amount */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
               Amount (Rs) <span className="text-red-500">*</span>
             </label>
             <input
@@ -2205,19 +2219,19 @@ const AdminBooks: React.FC = () => {
               onChange={e => setPaymentRequestForm(p => ({ ...p, amount: e.target.value }))}
               placeholder="Enter amount"
               min={1}
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
+              className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+            <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Description</label>
             <textarea
               value={paymentRequestForm.description}
               onChange={e => setPaymentRequestForm(p => ({ ...p, description: e.target.value }))}
               placeholder="Add a note about this payment request..."
               rows={3}
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors resize-none"
+              className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors resize-none"
             />
           </div>
         </div>
@@ -2233,7 +2247,7 @@ const AdminBooks: React.FC = () => {
           <>
             <button
               onClick={() => { setShowExtendDueDateModal(false); setNewDueDate(''); }}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-600 rounded-xl transition-colors"
             >
               Cancel
             </button>
@@ -2252,12 +2266,12 @@ const AdminBooks: React.FC = () => {
         }
       >
         <div className="space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Current due date for <span className="font-semibold text-gray-900 dark:text-gray-100">{selectedBook?.bookName}</span>:{' '}
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            Current due date for <span className="font-semibold text-neutral-900 dark:text-neutral-100">{selectedBook?.bookName}</span>:{' '}
             <span className="font-semibold text-amber-700 dark:text-amber-300">{formatDate(selectedBook?.dueDate)}</span>
           </p>
           <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">
               New Due Date <span className="text-red-500">*</span>
             </label>
             <input
@@ -2265,7 +2279,7 @@ const AdminBooks: React.FC = () => {
               value={newDueDate}
               min={today}
               onChange={e => setNewDueDate(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
+              className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
             />
           </div>
         </div>

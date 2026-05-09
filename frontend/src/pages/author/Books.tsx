@@ -32,6 +32,9 @@ import { format } from 'date-fns';
 
 // Book types are now fetched dynamically from admin config
 
+const LIME = '#84CC16';
+const LIME_DARK = '#65a30d';
+
 const DEFAULT_PLATFORMS = [
   'Amazon',
   'Flipkart',
@@ -178,7 +181,8 @@ const OpenFileButton: React.FC<{ bookId: string; fileUrl: string }> = ({ bookId,
     <button
       onClick={handleOpen}
       disabled={loading}
-      className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 disabled:opacity-50"
+      className="hover:opacity-70 disabled:opacity-50 transition-opacity"
+      style={{ color: LIME_DARK }}
       title="Open file"
     >
       {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
@@ -211,16 +215,17 @@ const StepIndicator: React.FC<{ currentStep: number; steps: string[] }> = ({ cur
                   isComplete
                     ? 'bg-emerald-500 text-white'
                     : isActive
-                    ? 'bg-indigo-600 text-white ring-4 ring-indigo-100 dark:ring-indigo-900/40'
+                    ? 'text-white ring-4 ring-lime-100 dark:ring-lime-900/40'
                     : 'bg-neutral-200 dark:bg-dark-300 text-neutral-500 dark:text-dark-500'
                 }`}
+                style={isActive ? { background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` } : undefined}
               >
                 {isComplete ? <Check className="w-5 h-5" /> : stepNum}
               </div>
               <span
                 className={`mt-2 text-xs font-medium text-center hidden sm:block ${
                   isActive
-                    ? 'text-indigo-600 dark:text-indigo-400'
+                    ? 'text-lime-700 dark:text-lime-400'
                     : isComplete
                     ? 'text-emerald-600 dark:text-emerald-400'
                     : 'text-neutral-400 dark:text-dark-400'
@@ -785,7 +790,8 @@ const Books: React.FC = () => {
     const paidCount = paidEntries.length;
     const totalAmount = book.paymentStatus?.totalAmount || 0;
     const perInstallment = totalCount > 1 ? Math.ceil(totalAmount / totalCount) : totalAmount;
-    const isFullyPaid = (book.paymentStatus?.pendingAmount || (book.payment?.pendingAmount ?? totalAmount)) <= 0;
+    const isFullyPaid = (book.paymentStatus?.paymentCompletionPercentage ?? 0) >= 100 ||
+      (book.paymentStatus?.pendingAmount ?? book.payment?.pendingAmount ?? totalAmount) <= 0;
     return { plan, totalCount, paidCount, paidEntries, perInstallment, isFullyPaid };
   };
 
@@ -811,7 +817,8 @@ const Books: React.FC = () => {
           <h1 className="text-h1 font-bold text-neutral-900 dark:text-dark-900">Books Listing</h1>
           <button
             onClick={openAddWizard}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-body-sm font-medium rounded-lg shadow-sm transition-colors duration-200"
+            className="inline-flex items-center gap-2 px-5 py-2.5 text-white text-body-sm font-semibold rounded-xl shadow-sm transition-all duration-200"
+            style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
           >
             <Plus className="w-4 h-4" />
             New Book
@@ -832,7 +839,8 @@ const Books: React.FC = () => {
             </p>
             <button
               onClick={openAddWizard}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-body-sm font-medium rounded-lg shadow-sm transition-colors duration-200"
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-white text-body-sm font-semibold rounded-xl shadow-sm transition-all duration-200"
+            style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
             >
               <Plus className="w-4 h-4" />
               New Book
@@ -881,7 +889,8 @@ const Books: React.FC = () => {
                           <td className="px-4 py-3">
                             <button
                               onClick={() => openDetail(book)}
-                              className="text-body-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline text-left"
+                              className="text-body-sm font-semibold hover:underline text-left"
+                              style={{ color: LIME_DARK }}
                             >
                               {book.bookName}
                             </button>
@@ -938,7 +947,8 @@ const Books: React.FC = () => {
                                     <button
                                       onClick={() => handlePayNow(book)}
                                       disabled={paymentLoading && payingBook?.bookId === book.bookId}
-                                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white transition-colors"
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium disabled:opacity-60 text-white transition-all"
+                                      style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
                                     >
                                       {paymentLoading && payingBook?.bookId === book.bookId
                                         ? <Loader2 className="w-3 h-3 animate-spin" />
@@ -953,7 +963,8 @@ const Books: React.FC = () => {
                                 <button
                                   onClick={() => handlePayNow(book)}
                                   disabled={paymentLoading && payingBook?.bookId === book.bookId}
-                                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white transition-colors"
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-60 text-white transition-all"
+                                  style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
                                 >
                                   {paymentLoading && payingBook?.bookId === book.bookId
                                     ? <Loader2 className="w-3 h-3 animate-spin" />
@@ -980,7 +991,7 @@ const Books: React.FC = () => {
                                   return (
                                     <span key={platform} className="inline-flex items-center gap-1">
                                       <span className="font-medium">{platform}:</span>
-                                      <span className={units > 0 ? 'text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-neutral-400 dark:text-dark-400'}>
+                                      <span className={units > 0 ? 'font-semibold' : 'text-neutral-400 dark:text-dark-400'} style={units > 0 ? { color: LIME_DARK } : undefined}>
                                         {units}
                                       </span>
                                     </span>
@@ -1062,7 +1073,8 @@ const Books: React.FC = () => {
                 setWizardStep(1);
                 setViewMode('add');
               }}
-              className="ml-auto inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+              className="ml-auto inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-lg transition-all"
+              style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
             >
               <Pencil className="w-4 h-4" />
               Edit Book
@@ -1082,8 +1094,8 @@ const Books: React.FC = () => {
                   className="w-40 h-56 object-cover rounded-xl border border-neutral-200 dark:border-dark-300 shadow-sm"
                 />
               ) : (
-                <div className="w-40 h-56 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-xl border border-neutral-200 dark:border-dark-300 flex items-center justify-center">
-                  <BookOpen className="w-12 h-12 text-indigo-300 dark:text-indigo-600" />
+                <div className="w-40 h-56 rounded-xl border border-neutral-200 dark:border-dark-300 flex items-center justify-center" style={{ background: 'rgba(132,204,22,0.08)' }}>
+                  <BookOpen className="w-12 h-12" style={{ color: LIME }} />
                 </div>
               )}
             </div>
@@ -1207,7 +1219,8 @@ const Books: React.FC = () => {
           <div className="mt-4 pt-4 border-t border-neutral-100 dark:border-dark-200">
             <button
               onClick={() => setShowFiles(!showFiles)}
-              className="inline-flex items-center gap-2 text-body-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+              className="inline-flex items-center gap-2 text-body-sm font-medium transition-colors hover:opacity-75"
+              style={{ color: LIME_DARK }}
             >
               <Eye className="w-4 h-4" />
               {showFiles ? 'Hide Files' : 'View Files'}
@@ -1297,8 +1310,8 @@ const Books: React.FC = () => {
             const instInfo = getInstallmentInfo(book);
             if (instInfo.totalCount <= 1) return null;
             return (
-              <div className="mt-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-100 dark:border-indigo-800/30">
-                <h4 className="text-body-sm font-semibold text-indigo-700 dark:text-indigo-300 mb-3">
+              <div className="mt-4 p-4 rounded-lg border" style={{ background: 'rgba(132,204,22,0.07)', borderColor: 'rgba(132,204,22,0.25)' }}>
+                <h4 className="text-body-sm font-semibold mb-3" style={{ color: LIME_DARK }}>
                   Installment Plan ({instInfo.totalCount} installments)
                 </h4>
                 <div className="space-y-2">
@@ -1377,7 +1390,8 @@ const Books: React.FC = () => {
             <button
               onClick={() => handlePayNow(book)}
               disabled={paymentLoading && payingBook?.bookId === book.bookId}
-              className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-body-sm font-medium rounded-lg shadow-sm transition-colors duration-200"
+              className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 disabled:opacity-60 text-white text-body-sm font-semibold rounded-xl shadow-sm transition-all duration-200"
+              style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
             >
               {paymentLoading && payingBook?.bookId === book.bookId
                 ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -1420,15 +1434,14 @@ const Books: React.FC = () => {
                     <div
                       key={platform}
                       className={`p-4 rounded-xl text-center transition-colors ${
-                        units > 0
-                          ? 'bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30'
-                          : 'bg-neutral-50 dark:bg-dark-100'
+                        units > 0 ? 'border' : 'bg-neutral-50 dark:bg-dark-100'
                       }`}
+                      style={units > 0 ? { background: 'rgba(132,204,22,0.07)', borderColor: 'rgba(132,204,22,0.25)' } : undefined}
                     >
                       <p className="text-body-xs text-neutral-500 dark:text-dark-500 font-medium mb-1 truncate" title={platform}>
                         {platform}
                       </p>
-                      <p className={`text-h4 font-bold ${units > 0 ? 'text-indigo-700 dark:text-indigo-300' : 'text-neutral-900 dark:text-dark-900'}`}>
+                      <p className="text-h4 font-bold" style={units > 0 ? { color: LIME_DARK } : undefined}>
                         {units}
                       </p>
                       <p className="text-body-xs text-neutral-400 dark:text-dark-400">units sold</p>
@@ -1437,7 +1450,8 @@ const Books: React.FC = () => {
                           href={link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="mt-1 text-body-xs text-indigo-600 dark:text-indigo-400 hover:underline block truncate"
+                          className="mt-1 text-body-xs hover:underline block truncate"
+                          style={{ color: LIME_DARK }}
                         >
                           View listing
                         </a>
@@ -1472,7 +1486,7 @@ const Books: React.FC = () => {
           className={`w-full px-4 py-2.5 rounded-lg border ${
             formErrors.bookName
               ? 'border-red-400 focus:ring-red-500'
-              : 'border-neutral-300 dark:border-dark-300 focus:ring-indigo-500'
+              : 'border-neutral-300 dark:border-dark-300 focus:ring-lime-400/40 focus:border-lime-400'
           } bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200`}
         />
         {formErrors.bookName && (
@@ -1492,7 +1506,7 @@ const Books: React.FC = () => {
             className={`w-full px-4 py-2.5 rounded-lg border ${
               formErrors.language
                 ? 'border-red-400 focus:ring-red-500'
-                : 'border-neutral-300 dark:border-dark-300 focus:ring-indigo-500'
+                : 'border-neutral-300 dark:border-dark-300 focus:ring-lime-400/40 focus:border-lime-400'
             } bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 focus:outline-none focus:ring-2 focus:border-transparent appearance-none transition-all duration-200`}
           >
             <option value="">-- Select Language --</option>
@@ -1536,7 +1550,7 @@ const Books: React.FC = () => {
             className={`w-full px-4 py-2.5 rounded-lg border ${
               formErrors.bookType
                 ? 'border-red-400 focus:ring-red-500'
-                : 'border-neutral-300 dark:border-dark-300 focus:ring-indigo-500'
+                : 'border-neutral-300 dark:border-dark-300 focus:ring-lime-400/40 focus:border-lime-400'
             } bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 focus:outline-none focus:ring-2 focus:border-transparent appearance-none transition-all duration-200`}
           >
             <option value="">-- Select Book Type --</option>
@@ -1558,7 +1572,7 @@ const Books: React.FC = () => {
             value={(formData as any).customBookType || ''}
             onChange={(e) => setFormData((p) => ({ ...p, customBookType: e.target.value }))}
             placeholder="Enter custom book type"
-            className="w-full mt-2 px-4 py-2.5 text-sm border border-neutral-300 dark:border-dark-300 rounded-xl bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full mt-2 px-4 py-2.5 text-sm border border-neutral-300 dark:border-dark-300 rounded-xl bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 focus:outline-none focus:ring-2 focus:ring-lime-400/40 focus:border-lime-400"
           />
         )}
       </div>
@@ -1573,7 +1587,7 @@ const Books: React.FC = () => {
           value={formData.subtitle}
           onChange={(e) => setFormData((p) => ({ ...p, subtitle: e.target.value }))}
           placeholder="Enter subtitle (optional)"
-          className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 dark:border-dark-300 bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+          className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 dark:border-dark-300 bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 focus:outline-none focus:ring-2 focus:ring-lime-400/40 focus:border-lime-400 focus:border-transparent transition-all duration-200"
         />
       </div>
 
@@ -1587,7 +1601,7 @@ const Books: React.FC = () => {
           value={formData.targetAudience}
           onChange={(e) => setFormData((p) => ({ ...p, targetAudience: e.target.value }))}
           placeholder="e.g., Young Adults, Students, Professionals..."
-          className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 dark:border-dark-300 bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+          className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 dark:border-dark-300 bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 focus:outline-none focus:ring-2 focus:ring-lime-400/40 focus:border-lime-400 focus:border-transparent transition-all duration-200"
         />
       </div>
 
@@ -1604,7 +1618,7 @@ const Books: React.FC = () => {
           className={`w-full px-4 py-2.5 rounded-lg border ${
             formErrors.expectedLaunchDate
               ? 'border-red-400 focus:ring-red-500'
-              : 'border-neutral-300 dark:border-dark-300 focus:ring-indigo-500'
+              : 'border-neutral-300 dark:border-dark-300 focus:ring-lime-400/40 focus:border-lime-400'
           } bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200`}
         />
         {formErrors.expectedLaunchDate && (
@@ -1712,7 +1726,7 @@ const Books: React.FC = () => {
             className={`w-28 px-4 py-2.5 rounded-lg border ${
               formErrors.physicalCopies
                 ? 'border-red-400 focus:ring-red-500'
-                : 'border-neutral-300 dark:border-dark-300 focus:ring-indigo-500'
+                : 'border-neutral-300 dark:border-dark-300 focus:ring-lime-400/40 focus:border-lime-400'
             } bg-white dark:bg-dark-50 text-neutral-900 dark:text-dark-900 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200`}
           />
           <span className="text-body-xs text-emerald-600 dark:text-emerald-400 font-medium">
@@ -1747,13 +1761,13 @@ const Books: React.FC = () => {
           onClick={() => fileInputRef.current?.click()}
           className={`w-full py-8 px-4 border-2 border-dashed rounded-xl text-center cursor-pointer transition-all duration-200 ${
             isDragging
-              ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-              : 'border-neutral-300 dark:border-dark-400 hover:border-indigo-400 hover:bg-neutral-50 dark:hover:bg-dark-100'
+              ? 'border-lime-500'
+              : 'border-neutral-300 dark:border-dark-400 hover:border-lime-400 hover:bg-neutral-50 dark:hover:bg-dark-100'
           }`}
         >
           <Upload className="w-8 h-8 mx-auto mb-2 text-neutral-400 dark:text-dark-400" />
           <p className="text-body-sm text-neutral-600 dark:text-dark-600">
-            <span className="font-medium text-indigo-600 dark:text-indigo-400">Click to upload</span>{' '}
+            <span className="font-medium" style={{ color: LIME_DARK }}>Click to upload</span>{' '}
             or drag and drop
           </p>
           <p className="text-body-xs text-neutral-400 dark:text-dark-400 mt-1">
@@ -1773,7 +1787,7 @@ const Books: React.FC = () => {
                 key={`${file.name}-${idx}`}
                 className="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-dark-100 rounded-lg border border-neutral-200 dark:border-dark-300"
               >
-                <FileText className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+                <FileText className="w-4 h-4 flex-shrink-0" style={{ color: LIME_DARK }} />
                 <div className="flex-1 min-w-0">
                   <p className="text-body-sm font-medium text-neutral-800 dark:text-dark-800 truncate">
                     {file.name}
@@ -1809,7 +1823,7 @@ const Books: React.FC = () => {
   const renderStep3 = () => (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <ShoppingCart className="w-10 h-10 mx-auto mb-3 text-indigo-500" />
+        <ShoppingCart className="w-10 h-10 mx-auto mb-3" style={{ color: LIME_DARK }} />
         <h3 className="text-h4 font-bold text-neutral-900 dark:text-dark-900">
           Unlock the Earning Potential by Authorize to Selling
         </h3>
@@ -1819,8 +1833,8 @@ const Books: React.FC = () => {
       </div>
 
       {/* Select All */}
-      <div className="flex items-center justify-between p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
-        <span className="text-body-sm font-medium text-indigo-700 dark:text-indigo-300">
+      <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'rgba(132,204,22,0.09)', border: '1px solid rgba(132,204,22,0.25)' }}>
+        <span className="text-body-sm font-medium" style={{ color: LIME_DARK }}>
           Select All Platforms
         </span>
         <button
@@ -1828,9 +1842,10 @@ const Books: React.FC = () => {
           onClick={toggleAllPlatforms}
           className={`w-11 h-6 rounded-full transition-colors duration-200 relative flex-shrink-0 ${
             formData.selectedPlatforms.length === DEFAULT_PLATFORMS.length
-              ? 'bg-indigo-600'
+              ? ''
               : 'bg-neutral-300 dark:bg-dark-400'
           }`}
+          style={formData.selectedPlatforms.length === DEFAULT_PLATFORMS.length ? { background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` } : undefined}
         >
           <span
             className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
@@ -1853,7 +1868,7 @@ const Books: React.FC = () => {
               onClick={() => togglePlatform(platform)}
               className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 text-left ${
                 isSelected
-                  ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                  ? 'border-lime-500 bg-lime-50 dark:bg-lime-900/20'
                   : 'border-neutral-200 dark:border-dark-300 hover:border-neutral-300 dark:hover:border-dark-400 bg-white dark:bg-dark-100'
               }`}
             >

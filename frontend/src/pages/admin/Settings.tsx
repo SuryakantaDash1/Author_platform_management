@@ -3,6 +3,9 @@ import { Lock, Eye, EyeOff, CheckCircle2, XCircle, Shield } from 'lucide-react';
 import axiosInstance from '../../api/interceptors';
 import toast from 'react-hot-toast';
 
+const LIME = '#84CC16';
+const LIME_DARK = '#65a30d';
+
 // Password validation rules
 interface PasswordValidation {
   minLength: boolean;
@@ -44,9 +47,9 @@ const Settings: React.FC = () => {
       {passed ? (
         <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
       ) : (
-        <XCircle className="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />
+        <XCircle className="w-4 h-4 text-neutral-300 dark:text-neutral-600 flex-shrink-0" />
       )}
-      <span className={passed ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}>
+      <span className={passed ? 'text-green-600 dark:text-green-400' : 'text-neutral-500 dark:text-neutral-400'}>
         {label}
       </span>
     </div>
@@ -118,26 +121,26 @@ const Settings: React.FC = () => {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Settings</h1>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
           Manage your account settings and preferences
         </p>
       </div>
 
       {/* Change Password Card */}
       <div className="max-w-xl">
-        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700 overflow-hidden">
           {/* Card Header */}
-          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+          <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(132,204,22,0.12)' }}>
+                <Shield className="w-5 h-5" style={{ color: LIME_DARK }} />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
                   Change Password
                 </h2>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">
                   Update your password to keep your account secure
                 </p>
               </div>
@@ -150,12 +153,12 @@ const Settings: React.FC = () => {
             <div>
               <label
                 htmlFor="currentPassword"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+                className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5"
               >
                 Current Password (Old Password)
               </label>
               <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
                   <Lock className="w-4 h-4" />
                 </div>
                 <input
@@ -167,16 +170,16 @@ const Settings: React.FC = () => {
                     if (errors.currentPassword) setErrors((prev) => ({ ...prev, currentPassword: '' }));
                   }}
                   placeholder="Enter current password"
-                  className={`w-full pl-10 pr-10 py-2.5 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 transition-all ${
+                  className={`w-full pl-10 pr-10 py-2.5 text-sm border rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 transition-all ${
                     errors.currentPassword
                       ? 'border-red-500 focus:ring-red-400'
-                      : 'border-gray-300 dark:border-gray-600 focus:ring-purple-500'
+                      : 'border-neutral-300 dark:border-neutral-600 focus:ring-lime-400/40 focus:border-lime-400'
                   }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
                 >
                   {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -190,12 +193,12 @@ const Settings: React.FC = () => {
             <div>
               <label
                 htmlFor="newPassword"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+                className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5"
               >
                 New Password
               </label>
               <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
                   <Lock className="w-4 h-4" />
                 </div>
                 <input
@@ -207,16 +210,16 @@ const Settings: React.FC = () => {
                     if (errors.newPassword) setErrors((prev) => ({ ...prev, newPassword: '' }));
                   }}
                   placeholder="Enter new password"
-                  className={`w-full pl-10 pr-10 py-2.5 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 transition-all ${
+                  className={`w-full pl-10 pr-10 py-2.5 text-sm border rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 transition-all ${
                     errors.newPassword
                       ? 'border-red-500 focus:ring-red-400'
-                      : 'border-gray-300 dark:border-gray-600 focus:ring-purple-500'
+                      : 'border-neutral-300 dark:border-neutral-600 focus:ring-lime-400/40 focus:border-lime-400'
                   }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
                 >
                   {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -227,8 +230,8 @@ const Settings: React.FC = () => {
 
               {/* Password Requirements */}
               {newPassword.length > 0 && (
-                <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-1.5">
-                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                <div className="mt-3 p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg space-y-1.5">
+                  <p className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-2">
                     Password Requirements:
                   </p>
                   <ValidationCheck passed={passwordValidation.minLength} label="At least 8 characters" />
@@ -244,12 +247,12 @@ const Settings: React.FC = () => {
             <div>
               <label
                 htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+                className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5"
               >
                 Confirm New Password
               </label>
               <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
                   <Lock className="w-4 h-4" />
                 </div>
                 <input
@@ -261,18 +264,18 @@ const Settings: React.FC = () => {
                     if (errors.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: '' }));
                   }}
                   placeholder="Confirm new password"
-                  className={`w-full pl-10 pr-10 py-2.5 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 transition-all ${
+                  className={`w-full pl-10 pr-10 py-2.5 text-sm border rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 transition-all ${
                     errors.confirmPassword
                       ? 'border-red-500 focus:ring-red-400'
                       : confirmPassword.length > 0 && passwordsMatch
                       ? 'border-green-500 focus:ring-green-400'
-                      : 'border-gray-300 dark:border-gray-600 focus:ring-purple-500'
+                      : 'border-neutral-300 dark:border-neutral-600 focus:ring-lime-400/40 focus:border-lime-400'
                   }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
                 >
                   {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -292,9 +295,10 @@ const Settings: React.FC = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full flex items-center justify-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${
+                className={`w-full flex items-center justify-center gap-2 px-6 py-2.5 text-white text-sm font-semibold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-lime-400/40 focus:ring-offset-2 dark:focus:ring-offset-neutral-900 ${
                   isLoading ? 'opacity-60 cursor-not-allowed' : ''
                 }`}
+                style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
               >
                 {isLoading ? (
                   <>

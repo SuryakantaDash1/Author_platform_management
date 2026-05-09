@@ -21,6 +21,9 @@ import {
 } from 'lucide-react';
 import Badge from '../../components/common/Badge';
 
+const LIME = '#84CC16';
+const LIME_DARK = '#65a30d';
+
 // ── Types ──────────────────────────────────────────────────────────────
 interface AuthorAddress {
   housePlot?: string;
@@ -86,8 +89,7 @@ const categoryLabel = (category: string) => {
   return found ? found.label : category;
 };
 
-// ── Component ─────────────────────────────────────────────────────────
-// Inline messages component for expanded tickets
+// ── Inline messages component ─────────────────────────────────────────
 const TicketMessages: React.FC<{ ticketId: string; status: string }> = ({ ticketId, status }) => {
   const [messages, setMessages] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -116,23 +118,26 @@ const TicketMessages: React.FC<{ ticketId: string; status: string }> = ({ ticket
   };
 
   return (
-    <div className="mt-3 pt-3 border-t border-neutral-200 dark:border-dark-300" onClick={e => e.stopPropagation()}>
-      <p className="text-body-xs font-semibold text-neutral-700 dark:text-dark-700 mb-2">Messages</p>
+    <div className="mt-3 pt-3 border-t border-neutral-200 dark:border-neutral-700" onClick={e => e.stopPropagation()}>
+      <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">Messages</p>
       <div className="space-y-2 max-h-[200px] overflow-y-auto mb-3">
-        {loading ? <p className="text-body-xs text-neutral-400 py-2">Loading...</p>
-          : messages.length === 0 ? <p className="text-body-xs text-neutral-400 py-2">No messages yet</p>
-          : messages.filter((m: any) => m.senderRole !== 'system').length === 0 ? <p className="text-body-xs text-neutral-400 py-2">No messages yet</p>
+        {loading ? <p className="text-xs text-neutral-400 py-2">Loading...</p>
+          : messages.length === 0 ? <p className="text-xs text-neutral-400 py-2">No messages yet</p>
+          : messages.filter((m: any) => m.senderRole !== 'system').length === 0 ? <p className="text-xs text-neutral-400 py-2">No messages yet</p>
           : messages.filter((m: any) => m.senderRole !== 'system').map((msg: any, i: number) => (
             <div key={i} className={`flex ${msg.senderRole === 'author' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] px-3 py-2 rounded-xl text-body-sm ${
-                msg.senderRole === 'author'
-                  ? 'bg-indigo-600 text-white rounded-br-sm'
-                  : msg.senderRole === 'system'
-                  ? 'bg-neutral-100 dark:bg-dark-200 text-neutral-500 text-body-xs italic'
-                  : 'bg-white dark:bg-dark-200 text-neutral-900 dark:text-dark-900 border border-neutral-200 dark:border-dark-300 rounded-bl-sm'
-              }`}>
+              <div
+                className={`max-w-[80%] px-3 py-2 rounded-xl text-sm ${
+                  msg.senderRole === 'author'
+                    ? 'text-white rounded-br-sm'
+                    : msg.senderRole === 'system'
+                    ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 text-xs italic'
+                    : 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 border border-neutral-200 dark:border-neutral-700 rounded-bl-sm'
+                }`}
+                style={msg.senderRole === 'author' ? { background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` } : undefined}
+              >
                 <p>{msg.message}</p>
-                <p className={`text-[10px] mt-0.5 ${msg.senderRole === 'author' ? 'text-indigo-200' : 'text-neutral-400'}`}>
+                <p className={`text-[10px] mt-0.5 ${msg.senderRole === 'author' ? 'text-white/70' : 'text-neutral-400'}`}>
                   {msg.senderRole === 'admin' ? 'Admin' : msg.senderRole === 'system' ? 'System' : 'You'} · {new Date(msg.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
@@ -141,13 +146,21 @@ const TicketMessages: React.FC<{ ticketId: string; status: string }> = ({ ticket
       </div>
       {status !== 'closed' && (
         <div className="flex gap-2">
-          <input type="text" value={reply} onChange={e => setReply(e.target.value)}
+          <input
+            type="text"
+            value={reply}
+            onChange={e => setReply(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSend(); }}}
             placeholder="Type a reply..."
-            className="flex-1 px-3 py-2 text-body-sm border border-neutral-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-          <button onClick={handleSend} disabled={sending || !reply.trim()}
-            className="px-3 py-2 text-body-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 rounded-lg">
-            {sending ? '...' : 'Send'}
+            className="flex-1 px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-lime-400/40 focus:border-lime-400 focus:outline-none"
+          />
+          <button
+            onClick={handleSend}
+            disabled={sending || !reply.trim()}
+            className="px-3 py-2 text-sm font-medium text-white rounded-lg disabled:opacity-50 transition-all hover:opacity-90"
+            style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
+          >
+            {sending ? '...' : <Send className="w-4 h-4" />}
           </button>
         </div>
       )}
@@ -158,16 +171,11 @@ const TicketMessages: React.FC<{ ticketId: string; status: string }> = ({ ticket
 const Tickets: React.FC = () => {
   const { user } = useAuth();
 
-  // Profile state
   const [profile, setProfile] = useState<AuthorProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-
-  // Tickets state
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [ticketsLoading, setTicketsLoading] = useState(true);
   const [expandedTicket, setExpandedTicket] = useState<string | null>(null);
-
-  // Form state
   const [form, setForm] = useState<TicketFormData>({
     category: '',
     discussionTimeSlot1: '',
@@ -197,7 +205,6 @@ const Tickets: React.FC = () => {
         });
       }
     } catch {
-      // Fallback to auth-context user info
       setProfile({
         firstName: user?.firstName,
         lastName: user?.lastName,
@@ -218,7 +225,7 @@ const Tickets: React.FC = () => {
         setTickets(data.data?.tickets || []);
       }
     } catch {
-      // Silently fail – tickets section will simply be empty
+      // Silently fail
     } finally {
       setTicketsLoading(false);
     }
@@ -229,36 +236,20 @@ const Tickets: React.FC = () => {
     fetchTickets();
   }, [fetchProfile, fetchTickets]);
 
-  // ── Form handlers ──────────────────────────────────────────────────
-  const handleChange = (
-    e: React.ChangeEvent<HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLTextAreaElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.category) {
-      toast.error('Please select a support category.');
-      return;
-    }
-    if (!form.discussionTimeSlot1) {
-      toast.error('Please select a discussion time slot.');
-      return;
-    }
-    if (!form.discussionDay) {
-      toast.error('Please select a discussion day.');
-      return;
-    }
-    if (!form.description.trim()) {
-      toast.error('Please enter a description.');
-      return;
-    }
+    if (!form.category) { toast.error('Please select a support category.'); return; }
+    if (!form.discussionTimeSlot1) { toast.error('Please select a discussion time slot.'); return; }
+    if (!form.discussionDay) { toast.error('Please select a discussion day.'); return; }
+    if (!form.description.trim()) { toast.error('Please enter a description.'); return; }
 
     try {
       setSubmitting(true);
-
       const payload = {
         title: categoryLabel(form.category),
         category: form.category,
@@ -267,312 +258,301 @@ const Tickets: React.FC = () => {
         discussionTimeSlot1: form.discussionTimeSlot1,
         discussionTimeSlot2: '',
       };
-
       const { data } = await axiosInstance.post('/support/tickets', payload);
-
       if (data.success) {
         toast.success('Support request submitted successfully!');
-        setForm({
-          category: '',
-          discussionTimeSlot1: '',
-          discussionDay: '',
-          description: '',
-        });
+        setForm({ category: '', discussionTimeSlot1: '', discussionDay: '', description: '' });
         fetchTickets();
       } else {
         toast.error(data.message || 'Failed to submit request.');
       }
     } catch (err: any) {
-      toast.error(
-        err?.response?.data?.message || 'Something went wrong. Please try again.'
-      );
+      toast.error(err?.response?.data?.message || 'Something went wrong. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  // ── Computed profile fields ─────────────────────────────────────────
-  const fullName =
-    [profile?.firstName, profile?.lastName].filter(Boolean).join(' ') || 'Author';
+  const fullName = [profile?.firstName, profile?.lastName].filter(Boolean).join(' ') || 'Author';
   const addr = profile?.address && typeof profile.address === 'object' ? profile.address : null;
   const addressLine = [
-    addr?.housePlot, addr?.city || profile?.city, addr?.district, addr?.state || profile?.state, addr?.country, addr?.pinCode || profile?.pincode
+    addr?.housePlot, addr?.city || profile?.city, addr?.district,
+    addr?.state || profile?.state, addr?.country, addr?.pinCode || profile?.pincode,
   ].filter(Boolean).join(', ');
 
   // ── Render ──────────────────────────────────────────────────────────
   return (
     <div className="animate-fadeIn">
       {/* Page heading */}
-      <h1 className="text-h1 font-bold text-neutral-900 dark:text-dark-900 mb-6">
-        Support / Help Chart
-      </h1>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Support / Help Desk</h1>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
+          Submit a request or chat with admin support
+        </p>
+      </div>
 
       {/* ─── Two-column layout ─────────────────────────────────────── */}
       <div className="flex flex-col lg:flex-row gap-6">
         {/* ═══════════════ LEFT SIDEBAR ═══════════════ */}
         <div className="w-full lg:w-1/3">
-          <div className="card p-6 sticky top-24">
-            {/* POVITAL logo icon */}
-            <div className="flex justify-center mb-5">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary-600 to-secondary-600 rounded-xl flex items-center justify-center shadow-md">
-                <Book className="w-7 h-7 text-white" />
+          <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden sticky top-24">
+            {/* Lime accent top bar */}
+            <div className="h-1" style={{ background: `linear-gradient(90deg, ${LIME}, ${LIME_DARK})` }} />
+            <div className="p-6">
+              {/* Icon */}
+              <div className="flex justify-center mb-5">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md" style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}>
+                  <Book className="w-7 h-7 text-white" />
+                </div>
               </div>
-            </div>
 
-            {profileLoading ? (
-              <div className="flex flex-col items-center gap-3 py-8">
-                <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
-                <p className="text-body-sm text-neutral-500 dark:text-dark-500">
-                  Loading profile...
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* Profile photo */}
-                <div className="flex justify-center mb-4">
-                  {profile?.profilePicture ? (
-                    <img
-                      src={profile.profilePicture}
-                      alt={fullName}
-                      className="w-24 h-24 rounded-full object-cover border-4 border-primary-100 dark:border-primary-900/40 shadow"
-                    />
-                  ) : (
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center border-4 border-primary-100 dark:border-primary-900/40 shadow">
-                      <span className="text-white text-3xl font-bold">
-                        {(profile?.firstName?.charAt(0) || 'A').toUpperCase()}
-                      </span>
-                    </div>
-                  )}
+              {profileLoading ? (
+                <div className="flex flex-col items-center gap-3 py-8">
+                  <Loader2 className="w-8 h-8 animate-spin" style={{ color: LIME_DARK }} />
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">Loading profile...</p>
                 </div>
+              ) : (
+                <>
+                  {/* Profile photo */}
+                  <div className="flex justify-center mb-4">
+                    {profile?.profilePicture ? (
+                      <img
+                        src={profile.profilePicture}
+                        alt={fullName}
+                        className="w-24 h-24 rounded-full object-cover shadow"
+                        style={{ border: `3px solid ${LIME}` }}
+                      />
+                    ) : (
+                      <div
+                        className="w-24 h-24 rounded-full flex items-center justify-center shadow"
+                        style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})`, border: `3px solid rgba(132,204,22,0.30)` }}
+                      >
+                        <span className="text-white text-3xl font-bold">
+                          {(profile?.firstName?.charAt(0) || 'A').toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
 
-                {/* Author info */}
-                <div className="text-center space-y-1 mb-5">
-                  {profile?.authorId && (
-                    <p className="text-body-xs font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 inline-block px-3 py-0.5 rounded-full">
-                      ID: {profile.authorId}
-                    </p>
-                  )}
-                  <h3 className="text-h5 font-semibold text-neutral-900 dark:text-dark-900">
-                    {fullName}
-                  </h3>
-                </div>
-
-                {/* Detail rows */}
-                <div className="space-y-3 border-t border-neutral-200 dark:border-dark-300 pt-4">
-                  {addressLine && (
-                    <div className="flex items-start gap-3">
-                      <MapPin className="w-4 h-4 mt-0.5 text-indigo-500 shrink-0" />
-                      <span className="text-body-sm text-neutral-700 dark:text-dark-700">
-                        {addressLine}
-                      </span>
-                    </div>
-                  )}
-
-                  {profile?.mobile && (
-                    <div className="flex items-start gap-3">
-                      <Phone className="w-4 h-4 mt-0.5 text-indigo-500 shrink-0" />
-                      <span className="text-body-sm text-neutral-700 dark:text-dark-700">
-                        {profile.mobile}
-                      </span>
-                    </div>
-                  )}
-
-                  {profile?.email && (
-                    <div className="flex items-start gap-3">
-                      <Mail className="w-4 h-4 mt-0.5 text-indigo-500 shrink-0" />
-                      <span className="text-body-sm text-neutral-700 dark:text-dark-700 break-all">
-                        {profile.email}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Total Books card */}
-                <div className="mt-5 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl p-4 border border-indigo-100 dark:border-indigo-800/30">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg flex items-center justify-center">
-                      <BookOpen className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                    </div>
-                    <div>
-                      <p className="text-body-xs text-neutral-500 dark:text-dark-500">
-                        Total Books
+                  {/* Author info */}
+                  <div className="text-center space-y-1 mb-5">
+                    {profile?.authorId && (
+                      <p className="text-xs font-semibold inline-block px-3 py-0.5 rounded-full" style={{ color: LIME_DARK, background: 'rgba(132,204,22,0.12)' }}>
+                        ID: {profile.authorId}
                       </p>
-                      <p className="text-h4 font-bold text-indigo-700 dark:text-indigo-300">
-                        0
-                      </p>
+                    )}
+                    <h3 className="text-base font-semibold text-neutral-900 dark:text-white">
+                      {fullName}
+                    </h3>
+                  </div>
+
+                  {/* Detail rows */}
+                  <div className="space-y-3 border-t border-neutral-200 dark:border-neutral-800 pt-4">
+                    {addressLine && (
+                      <div className="flex items-start gap-3">
+                        <MapPin className="w-4 h-4 mt-0.5 shrink-0" style={{ color: LIME_DARK }} />
+                        <span className="text-sm text-neutral-700 dark:text-neutral-300">{addressLine}</span>
+                      </div>
+                    )}
+                    {profile?.mobile && (
+                      <div className="flex items-start gap-3">
+                        <Phone className="w-4 h-4 mt-0.5 shrink-0" style={{ color: LIME_DARK }} />
+                        <span className="text-sm text-neutral-700 dark:text-neutral-300">{profile.mobile}</span>
+                      </div>
+                    )}
+                    {profile?.email && (
+                      <div className="flex items-start gap-3">
+                        <Mail className="w-4 h-4 mt-0.5 shrink-0" style={{ color: LIME_DARK }} />
+                        <span className="text-sm text-neutral-700 dark:text-neutral-300 break-all">{profile.email}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Total Books card */}
+                  <div className="mt-5 rounded-xl p-4" style={{ background: 'rgba(132,204,22,0.08)', border: '1px solid rgba(132,204,22,0.20)' }}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(132,204,22,0.15)' }}>
+                        <BookOpen className="w-5 h-5" style={{ color: LIME_DARK }} />
+                      </div>
+                      <div>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400">Total Books</p>
+                        <p className="text-lg font-bold" style={{ color: LIME_DARK }}>0</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </>
-            )}
+                </>
+              )}
+            </div>
           </div>
         </div>
 
         {/* ═══════════════ RIGHT CONTENT ═══════════════ */}
         <div className="w-full lg:w-2/3 space-y-6">
-          {/* ── Contact for Admin Support panel ────────────────────── */}
-          <div className="card p-6">
-            {/* Header row */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <MessageSquare className="w-5 h-5 text-white" />
+          {/* ── Contact for Admin Support panel ── */}
+          <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+            {/* Lime accent top bar */}
+            <div className="h-1" style={{ background: `linear-gradient(90deg, ${LIME}, ${LIME_DARK})` }} />
+            <div className="p-6">
+              {/* Header row */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}>
+                    <MessageSquare className="w-5 h-5 text-white" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
+                    Contact for Admin Support
+                  </h2>
                 </div>
-                <h2 className="text-h4 font-semibold text-neutral-900 dark:text-dark-900">
-                  Contact for Admin Support
-                </h2>
-              </div>
 
-              {/* Chat Center button */}
-              <button
-                onClick={() => tickets.length > 0 && setExpandedTicket(expandedTicket === tickets[0].ticketId ? null : (tickets[0].ticketId ?? null))}
-                disabled={tickets.length === 0}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-500 hover:bg-green-600 text-white text-body-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title={tickets.length === 0 ? 'Submit a ticket to start chatting' : 'Open chat for latest ticket'}
-              >
-                <MessageSquare className="w-4 h-4" />
-                Chat Center
-              </button>
-            </div>
-
-            {/* ── Support form ──────────────────────────────────────── */}
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Select Support For? */}
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 dark:text-dark-700 mb-2">
-                  Select Support For? <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <select
-                    name="category"
-                    value={form.category}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 dark:border-dark-300 bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none transition-all duration-200"
-                  >
-                    <option value="">-- Select a category --</option>
-                    {TICKET_CATEGORIES.map((cat) => (
-                      <option key={cat.value} value={cat.value}>
-                        {cat.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Discussion Time */}
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 dark:text-dark-700 mb-2">
-                  Discussion Time <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <select
-                    name="discussionTimeSlot1"
-                    value={form.discussionTimeSlot1}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 dark:border-dark-300 bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none transition-all duration-200"
-                  >
-                    <option value="">-- Select a time slot --</option>
-                    {TIME_SLOTS.map((slot) => (
-                      <option key={slot.value} value={slot.value}>
-                        {slot.label}
-                      </option>
-                    ))}
-                  </select>
-                  <Clock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Discussion Day - Dropdown */}
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 dark:text-dark-700 mb-2">
-                  Discussion Day <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="discussionDay"
-                  value={form.discussionDay}
-                  onChange={handleChange as any}
-                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 dark:border-dark-300 bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
-                >
-                  <option value="">-- Select a day --</option>
-                  {(() => {
-                    const days = [];
-                    for (let i = 0; i < 3; i++) {
-                      const d = new Date();
-                      d.setDate(d.getDate() + i);
-                      const label = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : 'Day After Tomorrow';
-                      const val = d.toISOString().split('T')[0];
-                      days.push(<option key={val} value={val}>{label} ({d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })})</option>);
-                    }
-                    return days;
-                  })()}
-                </select>
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 dark:text-dark-700 mb-2">
-                  Description <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  name="description"
-                  value={form.description}
-                  onChange={handleChange}
-                  rows={4}
-                  placeholder="Describe your issue or query in detail..."
-                  className="w-full px-4 py-3 rounded-lg border border-neutral-300 dark:border-dark-300 bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 placeholder:text-neutral-400 dark:placeholder:text-dark-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none transition-all duration-200"
-                />
-              </div>
-
-              {/* Submit button */}
-              <div className="flex justify-end">
+                {/* Chat Center button */}
                 <button
-                  type="submit"
-                  disabled={submitting}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white text-body-sm font-medium rounded-lg focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => tickets.length > 0 && setExpandedTicket(expandedTicket === tickets[0].ticketId ? null : (tickets[0].ticketId ?? null))}
+                  disabled={tickets.length === 0}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 text-white text-sm font-semibold rounded-xl transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
+                  title={tickets.length === 0 ? 'Submit a ticket to start chatting' : 'Open chat for latest ticket'}
                 >
-                  {submitting ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
-                  {submitting ? 'Submitting...' : 'Submit Request'}
+                  <MessageSquare className="w-4 h-4" />
+                  Chat Center
                 </button>
               </div>
-            </form>
+
+              {/* ── Support form ── */}
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Select Support For? */}
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    Select Support For? <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      name="category"
+                      value={form.category}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/40 focus:border-lime-400 appearance-none transition-all duration-200"
+                    >
+                      <option value="">-- Select a category --</option>
+                      {TICKET_CATEGORIES.map((cat) => (
+                        <option key={cat.value} value={cat.value}>{cat.label}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* Discussion Time */}
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    Discussion Time <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      name="discussionTimeSlot1"
+                      value={form.discussionTimeSlot1}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/40 focus:border-lime-400 appearance-none transition-all duration-200"
+                    >
+                      <option value="">-- Select a time slot --</option>
+                      {TIME_SLOTS.map((slot) => (
+                        <option key={slot.value} value={slot.value}>{slot.label}</option>
+                      ))}
+                    </select>
+                    <Clock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* Discussion Day */}
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    Discussion Day <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="discussionDay"
+                    value={form.discussionDay}
+                    onChange={handleChange as any}
+                    className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/40 focus:border-lime-400 transition-all duration-200"
+                  >
+                    <option value="">-- Select a day --</option>
+                    {(() => {
+                      const days = [];
+                      for (let i = 0; i < 3; i++) {
+                        const d = new Date();
+                        d.setDate(d.getDate() + i);
+                        const label = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : 'Day After Tomorrow';
+                        const val = d.toISOString().split('T')[0];
+                        days.push(
+                          <option key={val} value={val}>
+                            {label} ({d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })})
+                          </option>
+                        );
+                      }
+                      return days;
+                    })()}
+                  </select>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    Description <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    name="description"
+                    value={form.description}
+                    onChange={handleChange}
+                    rows={4}
+                    placeholder="Describe your issue or query in detail..."
+                    className="w-full px-4 py-3 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-lime-400/40 focus:border-lime-400 resize-none transition-all duration-200"
+                  />
+                </div>
+
+                {/* Submit button */}
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="inline-flex items-center gap-2 px-6 py-3 text-white text-sm font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-lime-400/40 focus:ring-offset-2 transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
+                  >
+                    {submitting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                    {submitting ? 'Submitting...' : 'Submit Request'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
 
-          {/* ── Existing tickets list ──────────────────────────────── */}
-          <div className="card p-6">
+          {/* ── Existing tickets list ── */}
+          <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-6">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-h5 font-semibold text-neutral-900 dark:text-dark-900">
+              <h3 className="text-base font-semibold text-neutral-900 dark:text-white">
                 Your Support Tickets
               </h3>
               <button
                 onClick={fetchTickets}
                 disabled={ticketsLoading}
-                className="p-2 rounded-lg text-neutral-500 hover:text-primary-600 hover:bg-neutral-100 dark:hover:bg-dark-200 transition-colors disabled:opacity-50"
+                className="p-2 rounded-lg text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors disabled:opacity-50"
                 title="Refresh tickets"
               >
-                <RefreshCw
-                  className={`w-4 h-4 ${ticketsLoading ? 'animate-spin' : ''}`}
-                />
+                <RefreshCw className={`w-4 h-4 ${ticketsLoading ? 'animate-spin' : ''}`} />
               </button>
             </div>
 
             {ticketsLoading ? (
               <div className="flex flex-col items-center gap-3 py-10">
-                <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
-                <p className="text-body-sm text-neutral-500 dark:text-dark-500">
-                  Loading tickets...
-                </p>
+                <Loader2 className="w-8 h-8 animate-spin" style={{ color: LIME_DARK }} />
+                <p className="text-sm text-neutral-500 dark:text-neutral-400">Loading tickets...</p>
               </div>
             ) : tickets.length === 0 ? (
               <div className="flex flex-col items-center gap-3 py-10 text-center">
-                <div className="w-14 h-14 bg-neutral-100 dark:bg-dark-200 rounded-full flex items-center justify-center">
-                  <AlertCircle className="w-7 h-7 text-neutral-400 dark:text-dark-400" />
+                <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: 'rgba(132,204,22,0.10)' }}>
+                  <AlertCircle className="w-7 h-7" style={{ color: LIME_DARK }} />
                 </div>
-                <p className="text-body-sm text-neutral-500 dark:text-dark-500">
+                <p className="text-sm text-neutral-500 dark:text-neutral-400">
                   No support tickets yet. Submit a request above to get started.
                 </p>
               </div>
@@ -581,59 +561,50 @@ const Tickets: React.FC = () => {
                 {tickets.map((ticket) => (
                   <div
                     key={ticket._id}
-                    className="border border-neutral-200 dark:border-dark-300 rounded-xl p-4 hover:shadow-md transition-all duration-200 bg-neutral-50/50 dark:bg-dark-100/50 cursor-pointer"
+                    className="border border-neutral-200 dark:border-neutral-700 rounded-xl p-4 hover:shadow-md transition-all duration-200 bg-neutral-50/50 dark:bg-neutral-800/30 cursor-pointer"
                     onClick={() => setExpandedTicket(expandedTicket === ticket.ticketId ? null : (ticket.ticketId ?? null))}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-body font-semibold text-neutral-900 dark:text-dark-900 truncate">
+                        <h4 className="text-sm font-semibold text-neutral-900 dark:text-white truncate">
                           {ticket.title}
                         </h4>
-                        <p className="text-body-xs text-indigo-600 dark:text-indigo-400 mt-0.5">
+                        <p className="text-xs mt-0.5 font-medium" style={{ color: LIME_DARK }}>
                           {categoryLabel(ticket.category)}
                         </p>
                       </div>
-                      <Badge
-                        variant={statusBadgeVariant(ticket.status)}
-                        size="sm"
-                        dot
-                      >
+                      <Badge variant={statusBadgeVariant(ticket.status)} size="sm" dot>
                         {statusLabel(ticket.status)}
                       </Badge>
                     </div>
 
                     {ticket.description && (
-                      <p className="text-body-sm text-neutral-600 dark:text-dark-600 mt-2 truncate-2">
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2 line-clamp-2">
                         {ticket.description}
                       </p>
                     )}
 
-                    <div className="flex flex-wrap items-center gap-4 mt-3 text-body-xs text-neutral-500 dark:text-dark-500">
+                    <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-neutral-500 dark:text-neutral-400">
                       <span className="inline-flex items-center gap-1">
                         <CalendarDays className="w-3.5 h-3.5" />
                         {new Date(ticket.createdAt).toLocaleDateString('en-IN', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
+                          day: '2-digit', month: 'short', year: 'numeric',
                         })}
                       </span>
                       {ticket.discussionDay && (
                         <span className="inline-flex items-center gap-1">
                           <Clock className="w-3.5 h-3.5" />
-                          {ticket.discussionDay ? new Date(ticket.discussionDay).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : ticket.discussionDay}
-                          {ticket.discussionTimeSlot1
-                            ? ` | ${ticket.discussionTimeSlot1}`
-                            : ''}
+                          {new Date(ticket.discussionDay).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          {ticket.discussionTimeSlot1 ? ` | ${ticket.discussionTimeSlot1}` : ''}
                         </span>
                       )}
                       {ticket.ticketId && (
-                        <span className="font-mono text-neutral-400 dark:text-dark-400">
+                        <span className="font-mono text-neutral-400 dark:text-neutral-500">
                           #{ticket.ticketId}
                         </span>
                       )}
                     </div>
 
-                    {/* Expanded Messages Section */}
                     {expandedTicket === ticket.ticketId && (
                       <TicketMessages ticketId={ticket.ticketId} status={ticket.status} />
                     )}

@@ -124,6 +124,9 @@ const initialForm: FormState = {
 // Component
 // ---------------------------------------------------------------------------
 
+const LIME = '#84CC16';
+const LIME_DARK = '#65a30d';
+
 const PaymentConfig: React.FC = () => {
   // ---- State ----
   const [configs, setConfigs] = useState<PaymentConfigData[]>([]);
@@ -503,19 +506,19 @@ const PaymentConfig: React.FC = () => {
 
   const renderPriceCell = (svc: ServicePrice | undefined) => {
     if (!svc || svc.price === 0) {
-      return <span className="text-gray-400 dark:text-gray-600">--</span>;
+      return <span className="text-neutral-400 dark:text-neutral-600">--</span>;
     }
     const discounted = calcFinalPrice(svc.price, svc.discount);
     if (svc.discount > 0 && discounted !== svc.price) {
       return (
         <span className="whitespace-nowrap">
-          <span className="font-semibold text-gray-900 dark:text-gray-100">{discounted}</span>
-          <span className="text-gray-400 dark:text-gray-500 mx-0.5">/</span>
-          <span className="line-through text-gray-400 dark:text-gray-500 text-xs">{svc.price}</span>
+          <span className="font-semibold text-neutral-900 dark:text-neutral-100">{discounted}</span>
+          <span className="text-neutral-400 dark:text-neutral-500 mx-0.5">/</span>
+          <span className="line-through text-neutral-400 dark:text-neutral-500 text-xs">{svc.price}</span>
         </span>
       );
     }
-    return <span className="font-semibold text-gray-900 dark:text-gray-100">{svc.price}</span>;
+    return <span className="font-semibold text-neutral-900 dark:text-neutral-100">{svc.price}</span>;
   };
 
   // =========================================================================
@@ -523,13 +526,13 @@ const PaymentConfig: React.FC = () => {
   // =========================================================================
 
   const renderBookTypesCard = () => (
-    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+    <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700 p-6 mb-6">
       <div className="flex items-center gap-2 mb-4">
-        <BookOpen className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Book Types</h3>
-        {savingBookTypes && <Loader2 className="w-4 h-4 text-indigo-500 animate-spin" />}
+        <BookOpen className="w-5 h-5" style={{ color: LIME_DARK }} />
+        <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Book Types</h3>
+        {savingBookTypes && <Loader2 className="w-4 h-4 animate-spin" style={{ color: LIME }} />}
       </div>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+      <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
         Manage book types that authors can select when adding a book. These appear in the Book Type dropdown.
       </p>
 
@@ -541,11 +544,12 @@ const PaymentConfig: React.FC = () => {
           onChange={e => setNewBookType(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && addBookType()}
           placeholder="Enter new book type..."
-          className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="flex-1 px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400"
         />
         <button
           onClick={addBookType}
-          className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors flex items-center gap-1"
+          className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors flex items-center gap-1"
+          style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
         >
           <Plus className="w-4 h-4" /> Add
         </button>
@@ -553,7 +557,7 @@ const PaymentConfig: React.FC = () => {
 
       {/* Types list */}
       {bookTypes.length === 0 ? (
-        <p className="text-sm text-gray-400 dark:text-gray-500 italic text-center py-4">
+        <p className="text-sm text-neutral-400 dark:text-neutral-500 italic text-center py-4">
           No book types added yet. Add your first book type above.
         </p>
       ) : (
@@ -561,12 +565,13 @@ const PaymentConfig: React.FC = () => {
           {bookTypes.map((type, i) => (
             <span
               key={i}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded-full border border-indigo-200 dark:border-indigo-800"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-full border"
+              style={{ background: 'rgba(132,204,22,0.10)', color: LIME_DARK, borderColor: 'rgba(132,204,22,0.30)' }}
             >
               {type}
               <button
                 onClick={() => removeBookType(i)}
-                className="ml-0.5 text-indigo-400 hover:text-red-500 transition-colors"
+                className="ml-0.5 hover:text-red-500 transition-colors" style={{ color: LIME }}
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -582,11 +587,11 @@ const PaymentConfig: React.FC = () => {
   // =========================================================================
 
   const renderLeftPanel = () => (
-    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+    <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700 overflow-hidden flex flex-col">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-          <CreditCard className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+      <div className="px-5 py-4 border-b border-neutral-200 dark:border-neutral-700 flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
+          <CreditCard className="w-5 h-5" style={{ color: LIME_DARK }} />
           Payment Configuration
         </h2>
       </div>
@@ -594,11 +599,11 @@ const PaymentConfig: React.FC = () => {
       {/* Table */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-16 gap-3">
-          <div className="w-8 h-8 border-4 border-gray-200 border-t-indigo-600 rounded-full animate-spin" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
+          <div className="w-8 h-8 border-4 border-neutral-200 rounded-full animate-spin" style={{ borderTopColor: LIME }} />
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">Loading...</p>
         </div>
       ) : configs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-500 dark:text-gray-400">
+        <div className="flex flex-col items-center justify-center py-16 gap-3 text-neutral-500 dark:text-neutral-400">
           <Languages className="w-10 h-10 opacity-40" />
           <p className="text-sm">No configurations found</p>
         </div>
@@ -606,44 +611,44 @@ const PaymentConfig: React.FC = () => {
         <div className="overflow-x-auto flex-1">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <tr className="bg-neutral-50 dark:bg-neutral-800/50 border-b border-neutral-200 dark:border-neutral-700">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   Book Language
                 </th>
-                <th className="text-center px-3 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="text-center px-3 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   Onboard Package
                 </th>
-                <th className="text-center px-3 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="text-center px-3 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   Cover Page
                 </th>
-                <th className="text-center px-3 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="text-center px-3 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   Distribution
                 </th>
-                <th className="text-center px-3 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="text-center px-3 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   Master Copy
                 </th>
-                <th className="text-center px-3 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="text-center px-3 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   Copyrights
                 </th>
-                <th className="text-center px-3 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="text-center px-3 py-3 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                   Action
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {configs.map((config) => {
                 const svc = config.services || ({} as Record<ServiceKey, ServicePrice>);
                 return (
                   <tr
                     key={config._id}
-                    className={`hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors ${
-                      editingId === config._id ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : ''
+                    className={`hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors ${
+                      editingId === config._id ? 'bg-lime-50/70 dark:bg-lime-900/10' : ''
                     }`}
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-indigo-500 dark:text-indigo-400 flex-shrink-0" />
-                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                        <Globe className="w-4 h-4 flex-shrink-0" style={{ color: LIME_DARK }} />
+                        <span className="font-medium text-neutral-900 dark:text-neutral-100">
                           {config.language}
                         </span>
                       </div>
@@ -667,14 +672,14 @@ const PaymentConfig: React.FC = () => {
                       <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() => openEditModal(config)}
-                          className="p-1.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                          className="p-1.5 text-neutral-500 dark:text-neutral-400 hover:text-lime-700 dark:hover:text-lime-400 hover:bg-lime-50 dark:hover:bg-lime-900/20 rounded-lg transition-colors"
                           title="Edit"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => openDeleteConfirm(config)}
-                          className="p-1.5 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                          className="p-1.5 text-neutral-500 hover:text-red-600 dark:text-neutral-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                           title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -690,10 +695,10 @@ const PaymentConfig: React.FC = () => {
       )}
 
       {/* Add More button */}
-      <div className="px-5 py-3 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+      <div className="px-5 py-3 border-t border-neutral-200 dark:border-neutral-700 flex justify-end">
         <button
           onClick={openCreatePanel}
-          className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium hover:bg-lime-50 dark:hover:bg-lime-900/20 rounded-lg transition-colors" style={{ color: LIME_DARK }}
         >
           <Plus className="w-4 h-4" />
           Add More
@@ -728,26 +733,26 @@ const PaymentConfig: React.FC = () => {
     ];
 
     return (
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700 overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-700">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
               Payment Configuration for Authors
             </h2>
             <button
               onClick={closePanel}
-              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              className="p-1.5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
           {lastModify && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
               Last modify: {lastModify}
             </p>
           )}
-          <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400 mt-2">
+          <p className="text-sm font-medium mt-2" style={{ color: LIME_DARK }}>
             Standard activation plan
           </p>
         </div>
@@ -756,7 +761,7 @@ const PaymentConfig: React.FC = () => {
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Book Language */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
               Book Language <span className="text-red-500">*</span>
             </label>
             <input
@@ -773,10 +778,10 @@ const PaymentConfig: React.FC = () => {
                 }
               }}
               placeholder="e.g. English, Hindi, Odia..."
-              className={`w-full px-4 py-2.5 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+              className={`w-full px-4 py-2.5 text-sm border rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors ${
                 errors.language
                   ? 'border-red-400 dark:border-red-500'
-                  : 'border-gray-300 dark:border-gray-600'
+                  : 'border-neutral-300 dark:border-neutral-600'
               }`}
             />
             {errors.language && (
@@ -792,12 +797,12 @@ const PaymentConfig: React.FC = () => {
 
             return (
               <div key={key}>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">
                   {label}
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">Rs</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400">Rs</span>
                     <input
                       type="number"
                       min="0"
@@ -805,15 +810,15 @@ const PaymentConfig: React.FC = () => {
                       value={svc.price}
                       onChange={(e) => updateService(key, 'price', e.target.value)}
                       placeholder="Main Price"
-                      className={`w-full pl-9 pr-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+                      className={`w-full pl-9 pr-3 py-2 text-sm border rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors ${
                         priceErr
                           ? 'border-red-400 dark:border-red-500'
-                          : 'border-gray-300 dark:border-gray-600'
+                          : 'border-neutral-300 dark:border-neutral-600'
                       }`}
                     />
                   </div>
                   <div className="relative">
-                    <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                    <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
                     <input
                       type="number"
                       min="0"
@@ -822,10 +827,10 @@ const PaymentConfig: React.FC = () => {
                       value={svc.discount}
                       onChange={(e) => updateService(key, 'discount', e.target.value)}
                       placeholder="Discount %"
-                      className={`w-full pl-9 pr-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+                      className={`w-full pl-9 pr-3 py-2 text-sm border rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors ${
                         discountErr
                           ? 'border-red-400 dark:border-red-500'
-                          : 'border-gray-300 dark:border-gray-600'
+                          : 'border-neutral-300 dark:border-neutral-600'
                       }`}
                     />
                   </div>
@@ -839,8 +844,8 @@ const PaymentConfig: React.FC = () => {
 
           {/* Benefits (textarea) */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-indigo-500" />
+            <h3 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 mb-2 flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-lime-600" />
               List of Benefits
             </h3>
             <textarea
@@ -851,26 +856,26 @@ const PaymentConfig: React.FC = () => {
               }}
               rows={5}
               placeholder="Enter each benefit on a new line..."
-              className="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors resize-none"
+              className="w-full px-4 py-2.5 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors resize-none"
             />
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+            <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">
               Each line will be treated as a separate benefit.
             </p>
           </div>
 
           {/* Referral Configuration */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
-              <Gift className="w-4 h-4 text-indigo-500" />
+            <h3 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 mb-3 flex items-center gap-2">
+              <Gift className="w-4 h-4 text-lime-600" />
               Referral Configuration
             </h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">
                   1st Bonus Published Bonus
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">Rs</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400">Rs</span>
                   <input
                     type="number"
                     min="0"
@@ -883,16 +888,16 @@ const PaymentConfig: React.FC = () => {
                       }))
                     }
                     placeholder="Example: Rs 500"
-                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">
                   Per Referral Bonus
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">Rs</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400">Rs</span>
                   <input
                     type="number"
                     min="0"
@@ -905,7 +910,7 @@ const PaymentConfig: React.FC = () => {
                       }))
                     }
                     placeholder="Example: Rs 500"
-                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors"
                   />
                 </div>
               </div>
@@ -914,8 +919,8 @@ const PaymentConfig: React.FC = () => {
 
           {/* Installment Options */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-indigo-500" />
+            <h3 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 mb-3 flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-lime-600" />
               Installment Options
             </h3>
             <div className="space-y-2">
@@ -924,21 +929,21 @@ const PaymentConfig: React.FC = () => {
                   key={opt.key}
                   className={`flex items-center gap-3 px-4 py-2.5 rounded-lg border cursor-pointer transition-colors ${
                     form.installmentOptions.includes(opt.key)
-                      ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 dark:border-indigo-600'
-                      : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      ? 'border-lime-400 bg-lime-50 dark:bg-lime-900/20 dark:border-lime-600'
+                      : 'border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800'
                   }`}
                 >
                   <input
                     type="checkbox"
                     checked={form.installmentOptions.includes(opt.key)}
                     onChange={() => toggleInstallment(opt.key)}
-                    className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                    className="w-4 h-4 text-lime-600 rounded border-neutral-300 focus:ring-lime-400/30"
                   />
                   <div>
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                    <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
                       {opt.label}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{opt.description}</p>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">{opt.description}</p>
                   </div>
                 </label>
               ))}
@@ -947,8 +952,8 @@ const PaymentConfig: React.FC = () => {
 
           {/* Platforms */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
-              <Tag className="w-4 h-4 text-indigo-500" />
+            <h3 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 mb-3 flex items-center gap-2">
+              <Tag className="w-4 h-4 text-lime-600" />
               Platforms <span className="text-red-500">*</span>
             </h3>
             <div className="grid grid-cols-2 gap-2 mb-3">
@@ -957,15 +962,15 @@ const PaymentConfig: React.FC = () => {
                   key={platform}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors text-sm ${
                     form.platforms.includes(platform)
-                      ? 'border-purple-400 bg-purple-50 dark:bg-purple-900/20 dark:border-purple-600 text-purple-700 dark:text-purple-300'
-                      : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      ? 'border-lime-400 bg-lime-50 dark:bg-lime-900/20 dark:border-lime-600 text-lime-700 dark:text-lime-300'
+                      : 'border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800'
                   }`}
                 >
                   <input
                     type="checkbox"
                     checked={form.platforms.includes(platform)}
                     onChange={() => togglePlatform(platform)}
-                    className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+                    className="w-4 h-4 text-lime-600 rounded border-neutral-300 focus:ring-lime-400/30"
                   />
                   <span className="truncate">{platform}</span>
                 </label>
@@ -980,12 +985,12 @@ const PaymentConfig: React.FC = () => {
                 onChange={(e) => setForm((prev) => ({ ...prev, customPlatform: e.target.value }))}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomPlatform())}
                 placeholder="Add custom platform..."
-                className="flex-1 px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                className="flex-1 px-4 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors"
               />
               <button
                 type="button"
                 onClick={addCustomPlatform}
-                className="px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium border rounded-lg transition-colors hover:bg-lime-50 dark:hover:bg-lime-900/20" style={{ color: LIME_DARK, borderColor: 'rgba(132,204,22,0.40)' }}
               >
                 Add
               </button>
@@ -999,7 +1004,7 @@ const PaymentConfig: React.FC = () => {
                   .map((platform) => (
                     <span
                       key={platform}
-                      className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300"
+                      className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full" style={{ background: 'rgba(132,204,22,0.12)', color: LIME_DARK }}
                     >
                       {platform}
                       <button
@@ -1021,11 +1026,12 @@ const PaymentConfig: React.FC = () => {
         </div>
 
         {/* Footer - Save button */}
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30">
+        <div className="px-6 py-4 border-t border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900/50">
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="w-full flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="w-full flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-lime-400/40"
+            style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
           >
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
             {saving ? 'Saving...' : 'Save & Submit'}
@@ -1040,14 +1046,14 @@ const PaymentConfig: React.FC = () => {
   // =========================================================================
 
   const renderEmptyPanel = () => (
-    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center p-12 text-center">
-      <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
-        <Languages className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+    <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700 flex flex-col items-center justify-center p-12 text-center">
+      <div className="w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mb-4">
+        <Languages className="w-8 h-8 text-neutral-400 dark:text-neutral-500" />
       </div>
-      <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
+      <h3 className="text-lg font-medium text-neutral-700 dark:text-neutral-300 mb-2">
         No Configuration Selected
       </h3>
-      <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
+      <p className="text-sm text-neutral-500 dark:text-neutral-400 max-w-xs">
         Select a language to edit or click &lsquo;+ Add More&rsquo; to create a new payment configuration.
       </p>
     </div>
@@ -1073,7 +1079,7 @@ const PaymentConfig: React.FC = () => {
               setShowDeleteConfirm(false);
               setDeleteTarget(null);
             }}
-            className="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="px-5 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded-lg transition-colors"
           >
             Cancel
           </button>
@@ -1088,9 +1094,9 @@ const PaymentConfig: React.FC = () => {
         </>
       }
     >
-      <p className="text-sm text-gray-600 dark:text-gray-400">
+      <p className="text-sm text-neutral-600 dark:text-neutral-400">
         Are you sure you want to delete the payment configuration for{' '}
-        <strong className="text-gray-900 dark:text-gray-100">{deleteTarget?.language}</strong>?
+        <strong className="text-neutral-900 dark:text-neutral-100">{deleteTarget?.language}</strong>?
         This action cannot be undone.
       </p>
     </Modal>

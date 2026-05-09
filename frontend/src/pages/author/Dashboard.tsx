@@ -17,12 +17,16 @@ import {
   ExternalLink,
   Bell,
   Loader2,
+  TrendingUp,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axiosInstance from '../../api/interceptors';
 import { API_ENDPOINTS } from '../../api/endpoints';
 import Loader from '../../components/common/Loader';
 import ProfileUpdateModal from '../../components/author/ProfileUpdateModal';
+
+const LIME = '#84CC16';
+const LIME_DARK = '#65a30d';
 
 // ---------- Types ----------
 interface UserProfile {
@@ -82,12 +86,10 @@ const Dashboard: React.FC = () => {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Payment requests from admin
   const [paymentRequests, setPaymentRequests] = useState<any[]>([]);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [payingBookId, setPayingBookId] = useState<string | null>(null);
 
-  // Fetch profile data
   const fetchProfile = useCallback(async () => {
     try {
       const response = await axiosInstance.get(API_ENDPOINTS.AUTHOR.GET_PROFILE);
@@ -97,12 +99,10 @@ const Dashboard: React.FC = () => {
         setAuthor(authorData);
       }
     } catch (error: any) {
-      const message = error?.response?.data?.message || 'Failed to load profile';
-      toast.error(message);
+      toast.error(error?.response?.data?.message || 'Failed to load profile');
     }
   }, []);
 
-  // Fetch dashboard stats
   const fetchDashboardStats = useCallback(async () => {
     try {
       const response = await axiosInstance.get(API_ENDPOINTS.AUTHOR.GET_DASHBOARD);
@@ -116,12 +116,10 @@ const Dashboard: React.FC = () => {
         });
       }
     } catch (error: any) {
-      // Dashboard stats are non-critical; silently handle
       console.error('Failed to load dashboard stats:', error);
     }
   }, []);
 
-  // Fetch pending payment requests
   const fetchPaymentRequests = useCallback(async () => {
     try {
       const res = await axiosInstance.get(API_ENDPOINTS.PAYMENT.PENDING_REQUESTS);
@@ -131,7 +129,6 @@ const Dashboard: React.FC = () => {
     }
   }, []);
 
-  // Razorpay pay handler from dashboard
   const handlePayFromDashboard = async (request: any) => {
     setPayingBookId(request.bookId);
     setPaymentLoading(true);
@@ -161,7 +158,7 @@ const Dashboard: React.FC = () => {
           }
         },
         prefill: { name: authorName },
-        theme: { color: '#6366f1' },
+        theme: { color: LIME },
       };
 
       if (!(window as any).Razorpay) {
@@ -183,7 +180,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Initial data load
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -193,59 +189,37 @@ const Dashboard: React.FC = () => {
     loadData();
   }, [fetchProfile, fetchDashboardStats, fetchPaymentRequests]);
 
-  // Handle profile update completion
-  const handleProfileUpdated = () => {
-    fetchProfile();
-  };
+  const handleProfileUpdated = () => { fetchProfile(); };
 
-  // Handle profile photo upload
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('Only image files (JPEG, PNG, GIF, WEBP) are allowed');
-      return;
-    }
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image must be less than 5MB');
-      return;
-    }
+    if (!allowedTypes.includes(file.type)) { toast.error('Only image files are allowed'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error('Image must be less than 5MB'); return; }
 
     const formData = new FormData();
     formData.append('profilePicture', file);
-
     setUploadingPhoto(true);
     try {
-      const response = await axiosInstance.post(
-        API_ENDPOINTS.AUTHOR.UPLOAD_PROFILE_PICTURE,
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      );
+      const response = await axiosInstance.post(API_ENDPOINTS.AUTHOR.UPLOAD_PROFILE_PICTURE, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       if (response.data?.success) {
         toast.success('Profile photo updated!');
         fetchProfile();
-        // Notify Header to refresh profile image
         window.dispatchEvent(new Event('profile-updated'));
       }
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to upload photo');
     } finally {
       setUploadingPhoto(false);
-      // Reset input so same file can be re-selected
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
-  // Format currency
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-IN').format(amount);
-  };
+  const formatCurrency = (amount: number): string => new Intl.NumberFormat('en-IN').format(amount);
 
-  // Build full address string
   const getFullAddress = (): string => {
     if (!author?.address) return 'Address not provided';
     const { housePlot, landmark, city, district, state, country, pinCode } = author.address;
@@ -253,7 +227,6 @@ const Dashboard: React.FC = () => {
     return parts.length > 0 ? parts.join(', ') : 'Address not provided';
   };
 
-  // Get initials for avatar fallback
   const getInitials = (): string => {
     if (!user) return '??';
     const first = user.firstName?.charAt(0)?.toUpperCase() || '';
@@ -261,10 +234,8 @@ const Dashboard: React.FC = () => {
     return `${first}${last}` || '??';
   };
 
-  // Check if restricted
   const isRestricted = user?.isRestricted || author?.isRestricted;
 
-  // ---------- Loading State ----------
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -273,58 +244,63 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  // ---------- Stat Cards Config ----------
   const statCards = [
     {
       label: 'Total Books',
       value: stats.totalBooks,
       icon: BookOpen,
-      color: 'text-blue-600 dark:text-blue-400',
-      bg: 'bg-blue-50 dark:bg-blue-900/20',
+      color: 'text-lime-700 dark:text-lime-400',
+      bg: 'rgba(132,204,22,0.10)',
+      iconStyle: { color: LIME_DARK },
     },
     {
       label: 'Ongoing Books',
       value: stats.ongoingBooks,
       icon: Clock,
       color: 'text-amber-600 dark:text-amber-400',
-      bg: 'bg-amber-50 dark:bg-amber-900/20',
+      bg: 'rgba(245,158,11,0.10)',
+      iconStyle: { color: '#d97706' },
     },
     {
       label: 'Author Royalty',
       value: `${stats.authorRoyaltyPercent}%`,
       icon: Percent,
       color: 'text-emerald-600 dark:text-emerald-400',
-      bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+      bg: 'rgba(16,185,129,0.10)',
+      iconStyle: { color: '#059669' },
     },
     {
       label: 'Last Month Royalty',
       value: stats.lastMonthRoyalty,
-      icon: IndianRupee,
-      color: 'text-purple-600 dark:text-purple-400',
-      bg: 'bg-purple-50 dark:bg-purple-900/20',
-      prefix: '\u20B9',
+      icon: TrendingUp,
+      color: 'text-lime-700 dark:text-lime-400',
+      bg: 'rgba(132,204,22,0.10)',
+      iconStyle: { color: LIME_DARK },
+      prefix: '₹',
     },
   ];
 
-  // ---------- Render ----------
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <h1 className="text-h1 font-bold text-neutral-900 dark:text-dark-900">
-        Author Dashboard
-      </h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Author Dashboard</h1>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Welcome back, {user?.firstName}!</p>
+        </div>
+      </div>
 
-      {/* Restricted Account Banner */}
+      {/* Restricted Banner */}
       {isRestricted && (
         <div className="flex items-center gap-3 px-5 py-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
           <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
-          <p className="text-red-700 dark:text-red-300 font-medium text-body-sm">
-            Account Restricted &mdash; Please contact admin support
+          <p className="text-red-700 dark:text-red-300 font-medium text-sm">
+            Account Restricted — Please contact admin support
           </p>
         </div>
       )}
 
-      {/* Payment Request / Overdue Notifications */}
+      {/* Payment Requests */}
       {paymentRequests.length > 0 && (
         <div className="space-y-3">
           {paymentRequests.map((req, idx) => (
@@ -339,28 +315,20 @@ const Dashboard: React.FC = () => {
               <Bell className={`w-5 h-5 flex-shrink-0 mt-0.5 ${req.status === 'overdue' ? 'text-red-500' : 'text-amber-500'}`} />
               <div className="flex-1 min-w-0">
                 <p className={`font-semibold text-sm ${req.status === 'overdue' ? 'text-red-700 dark:text-red-300' : 'text-amber-700 dark:text-amber-300'}`}>
-                  {req.status === 'overdue'
-                    ? `Payment Overdue — "${req.bookName}" publishing paused`
-                    : `Payment Request — "${req.bookName}"`
-                  }
+                  {req.status === 'overdue' ? `Payment Overdue — "${req.bookName}" publishing paused` : `Payment Request — "${req.bookName}"`}
                 </p>
                 <p className={`text-xs mt-0.5 ${req.status === 'overdue' ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}`}>
-                  {req.description
-                    ? req.description
-                    : `Amount due: ₹${new Intl.NumberFormat('en-IN').format(req.amount)}`
-                  }
+                  {req.description || `Amount due: ₹${formatCurrency(req.amount)}`}
                 </p>
               </div>
               <button
                 onClick={() => handlePayFromDashboard(req)}
                 disabled={paymentLoading && payingBookId === req.bookId}
-                className="flex-shrink-0 inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg transition-colors"
+                className="flex-shrink-0 inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60 rounded-lg transition-colors"
+                style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
               >
-                {paymentLoading && payingBookId === req.bookId
-                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  : <IndianRupee className="w-3.5 h-3.5" />
-                }
-                Pay ₹{new Intl.NumberFormat('en-IN').format(req.amount)}
+                {paymentLoading && payingBookId === req.bookId ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <IndianRupee className="w-3.5 h-3.5" />}
+                Pay ₹{formatCurrency(req.amount)}
               </button>
             </div>
           ))}
@@ -368,138 +336,153 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* Profile Card */}
-      <div className="card p-6 relative">
-        {/* Hidden file input for photo upload */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-          className="hidden"
-          onChange={handlePhotoUpload}
-        />
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm overflow-hidden">
+        {/* Top lime accent bar */}
+        <div className="h-1.5 w-full" style={{ background: `linear-gradient(90deg, ${LIME}, ${LIME_DARK})` }} />
 
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Left: Profile Info */}
-          <div className="flex flex-col sm:flex-row gap-5 flex-1 min-w-0">
-            {/* Avatar with photo upload */}
-            <div className="flex-shrink-0">
-              <div
-                className="relative group cursor-pointer"
-                onClick={() => fileInputRef.current?.click()}
-                title="Click to change profile photo"
-              >
-                {author?.profilePicture ? (
-                  <img
-                    src={author.profilePicture}
-                    alt={`${user?.firstName} ${user?.lastName}`}
-                    className="w-24 h-24 rounded-xl object-cover border-2 border-indigo-200 dark:border-indigo-700 shadow-sm"
-                  />
-                ) : (
-                  <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm">
-                    <span className="text-2xl font-bold text-white">{getInitials()}</span>
-                  </div>
-                )}
-                {/* Camera overlay on hover */}
-                <div className="absolute inset-0 rounded-xl bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  {uploadingPhoto ? (
-                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        <div className="p-6">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+            className="hidden"
+            onChange={handlePhotoUpload}
+          />
+
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Left: Avatar + Info */}
+            <div className="flex flex-col sm:flex-row gap-5 flex-1 min-w-0">
+              {/* Avatar */}
+              <div className="flex-shrink-0 flex flex-col items-center gap-2">
+                <div
+                  className="relative group cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Click to change photo"
+                >
+                  {author?.profilePicture ? (
+                    <img
+                      src={author.profilePicture}
+                      alt={`${user?.firstName} ${user?.lastName}`}
+                      className="w-24 h-24 rounded-2xl object-cover shadow-md"
+                      style={{ border: `2px solid ${LIME}` }}
+                    />
                   ) : (
-                    <Camera className="w-6 h-6 text-white" />
+                    <div
+                      className="w-24 h-24 rounded-2xl flex items-center justify-center shadow-md"
+                      style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
+                    >
+                      <span className="text-2xl font-bold text-white">{getInitials()}</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 rounded-2xl bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    {uploadingPhoto
+                      ? <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      : <Camera className="w-6 h-6 text-white" />
+                    }
+                  </div>
+                </div>
+                {uploadingPhoto ? (
+                  <span className="text-xs font-medium animate-pulse" style={{ color: LIME_DARK }}>Uploading...</span>
+                ) : (
+                  <span className="text-xs font-mono text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 rounded-lg px-2.5 py-1">
+                    {author?.authorId || 'N/A'}
+                  </span>
+                )}
+              </div>
+
+              {/* Details */}
+              <div className="min-w-0 space-y-2.5 flex-1">
+                <div>
+                  <h2 className="text-xl font-bold text-neutral-900 dark:text-white truncate">
+                    {user?.firstName} {user?.lastName}
+                  </h2>
+                  {author?.publishedArticles && author.publishedArticles.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowArticles(prev => !prev)}
+                      className="mt-1 inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full transition-colors"
+                      style={{ background: 'rgba(132,204,22,0.12)', color: LIME_DARK }}
+                    >
+                      Published Author ({author.publishedArticles.length} {author.publishedArticles.length === 1 ? 'book' : 'books'})
+                      <span className="text-[10px]">{showArticles ? '▲' : '▼'}</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-start gap-2 text-sm text-neutral-600 dark:text-neutral-400">
+                    <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-neutral-400" />
+                    <span className="break-words">{getFullAddress()}</span>
+                  </div>
+                  {user?.mobile && (
+                    <div className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
+                      <Phone className="w-4 h-4 flex-shrink-0 text-neutral-400" />
+                      <span>{user.mobile}</span>
+                    </div>
+                  )}
+                  {user?.email && (
+                    <div className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
+                      <Mail className="w-4 h-4 flex-shrink-0 text-neutral-400" />
+                      <span className="truncate">{user.email}</span>
+                    </div>
+                  )}
+                  {author?.referralCode && (
+                    <div className="flex items-center gap-2 pt-0.5">
+                      <span className="text-xs text-neutral-500 dark:text-neutral-400">Referral Code:</span>
+                      <span
+                        className="text-xs font-mono font-bold px-2 py-0.5 rounded-md"
+                        style={{ background: 'rgba(132,204,22,0.12)', color: LIME_DARK }}
+                      >
+                        {author.referralCode}
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>
-              {/* Upload status or Author ID below avatar */}
-              {uploadingPhoto ? (
-                <p className="mt-2 text-center text-body-xs text-indigo-600 dark:text-indigo-400 font-medium animate-pulse">
-                  Uploading...
-                </p>
-              ) : (
-                <p className="mt-2 text-center text-body-xs font-mono text-neutral-500 dark:text-dark-500 bg-neutral-100 dark:bg-dark-200 rounded px-2 py-1">
-                  {author?.authorId || 'N/A'}
-                </p>
-              )}
             </div>
 
-            {/* Details */}
-            <div className="min-w-0 space-y-2">
-              <h2 className="text-h3 font-bold text-neutral-900 dark:text-dark-900 truncate">
-                {user?.firstName} {user?.lastName}
-              </h2>
-              {author?.publishedArticles && author.publishedArticles.length > 0 && (
-                <button type="button" onClick={() => setShowArticles(prev => !prev)}
-                  className="inline-flex items-center gap-1 text-body-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer">
-                  Published Author ({author.publishedArticles.length} {author.publishedArticles.length === 1 ? 'book' : 'books'})
-                  <span className="text-[10px]">{showArticles ? '▲' : '▼'}</span>
-                </button>
-              )}
+            {/* Right: Earnings + Actions */}
+            <div className="flex flex-col items-start lg:items-end justify-between gap-5 flex-shrink-0 lg:min-w-[200px]">
+              {/* Update Profile */}
+              <button
+                onClick={() => setShowProfileModal(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-white text-sm font-semibold rounded-xl shadow-sm transition-all"
+                style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                Update Profile
+              </button>
 
-              <div className="space-y-1.5 pt-1">
-                <div className="flex items-start gap-2 text-body-sm text-neutral-600 dark:text-dark-600">
-                  <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-neutral-400 dark:text-dark-400" />
-                  <span className="break-words">{getFullAddress()}</span>
-                </div>
-                {user?.mobile && (
-                  <div className="flex items-center gap-2 text-body-sm text-neutral-600 dark:text-dark-600">
-                    <Phone className="w-4 h-4 flex-shrink-0 text-neutral-400 dark:text-dark-400" />
-                    <span>{user.mobile}</span>
-                  </div>
-                )}
-                {user?.email && (
-                  <div className="flex items-center gap-2 text-body-sm text-neutral-600 dark:text-dark-600">
-                    <Mail className="w-4 h-4 flex-shrink-0 text-neutral-400 dark:text-dark-400" />
-                    <span className="truncate">{user.email}</span>
-                  </div>
-                )}
-                {author?.referralCode && (
-                  <div className="flex items-center gap-2 pt-1">
-                    <span className="text-body-xs font-medium text-neutral-500 dark:text-dark-500">Referral Code:</span>
-                    <span className="text-body-xs font-mono font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded">
-                      {author.referralCode}
-                    </span>
-                  </div>
-                )}
+              {/* Net Royalty Earning */}
+              <div className="rounded-xl p-4 w-full lg:text-right" style={{ background: 'rgba(132,204,22,0.08)', border: '1px solid rgba(132,204,22,0.20)' }}>
+                <p className="text-xs uppercase tracking-widest font-semibold mb-1" style={{ color: LIME_DARK }}>
+                  Net Royalty Earning
+                </p>
+                <p className="text-3xl font-bold text-neutral-900 dark:text-white">
+                  <span className="text-lg mr-0.5 text-neutral-500">₹</span>
+                  {formatCurrency(author?.totalEarnings ?? 0)}
+                </p>
               </div>
-            </div>
-          </div>
 
-          {/* Right: Earnings & Actions */}
-          <div className="flex flex-col items-end justify-between gap-4 flex-shrink-0">
-            {/* Update Profile Button */}
-            <button
-              onClick={() => setShowProfileModal(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-body-sm font-medium rounded-lg shadow-sm transition-colors duration-200"
-            >
-              <Pencil className="w-4 h-4" />
-              Update Profile
-            </button>
-
-            {/* Net Royalty */}
-            <div className="text-right">
-              <p className="text-body-xs text-neutral-500 dark:text-dark-500 uppercase tracking-wide font-medium mb-1">
-                Net Royalty Earning
-              </p>
-              <p className="text-3xl lg:text-4xl font-bold text-neutral-900 dark:text-dark-900">
-                <span className="text-xl mr-1 text-neutral-500 dark:text-dark-500">{'\u20B9'}</span>
-                {formatCurrency(author?.totalEarnings ?? 0)}
-              </p>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center gap-3">
-              <button
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-body-sm font-medium rounded-lg transition-colors duration-200 shadow-sm"
-                onClick={() => navigate('/author/tickets')}
-              >
-                <HelpCircle className="w-4 h-4" />
-                Help Chart
-              </button>
-              <button
-                onClick={() => navigate('/author/books')}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-body-sm font-medium rounded-lg shadow-sm transition-colors"
-              >
-                <PlusCircle className="w-4 h-4" />
-                New Book
-              </button>
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2.5 w-full lg:justify-end">
+                <button
+                  onClick={() => navigate('/author/tickets')}
+                  className="flex-1 lg:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-xl border transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  style={{ color: LIME_DARK, borderColor: 'rgba(132,204,22,0.35)' }}
+                >
+                  <HelpCircle className="w-4 h-4" />
+                  Help Desk
+                </button>
+                <button
+                  onClick={() => navigate('/author/books')}
+                  className="flex-1 lg:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-white text-sm font-semibold rounded-xl shadow-sm transition-all"
+                  style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  New Book
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -507,26 +490,32 @@ const Dashboard: React.FC = () => {
 
       {/* Published Articles Expandable */}
       {showArticles && author?.publishedArticles && author.publishedArticles.length > 0 && (
-        <div className="card p-5 space-y-3 animate-in slide-in-from-top-2">
-          <h3 className="text-body font-semibold text-neutral-900 dark:text-dark-900">Published Books / Articles</h3>
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm p-5 space-y-3">
+          <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Published Books / Articles</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {author.publishedArticles.map((article: any, idx: number) => (
-              <div key={idx} className="flex gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
+              <div key={idx} className="flex gap-3 p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-100 dark:border-neutral-700">
                 {article.bookPhoto ? (
                   <img src={article.bookPhoto} alt={article.bookName} className="w-14 h-18 object-cover rounded-lg flex-shrink-0" />
                 ) : (
-                  <div className="w-14 h-18 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Book className="w-6 h-6 text-indigo-400" />
+                  <div className="w-14 h-18 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(132,204,22,0.10)' }}>
+                    <Book className="w-6 h-6" style={{ color: LIME_DARK }} />
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{article.bookName}</p>
-                  {article.isbn && <p className="text-xs text-gray-500 dark:text-gray-400">ISBN: {article.isbn}</p>}
+                  <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate">{article.bookName}</p>
+                  {article.isbn && <p className="text-xs text-neutral-500 dark:text-neutral-400">ISBN: {article.isbn}</p>}
                   {article.links && article.links.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-1.5">
                       {article.links.map((link: any, lIdx: number) => (
-                        <a key={lIdx} href={link.url} target="_blank" rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors">
+                        <a
+                          key={lIdx}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded transition-colors"
+                          style={{ color: LIME_DARK, background: 'rgba(132,204,22,0.10)' }}
+                        >
                           {link.platform}
                           <ExternalLink className="w-2.5 h-2.5" />
                         </a>
@@ -547,16 +536,19 @@ const Dashboard: React.FC = () => {
           return (
             <div
               key={card.label}
-              className="card p-5 flex items-center gap-4"
+              className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition-shadow"
             >
-              <div className={`w-12 h-12 rounded-xl ${card.bg} flex items-center justify-center flex-shrink-0`}>
-                <Icon className={`w-6 h-6 ${card.color}`} />
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: card.bg }}
+              >
+                <Icon className="w-6 h-6" style={card.iconStyle} />
               </div>
               <div className="min-w-0">
-                <p className="text-body-xs text-neutral-500 dark:text-dark-500 font-medium uppercase tracking-wide">
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium uppercase tracking-wide">
                   {card.label}
                 </p>
-                <p className="text-xl font-bold text-neutral-900 dark:text-dark-900 truncate">
+                <p className="text-xl font-bold text-neutral-900 dark:text-white truncate mt-0.5">
                   {card.prefix ?? ''}{typeof card.value === 'number' ? formatCurrency(card.value) : card.value}
                 </p>
               </div>

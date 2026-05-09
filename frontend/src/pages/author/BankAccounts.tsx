@@ -17,6 +17,9 @@ import { API_ENDPOINTS } from '../../api/endpoints';
 import Loader from '../../components/common/Loader';
 import Badge from '../../components/common/Badge';
 
+const LIME = '#84CC16';
+const LIME_DARK = '#65a30d';
+
 // ---------- Types ----------
 interface BankAccount {
   _id: string;
@@ -217,7 +220,6 @@ const BankAccounts: React.FC = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
-    // Clear error for this field on change
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
@@ -344,20 +346,24 @@ const BankAccounts: React.FC = () => {
     <div className="space-y-6 animate-fadeIn">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-h1 font-bold text-neutral-900 dark:text-dark-900">
-          Bank Accounts
-        </h1>
+        <div>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Bank Accounts</h1>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
+            Manage your bank accounts for royalty payments
+          </p>
+        </div>
         <div className="flex items-center gap-3">
           <button
             onClick={fetchAccounts}
-            className="p-2.5 rounded-lg text-neutral-500 hover:text-primary-600 hover:bg-neutral-100 dark:hover:bg-dark-200 transition-colors"
+            className="p-2.5 rounded-lg text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
             title="Refresh"
           >
             <RefreshCw className="w-5 h-5" />
           </button>
           <button
             onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-body-sm font-medium rounded-lg shadow-sm transition-colors duration-200"
+            className="inline-flex items-center gap-2 px-5 py-2.5 text-white text-sm font-semibold rounded-xl shadow-sm transition-all duration-200 hover:opacity-90"
+            style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
           >
             <Plus className="w-4 h-4" />
             Add Bank Account
@@ -367,22 +373,23 @@ const BankAccounts: React.FC = () => {
 
       {/* Accounts List */}
       {accounts.length === 0 ? (
-        <div className="card p-12">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-12">
           <div className="flex flex-col items-center gap-4 text-center">
-            <div className="w-16 h-16 bg-neutral-100 dark:bg-dark-200 rounded-full flex items-center justify-center">
-              <CreditCard className="w-8 h-8 text-neutral-400 dark:text-dark-400" />
+            <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: 'rgba(132,204,22,0.10)' }}>
+              <CreditCard className="w-8 h-8" style={{ color: LIME_DARK }} />
             </div>
             <div>
-              <h3 className="text-h5 font-semibold text-neutral-900 dark:text-dark-900 mb-1">
+              <h3 className="text-base font-semibold text-neutral-900 dark:text-white mb-1">
                 No Bank Accounts
               </h3>
-              <p className="text-body-sm text-neutral-500 dark:text-dark-500">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
                 Add your bank account details to receive royalty payments.
               </p>
             </div>
             <button
               onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-body-sm font-medium rounded-lg shadow-sm transition-colors duration-200 mt-2"
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-white text-sm font-semibold rounded-xl shadow-sm transition-all duration-200 hover:opacity-90 mt-2"
+              style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
             >
               <Plus className="w-4 h-4" />
               Add Your First Account
@@ -394,76 +401,82 @@ const BankAccounts: React.FC = () => {
           {accounts.map((account) => (
             <div
               key={account._id}
-              className="card p-5 hover:shadow-md transition-all duration-200 relative"
+              className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden hover:shadow-md transition-all duration-200 relative"
             >
-              {/* Primary Badge */}
-              {account.accountType === 'primary' && (
-                <div className="absolute top-4 right-4">
-                  <Badge variant="success" size="sm" dot>
-                    Primary
-                  </Badge>
-                </div>
-              )}
+              {/* Lime accent top bar */}
+              <div className="h-1" style={{ background: `linear-gradient(90deg, ${LIME}, ${LIME_DARK})` }} />
 
-              {/* Bank Icon + Name */}
-              <div className="flex items-start gap-3 mb-4">
-                <div className="w-11 h-11 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Building2 className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-body font-semibold text-neutral-900 dark:text-dark-900 truncate pr-16">
-                    {account.bankName}
-                  </h3>
-                  <p className="text-body-xs text-neutral-500 dark:text-dark-500">
-                    {account.branchName}
-                  </p>
-                </div>
-              </div>
+              <div className="p-5">
+                {/* Primary Badge */}
+                {account.accountType === 'primary' && (
+                  <div className="absolute top-5 right-4">
+                    <Badge variant="success" size="sm" dot>
+                      Primary
+                    </Badge>
+                  </div>
+                )}
 
-              {/* Account Details */}
-              <div className="space-y-2.5 border-t border-neutral-100 dark:border-dark-300 pt-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-body-xs text-neutral-500 dark:text-dark-500">
-                    Account Holder
-                  </span>
-                  <span className="text-body-sm font-medium text-neutral-800 dark:text-dark-800 truncate ml-2 max-w-[60%] text-right">
-                    {account.accountHolderName}
-                  </span>
+                {/* Bank Icon + Name */}
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(132,204,22,0.12)' }}>
+                    <Building2 className="w-5 h-5" style={{ color: LIME_DARK }} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-semibold text-neutral-900 dark:text-white truncate pr-16">
+                      {account.bankName}
+                    </h3>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                      {account.branchName}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-body-xs text-neutral-500 dark:text-dark-500">
-                    Account No.
-                  </span>
-                  <span className="text-body-sm font-mono font-medium text-neutral-800 dark:text-dark-800">
-                    {maskAccountNumber(account.accountNumber)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-body-xs text-neutral-500 dark:text-dark-500">
-                    IFSC Code
-                  </span>
-                  <span className="text-body-sm font-mono font-medium text-neutral-800 dark:text-dark-800">
-                    {account.ifscCode}
-                  </span>
-                </div>
-              </div>
 
-              {/* Actions */}
-              <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-neutral-100 dark:border-dark-300">
-                <button
-                  onClick={() => openEditModal(account)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-body-xs font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:text-indigo-300 dark:hover:bg-indigo-900/20 rounded-lg transition-colors duration-200"
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                  Edit
-                </button>
-                <button
-                  onClick={() => setDeleteTarget(account)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-body-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Delete
-                </button>
+                {/* Account Details */}
+                <div className="space-y-2.5 border-t border-neutral-100 dark:border-neutral-800 pt-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                      Account Holder
+                    </span>
+                    <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate ml-2 max-w-[60%] text-right">
+                      {account.accountHolderName}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                      Account No.
+                    </span>
+                    <span className="text-sm font-mono font-medium text-neutral-800 dark:text-neutral-200">
+                      {maskAccountNumber(account.accountNumber)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                      IFSC Code
+                    </span>
+                    <span className="text-sm font-mono font-medium text-neutral-800 dark:text-neutral-200">
+                      {account.ifscCode}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-neutral-100 dark:border-neutral-800">
+                  <button
+                    onClick={() => openEditModal(account)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors duration-200 hover:bg-lime-50 dark:hover:bg-lime-900/20"
+                    style={{ color: LIME_DARK }}
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => setDeleteTarget(account)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -480,20 +493,20 @@ const BankAccounts: React.FC = () => {
           />
 
           {/* Modal */}
-          <div className="relative w-full max-w-lg bg-white dark:bg-dark-100 rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="relative w-full max-w-lg bg-white dark:bg-neutral-900 rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-dark-300">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-neutral-700">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg flex items-center justify-center">
-                  <CreditCard className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(132,204,22,0.12)' }}>
+                  <CreditCard className="w-5 h-5" style={{ color: LIME_DARK }} />
                 </div>
-                <h2 className="text-h4 font-semibold text-neutral-900 dark:text-dark-900">
+                <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
                   Add Bank Account
                 </h2>
               </div>
               <button
                 onClick={closeAddModal}
-                className="p-2 rounded-lg text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 dark:hover:bg-dark-200 transition-colors"
+                className="p-2 rounded-lg text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -503,7 +516,7 @@ const BankAccounts: React.FC = () => {
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
               {/* Bank Name */}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 dark:text-dark-700 mb-1.5">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
                   Bank Name <span className="text-red-500">*</span>
                 </label>
                 <div className="relative" ref={bankInputRef}>
@@ -522,15 +535,15 @@ const BankAccounts: React.FC = () => {
                     className={`w-full px-4 py-2.5 rounded-lg border ${
                       errors.bankName
                         ? 'border-red-300 dark:border-red-700 focus:ring-red-500'
-                        : 'border-neutral-300 dark:border-dark-300 focus:ring-indigo-500'
-                    } bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 placeholder:text-neutral-400 dark:placeholder:text-dark-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200`}
+                        : 'border-neutral-300 dark:border-neutral-600 focus:ring-lime-400/40 focus:border-lime-400'
+                    } bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-2 transition-all duration-200`}
                   />
                   {bankSuggestionsOpen && form.bankName.trim().length > 0 && (() => {
                     const filtered = INDIAN_BANKS.filter(b =>
                       b.toLowerCase().includes(form.bankName.toLowerCase())
                     );
                     return filtered.length > 0 ? (
-                      <ul className="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-dark-100 border border-neutral-200 dark:border-dark-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      <ul className="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                         {filtered.map((bank) => (
                           <li
                             key={bank}
@@ -539,7 +552,10 @@ const BankAccounts: React.FC = () => {
                               setForm((prev) => ({ ...prev, bankName: bank }));
                               setBankSuggestionsOpen(false);
                             }}
-                            className="px-4 py-2.5 text-sm text-neutral-800 dark:text-dark-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-700 dark:hover:text-indigo-300 cursor-pointer transition-colors"
+                            className="px-4 py-2.5 text-sm text-neutral-800 dark:text-neutral-200 cursor-pointer transition-colors hover:bg-lime-50 dark:hover:bg-lime-900/20"
+                            style={{}}
+                            onMouseEnter={e => (e.currentTarget.style.color = LIME_DARK)}
+                            onMouseLeave={e => (e.currentTarget.style.color = '')}
                           >
                             {bank}
                           </li>
@@ -549,7 +565,7 @@ const BankAccounts: React.FC = () => {
                   })()}
                 </div>
                 {errors.bankName && (
-                  <p className="mt-1 text-body-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
                     <AlertCircle className="w-3.5 h-3.5" />
                     {errors.bankName}
                   </p>
@@ -558,7 +574,7 @@ const BankAccounts: React.FC = () => {
 
               {/* Account Holder Name */}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 dark:text-dark-700 mb-1.5">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
                   Account Holder Name <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -570,11 +586,11 @@ const BankAccounts: React.FC = () => {
                   className={`w-full px-4 py-2.5 rounded-lg border ${
                     errors.accountHolderName
                       ? 'border-red-300 dark:border-red-700 focus:ring-red-500'
-                      : 'border-neutral-300 dark:border-dark-300 focus:ring-indigo-500'
-                  } bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 placeholder:text-neutral-400 dark:placeholder:text-dark-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200`}
+                      : 'border-neutral-300 dark:border-neutral-600 focus:ring-lime-400/40 focus:border-lime-400'
+                  } bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-2 transition-all duration-200`}
                 />
                 {errors.accountHolderName && (
-                  <p className="mt-1 text-body-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
                     <AlertCircle className="w-3.5 h-3.5" />
                     {errors.accountHolderName}
                   </p>
@@ -583,7 +599,7 @@ const BankAccounts: React.FC = () => {
 
               {/* Account Number */}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 dark:text-dark-700 mb-1.5">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
                   Account Number <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -591,7 +607,6 @@ const BankAccounts: React.FC = () => {
                   name="accountNumber"
                   value={form.accountNumber}
                   onChange={(e) => {
-                    // Only allow numeric input
                     const value = e.target.value.replace(/\D/g, '');
                     setForm((prev) => ({ ...prev, accountNumber: value }));
                     if (errors.accountNumber) {
@@ -603,11 +618,11 @@ const BankAccounts: React.FC = () => {
                   className={`w-full px-4 py-2.5 rounded-lg border ${
                     errors.accountNumber
                       ? 'border-red-300 dark:border-red-700 focus:ring-red-500'
-                      : 'border-neutral-300 dark:border-dark-300 focus:ring-indigo-500'
-                  } bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 placeholder:text-neutral-400 dark:placeholder:text-dark-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200`}
+                      : 'border-neutral-300 dark:border-neutral-600 focus:ring-lime-400/40 focus:border-lime-400'
+                  } bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-2 transition-all duration-200`}
                 />
                 {errors.accountNumber && (
-                  <p className="mt-1 text-body-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
                     <AlertCircle className="w-3.5 h-3.5" />
                     {errors.accountNumber}
                   </p>
@@ -616,7 +631,7 @@ const BankAccounts: React.FC = () => {
 
               {/* Re-enter Account Number */}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 dark:text-dark-700 mb-1.5">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
                   Re-enter Account Number <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -635,11 +650,11 @@ const BankAccounts: React.FC = () => {
                   className={`w-full px-4 py-2.5 rounded-lg border ${
                     errors.confirmAccountNumber
                       ? 'border-red-300 dark:border-red-700 focus:ring-red-500'
-                      : 'border-neutral-300 dark:border-dark-300 focus:ring-indigo-500'
-                  } bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 placeholder:text-neutral-400 dark:placeholder:text-dark-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200`}
+                      : 'border-neutral-300 dark:border-neutral-600 focus:ring-lime-400/40 focus:border-lime-400'
+                  } bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-2 transition-all duration-200`}
                 />
                 {errors.confirmAccountNumber && (
-                  <p className="mt-1 text-body-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
                     <AlertCircle className="w-3.5 h-3.5" />
                     {errors.confirmAccountNumber}
                   </p>
@@ -648,7 +663,7 @@ const BankAccounts: React.FC = () => {
 
               {/* IFSC Code */}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 dark:text-dark-700 mb-1.5">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
                   IFSC Code <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -667,11 +682,11 @@ const BankAccounts: React.FC = () => {
                   className={`w-full px-4 py-2.5 rounded-lg border ${
                     errors.ifscCode
                       ? 'border-red-300 dark:border-red-700 focus:ring-red-500'
-                      : 'border-neutral-300 dark:border-dark-300 focus:ring-indigo-500'
-                  } bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 placeholder:text-neutral-400 dark:placeholder:text-dark-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 uppercase`}
+                      : 'border-neutral-300 dark:border-neutral-600 focus:ring-lime-400/40 focus:border-lime-400'
+                  } bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-2 transition-all duration-200 uppercase`}
                 />
                 {errors.ifscCode && (
-                  <p className="mt-1 text-body-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
                     <AlertCircle className="w-3.5 h-3.5" />
                     {errors.ifscCode}
                   </p>
@@ -680,7 +695,7 @@ const BankAccounts: React.FC = () => {
 
               {/* Branch Name */}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 dark:text-dark-700 mb-1.5">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
                   Branch Name <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -692,11 +707,11 @@ const BankAccounts: React.FC = () => {
                   className={`w-full px-4 py-2.5 rounded-lg border ${
                     errors.branchName
                       ? 'border-red-300 dark:border-red-700 focus:ring-red-500'
-                      : 'border-neutral-300 dark:border-dark-300 focus:ring-indigo-500'
-                  } bg-white dark:bg-dark-100 text-neutral-900 dark:text-dark-900 placeholder:text-neutral-400 dark:placeholder:text-dark-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200`}
+                      : 'border-neutral-300 dark:border-neutral-600 focus:ring-lime-400/40 focus:border-lime-400'
+                  } bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-2 transition-all duration-200`}
                 />
                 {errors.branchName && (
-                  <p className="mt-1 text-body-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
                     <AlertCircle className="w-3.5 h-3.5" />
                     {errors.branchName}
                   </p>
@@ -713,31 +728,35 @@ const BankAccounts: React.FC = () => {
                     onChange={handleChange}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-neutral-200 dark:bg-dark-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                  <div
+                    className="w-11 h-6 bg-neutral-200 dark:bg-neutral-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-lime-400/40 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"
+                    style={form.isPrimary ? { background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` } : undefined}
+                  />
                 </label>
                 <div>
-                  <span className="text-sm font-medium text-neutral-700 dark:text-dark-700">
+                  <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                     Set as Primary Account
                   </span>
-                  <p className="text-body-xs text-neutral-500 dark:text-dark-500">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
                     Primary account will be used for royalty payments
                   </p>
                 </div>
               </div>
 
               {/* Form Actions */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-200 dark:border-dark-300">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-200 dark:border-neutral-700">
                 <button
                   type="button"
                   onClick={closeAddModal}
-                  className="px-5 py-2.5 text-body-sm font-medium text-neutral-700 dark:text-dark-700 bg-neutral-100 dark:bg-dark-200 hover:bg-neutral-200 dark:hover:bg-dark-300 rounded-lg transition-colors duration-200"
+                  className="px-5 py-2.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-lg transition-colors duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-body-sm font-medium rounded-lg shadow-sm transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 text-white text-sm font-semibold rounded-lg shadow-sm transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
                 >
                   {submitting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -762,7 +781,7 @@ const BankAccounts: React.FC = () => {
           />
 
           {/* Modal */}
-          <div className="relative w-full max-w-md bg-white dark:bg-dark-100 rounded-2xl shadow-xl p-6">
+          <div className="relative w-full max-w-md bg-white dark:bg-neutral-900 rounded-2xl shadow-xl p-6">
             <div className="flex flex-col items-center text-center gap-4">
               {/* Warning Icon */}
               <div className="w-14 h-14 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center">
@@ -770,16 +789,16 @@ const BankAccounts: React.FC = () => {
               </div>
 
               <div>
-                <h3 className="text-h4 font-semibold text-neutral-900 dark:text-dark-900 mb-2">
+                <h3 className="text-lg font-semibold text-neutral-900 dark:text-white mb-2">
                   Delete Bank Account
                 </h3>
-                <p className="text-body-sm text-neutral-600 dark:text-dark-600">
+                <p className="text-sm text-neutral-600 dark:text-neutral-400">
                   Are you sure you want to delete the account at{' '}
-                  <span className="font-semibold text-neutral-800 dark:text-dark-800">
+                  <span className="font-semibold text-neutral-800 dark:text-neutral-200">
                     {deleteTarget.bankName}
                   </span>{' '}
                   ending in{' '}
-                  <span className="font-mono font-semibold text-neutral-800 dark:text-dark-800">
+                  <span className="font-mono font-semibold text-neutral-800 dark:text-neutral-200">
                     {deleteTarget.accountNumber?.slice(-4) || '****'}
                   </span>
                   ? This action cannot be undone.
@@ -791,14 +810,14 @@ const BankAccounts: React.FC = () => {
                 <button
                   onClick={() => setDeleteTarget(null)}
                   disabled={deleting}
-                  className="flex-1 px-5 py-2.5 text-body-sm font-medium text-neutral-700 dark:text-dark-700 bg-neutral-100 dark:bg-dark-200 hover:bg-neutral-200 dark:hover:bg-dark-300 rounded-lg transition-colors duration-200 disabled:opacity-50"
+                  className="flex-1 px-5 py-2.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-lg transition-colors duration-200 disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-body-sm font-medium rounded-lg shadow-sm transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {deleting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -812,21 +831,27 @@ const BankAccounts: React.FC = () => {
           </div>
         </div>
       )}
+
       {/* ---------- Edit Modal ---------- */}
       {editTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => !editSubmitting && setEditTarget(null)} />
-          <div className="relative w-full max-w-lg bg-white dark:bg-dark-100 rounded-2xl shadow-xl">
-            <div className="flex items-center justify-between p-5 border-b border-neutral-200 dark:border-dark-300">
-              <h3 className="text-h4 font-semibold text-neutral-900 dark:text-dark-900">Edit Bank Account</h3>
-              <button onClick={() => setEditTarget(null)} disabled={editSubmitting} className="p-1.5 text-neutral-400 hover:text-neutral-600 rounded-lg">
+          <div className="relative w-full max-w-lg bg-white dark:bg-neutral-900 rounded-2xl shadow-xl">
+            <div className="flex items-center justify-between p-5 border-b border-neutral-200 dark:border-neutral-700">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(132,204,22,0.12)' }}>
+                  <Pencil className="w-4 h-4" style={{ color: LIME_DARK }} />
+                </div>
+                <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">Edit Bank Account</h3>
+              </div>
+              <button onClick={() => setEditTarget(null)} disabled={editSubmitting} className="p-1.5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 rounded-lg transition-colors">
                 <X className="w-4 h-4" />
               </button>
             </div>
             <form onSubmit={handleEditSubmit} className="p-5 space-y-4">
               {/* Bank Name — searchable dropdown */}
               <div>
-                <label className="block text-xs font-medium text-neutral-700 dark:text-dark-700 mb-1">Bank Name</label>
+                <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Bank Name</label>
                 <div className="relative" ref={editBankInputRef}>
                   <input
                     type="text"
@@ -838,14 +863,14 @@ const BankAccounts: React.FC = () => {
                     onFocus={() => setEditBankSuggestionsOpen(true)}
                     placeholder="e.g., State Bank of India"
                     autoComplete="off"
-                    className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-200 text-neutral-900 dark:text-dark-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/40 focus:border-lime-400"
                   />
                   {editBankSuggestionsOpen && editForm.bankName.trim().length > 0 && (() => {
                     const filtered = INDIAN_BANKS.filter(b =>
                       b.toLowerCase().includes(editForm.bankName.toLowerCase())
                     );
                     return filtered.length > 0 ? (
-                      <ul className="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-dark-100 border border-neutral-200 dark:border-dark-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      <ul className="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                         {filtered.map((bank) => (
                           <li
                             key={bank}
@@ -854,7 +879,9 @@ const BankAccounts: React.FC = () => {
                               setEditForm(prev => ({ ...prev, bankName: bank }));
                               setEditBankSuggestionsOpen(false);
                             }}
-                            className="px-4 py-2.5 text-sm text-neutral-800 dark:text-dark-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-700 dark:hover:text-indigo-300 cursor-pointer transition-colors"
+                            className="px-4 py-2.5 text-sm text-neutral-800 dark:text-neutral-200 cursor-pointer transition-colors hover:bg-lime-50 dark:hover:bg-lime-900/20"
+                            onMouseEnter={e => (e.currentTarget.style.color = LIME_DARK)}
+                            onMouseLeave={e => (e.currentTarget.style.color = '')}
                           >
                             {bank}
                           </li>
@@ -866,53 +893,60 @@ const BankAccounts: React.FC = () => {
               </div>
               {/* Account Holder Name */}
               <div>
-                <label className="block text-xs font-medium text-neutral-700 dark:text-dark-700 mb-1">Account Holder Name</label>
+                <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Account Holder Name</label>
                 <input
                   type="text"
                   value={editForm.accountHolderName}
                   onChange={e => setEditForm(prev => ({ ...prev, accountHolderName: e.target.value }))}
                   placeholder="Full name as per bank"
-                  className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-200 text-neutral-900 dark:text-dark-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/40 focus:border-lime-400"
                 />
               </div>
               {/* IFSC Code */}
               <div>
-                <label className="block text-xs font-medium text-neutral-700 dark:text-dark-700 mb-1">IFSC Code</label>
+                <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">IFSC Code</label>
                 <input
                   type="text"
                   value={editForm.ifscCode}
                   onChange={e => setEditForm(prev => ({ ...prev, ifscCode: e.target.value.toUpperCase().slice(0, 11) }))}
                   placeholder="e.g., SBIN0001234"
-                  className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-200 text-neutral-900 dark:text-dark-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 uppercase"
+                  className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/40 focus:border-lime-400 uppercase"
                 />
               </div>
               {/* Branch Name */}
               <div>
-                <label className="block text-xs font-medium text-neutral-700 dark:text-dark-700 mb-1">Branch Name</label>
+                <label className="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Branch Name</label>
                 <input
                   type="text"
                   value={editForm.branchName}
                   onChange={e => setEditForm(prev => ({ ...prev, branchName: e.target.value }))}
                   placeholder="Branch name"
-                  className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-200 text-neutral-900 dark:text-dark-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/40 focus:border-lime-400"
                 />
               </div>
               <label className="flex items-center gap-3 cursor-pointer pt-1">
-                <input
-                  type="checkbox"
-                  checked={editForm.isPrimary}
-                  onChange={e => setEditForm(prev => ({ ...prev, isPrimary: e.target.checked }))}
-                  className="w-4 h-4 rounded border-neutral-300 text-indigo-600 focus:ring-indigo-500"
-                />
-                <span className="text-sm text-neutral-700 dark:text-dark-700">Set as Primary Account</span>
+                <div className="relative inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={editForm.isPrimary}
+                    onChange={e => setEditForm(prev => ({ ...prev, isPrimary: e.target.checked }))}
+                    className="sr-only peer"
+                  />
+                  <div
+                    className="w-9 h-5 bg-neutral-200 dark:bg-neutral-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-lime-400/40 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all"
+                    style={editForm.isPrimary ? { background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` } : undefined}
+                  />
+                </div>
+                <span className="text-sm text-neutral-700 dark:text-neutral-300">Set as Primary Account</span>
               </label>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setEditTarget(null)} disabled={editSubmitting}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 dark:bg-dark-200 dark:text-dark-700 dark:hover:bg-dark-300 rounded-lg transition-colors disabled:opacity-50">
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-lg transition-colors disabled:opacity-50">
                   Cancel
                 </button>
                 <button type="submit" disabled={editSubmitting}
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50">
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white rounded-lg transition-all hover:opacity-90 disabled:opacity-50"
+                  style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}>
                   {editSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Pencil className="w-4 h-4" />}
                   {editSubmitting ? 'Saving...' : 'Save Changes'}
                 </button>

@@ -64,6 +64,9 @@ interface Financials {
 }
 
 
+const LIME = '#84CC16';
+const LIME_DARK = '#65a30d';
+
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const CURRENT_YEAR = new Date().getFullYear();
 const CURRENT_MONTH = new Date().getMonth() + 1;
@@ -379,7 +382,7 @@ const AdminSelling: React.FC = () => {
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-h6 font-semibold text-neutral-900 dark:text-dark-900">Platform Sales</h3>
-            <button onClick={addPlatformRow} className="inline-flex items-center gap-1.5 text-body-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 font-medium">
+            <button onClick={addPlatformRow} className="inline-flex items-center gap-1.5 text-body-sm font-semibold transition-opacity hover:opacity-80" style={{ color: LIME_DARK }}>
               <Plus className="w-4 h-4" /> Add Platform
             </button>
           </div>
@@ -488,13 +491,13 @@ const AdminSelling: React.FC = () => {
             <h3 className="text-h6 font-semibold text-neutral-900 dark:text-dark-900 mb-4">Financial Summary</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
-                { label: 'Total Revenue', value: `₹${fmt(previewFinancials.totalRevenue)}`, color: 'text-blue-600 dark:text-blue-400' },
+                { label: 'Total Revenue', value: `₹${fmt(previewFinancials.totalRevenue)}`, color: 'text-lime-700 dark:text-lime-400' },
                 { label: 'Production Cost', value: `₹${fmt(previewFinancials.productionCost)}`, color: 'text-red-500' },
                 { label: 'Gross Margin', value: `₹${fmt(previewFinancials.grossMargin)}`, color: 'text-amber-600 dark:text-amber-400' },
                 { label: 'Ads Cost', value: `₹${fmt(previewFinancials.adsCost)}`, color: 'text-red-500' },
                 { label: 'Platform Fees', value: `₹${fmt(previewFinancials.platformFees)}`, color: 'text-red-500' },
                 { label: 'Returns', value: `₹${fmt(previewFinancials.returnsExchangeAmount)}`, color: 'text-red-500' },
-                { label: 'Net Profit', value: `₹${fmt(previewFinancials.netProfit)}`, color: 'text-primary-600 dark:text-primary-400' },
+                { label: 'Net Profit', value: `₹${fmt(previewFinancials.netProfit)}`, color: 'text-lime-700 dark:text-lime-400' },
                 { label: `Author Royalty (${previewFinancials.royaltyPercentage}%)`, value: `₹${fmt(previewFinancials.authorRoyalty)}`, color: 'text-emerald-600 dark:text-emerald-400' },
               ].map((item) => (
                 <div key={item.label} className="bg-neutral-50 dark:bg-dark-200/50 rounded-lg p-3">
@@ -519,7 +522,8 @@ const AdminSelling: React.FC = () => {
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-body-sm font-medium transition-colors disabled:opacity-50 inline-flex items-center gap-2"
+            className="px-5 py-2.5 text-white rounded-xl text-body-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50 inline-flex items-center gap-2"
+            style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
           >
             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             {submitting ? 'Submitting…' : 'Submit Selling Data'}
@@ -554,7 +558,8 @@ const AdminSelling: React.FC = () => {
           <button
             onClick={() => searchBooks()}
             disabled={searching}
-            className="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-body-sm font-medium transition-colors disabled:opacity-50 inline-flex items-center gap-2"
+            className="px-5 py-2.5 text-white rounded-xl text-body-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50 inline-flex items-center gap-2"
+            style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
           >
             {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
             Search
@@ -584,7 +589,8 @@ const AdminSelling: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => selectBook(book)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-body-xs font-medium transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-white rounded-lg text-body-xs font-semibold transition-opacity hover:opacity-90"
+                    style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Enter Data

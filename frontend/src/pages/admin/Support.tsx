@@ -16,6 +16,9 @@ import axiosInstance from '../../api/interceptors';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 
+const LIME = '#84CC16';
+const LIME_DARK = '#65a30d';
+
 // Types
 interface Ticket {
   _id: string;
@@ -69,8 +72,8 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
       label: 'Resolved',
     },
     closed: {
-      bg: 'bg-gray-100 dark:bg-gray-700/30',
-      text: 'text-gray-700 dark:text-gray-300',
+      bg: 'bg-neutral-100 dark:bg-neutral-700/30',
+      text: 'text-neutral-700 dark:text-neutral-300',
       label: 'Closed',
     },
   };
@@ -89,7 +92,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
             ? 'bg-blue-500'
             : status === 'resolved'
             ? 'bg-green-500'
-            : 'bg-gray-500'
+            : 'bg-neutral-500'
         }`}
       />
       {config.label}
@@ -136,30 +139,30 @@ const TicketDetailModal: React.FC<{
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div className="flex items-center justify-between p-5 border-b border-neutral-200 dark:border-neutral-700 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Ticket Details</h2>
-            <span className="text-xs font-mono text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded">{ticket.ticketId}</span>
+            <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Ticket Details</h2>
+            <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ color: LIME_DARK, background: 'rgba(132,204,22,0.12)' }}>{ticket.ticketId}</span>
             <StatusBadge status={ticket.status} />
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
-            <X className="w-5 h-5 text-gray-500" />
+          <button onClick={onClose} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg">
+            <X className="w-5 h-5 text-neutral-500" />
           </button>
         </div>
 
         {/* Info */}
-        <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 space-y-3">
+        <div className="p-5 border-b border-neutral-200 dark:border-neutral-700 flex-shrink-0 space-y-3">
           <div className="grid grid-cols-2 gap-4">
-            <div><p className="text-xs text-gray-500">Author</p><p className="text-sm font-medium text-gray-900 dark:text-white">{ticket.authorName || 'Unknown'}</p></div>
-            <div><p className="text-xs text-gray-500">Category</p><p className="text-sm font-medium text-gray-900 dark:text-white">{ticket.category || ticket.title}</p></div>
+            <div><p className="text-xs text-neutral-500">Author</p><p className="text-sm font-medium text-neutral-900 dark:text-white">{ticket.authorName || 'Unknown'}</p></div>
+            <div><p className="text-xs text-neutral-500">Category</p><p className="text-sm font-medium text-neutral-900 dark:text-white">{ticket.category || ticket.title}</p></div>
           </div>
-          <div><p className="text-xs text-gray-500">Description</p><p className="text-sm text-gray-700 dark:text-gray-300">{ticket.description || '—'}</p></div>
+          <div><p className="text-xs text-neutral-500">Description</p><p className="text-sm text-neutral-700 dark:text-neutral-300">{ticket.description || '—'}</p></div>
           <div className="grid grid-cols-3 gap-3">
-            <div><p className="text-xs text-gray-500">Discussion Day</p><p className="text-sm">{ticket.discussionDay ? new Date(ticket.discussionDay).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</p></div>
-            <div><p className="text-xs text-gray-500">Time</p><p className="text-sm">{ticket.discussionTimeSlot1 || '—'}</p></div>
-            <div><p className="text-xs text-gray-500">Created</p><p className="text-sm">{new Date(ticket.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p></div>
+            <div><p className="text-xs text-neutral-500">Discussion Day</p><p className="text-sm">{ticket.discussionDay ? new Date(ticket.discussionDay).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</p></div>
+            <div><p className="text-xs text-neutral-500">Time</p><p className="text-sm">{ticket.discussionTimeSlot1 || '—'}</p></div>
+            <div><p className="text-xs text-neutral-500">Created</p><p className="text-sm">{new Date(ticket.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p></div>
           </div>
           {/* Status buttons */}
           <div className="flex gap-2">
@@ -170,30 +173,33 @@ const TicketDetailModal: React.FC<{
               <button onClick={() => onStatusUpdate('resolved')} className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg">Resolve</button>
             )}
             {ticket.status !== 'closed' && (
-              <button onClick={() => onStatusUpdate('closed')} className="px-3 py-1.5 text-xs font-medium text-white bg-gray-600 hover:bg-gray-700 rounded-lg">Close</button>
+              <button onClick={() => onStatusUpdate('closed')} className="px-3 py-1.5 text-xs font-medium text-white bg-neutral-600 hover:bg-neutral-700 rounded-lg">Close</button>
             )}
           </div>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-3 min-h-[150px] max-h-[300px] bg-gray-50 dark:bg-gray-800/30">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Messages</h3>
+        <div className="flex-1 overflow-y-auto p-5 space-y-3 min-h-[150px] max-h-[300px] bg-neutral-50 dark:bg-neutral-800/30">
+          <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Messages</h3>
           {loadingMsgs ? (
-            <p className="text-xs text-gray-400 text-center py-4">Loading messages...</p>
+            <p className="text-xs text-neutral-400 text-center py-4">Loading messages...</p>
           ) : messages.length === 0 ? (
-            <p className="text-xs text-gray-400 text-center py-4">No messages yet. Send a reply below.</p>
+            <p className="text-xs text-neutral-400 text-center py-4">No messages yet. Send a reply below.</p>
           ) : (
             messages.map((msg: any, i: number) => (
               <div key={i} className={`flex ${msg.senderRole === 'admin' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[75%] px-3 py-2 rounded-xl text-sm ${
-                  msg.senderRole === 'admin'
-                    ? 'bg-indigo-600 text-white rounded-br-sm'
-                    : msg.senderRole === 'system'
-                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs italic rounded-bl-sm'
-                    : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600 rounded-bl-sm'
-                }`}>
+                <div
+                  className={`max-w-[75%] px-3 py-2 rounded-xl text-sm ${
+                    msg.senderRole === 'admin'
+                      ? 'text-white rounded-br-sm'
+                      : msg.senderRole === 'system'
+                      ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 text-xs italic rounded-bl-sm'
+                      : 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 border border-neutral-200 dark:border-neutral-700 rounded-bl-sm'
+                  }`}
+                  style={msg.senderRole === 'admin' ? { background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` } : undefined}
+                >
                   <p>{msg.message}</p>
-                  <p className={`text-[10px] mt-1 ${msg.senderRole === 'admin' ? 'text-indigo-200' : 'text-gray-400'}`}>
+                  <p className={`text-[10px] mt-1 ${msg.senderRole === 'admin' ? 'text-white/70' : 'text-neutral-400'}`}>
                     {msg.senderRole === 'admin' ? 'Admin' : msg.senderRole === 'system' ? 'System' : (ticket.authorName || 'Author')} · {new Date(msg.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
@@ -205,7 +211,7 @@ const TicketDetailModal: React.FC<{
 
         {/* Send message */}
         {ticket.status !== 'closed' && (
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <div className="p-4 border-t border-neutral-200 dark:border-neutral-700 flex-shrink-0">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -213,12 +219,13 @@ const TicketDetailModal: React.FC<{
                 onChange={e => setNewMessage(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }}}
                 placeholder="Type your reply to the author..."
-                className="flex-1 px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="flex-1 px-4 py-2.5 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-lime-400/40 focus:border-lime-400 focus:outline-none"
               />
               <button
                 onClick={handleSend}
                 disabled={sending || !newMessage.trim()}
-                className="px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+                className="px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+                style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
               >
                 {sending ? '...' : 'Send'}
               </button>
@@ -402,15 +409,15 @@ const Support: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
             Help Center in Super Admin
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
             Manage and respond to author support tickets
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm font-medium">
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium" style={{ background: 'rgba(132,204,22,0.12)', color: LIME_DARK }}>
             <User className="w-4 h-4" />
             Admin Login
           </span>
@@ -418,35 +425,35 @@ const Support: React.FC = () => {
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+      <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700 p-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
           {/* Author Name/ID Search */}
           <div className="lg:col-span-1">
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+            <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">
               Author Name / ID
             </label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
               <input
                 type="text"
                 value={filters.search}
                 onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
                 onKeyDown={handleKeyDown}
                 placeholder="Search author..."
-                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+                className="w-full pl-9 pr-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/40 focus:border-lime-400 transition-all"
               />
             </div>
           </div>
 
           {/* Status Dropdown */}
           <div className="lg:col-span-1">
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+            <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">
               Status
             </label>
             <select
               value={filters.status}
               onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value }))}
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+              className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/40 focus:border-lime-400 transition-all"
             >
               <option value="">Select Status</option>
               <option value="pending">Pending</option>
@@ -458,32 +465,32 @@ const Support: React.FC = () => {
 
           {/* From Date */}
           <div className="lg:col-span-1">
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+            <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">
               From Date
             </label>
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
               <input
                 type="date"
                 value={filters.fromDate}
                 onChange={(e) => setFilters((prev) => ({ ...prev, fromDate: e.target.value }))}
-                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+                className="w-full pl-9 pr-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/40 focus:border-lime-400 transition-all"
               />
             </div>
           </div>
 
           {/* To Date */}
           <div className="lg:col-span-1">
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+            <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">
               To Date
             </label>
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
               <input
                 type="date"
                 value={filters.toDate}
                 onChange={(e) => setFilters((prev) => ({ ...prev, toDate: e.target.value }))}
-                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+                className="w-full pl-9 pr-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/40 focus:border-lime-400 transition-all"
               />
             </div>
           </div>
@@ -492,7 +499,8 @@ const Support: React.FC = () => {
           <div className="lg:col-span-1">
             <button
               onClick={handleSearch}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-lime-400/40"
+              style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
             >
               <Search className="w-4 h-4" />
               Search
@@ -503,7 +511,8 @@ const Support: React.FC = () => {
           <div className="lg:col-span-1">
             <button
               onClick={() => fetchTickets(pagination.currentPage)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors"
+              style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}
             >
               <RefreshCw className="w-4 h-4" />
               Refresh
@@ -513,30 +522,30 @@ const Support: React.FC = () => {
       </div>
 
       {/* Tickets Table */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-700 overflow-hidden">
         <div className="overflow-x-auto">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16">
-              <div className="w-10 h-10 border-4 border-gray-200 border-t-purple-600 rounded-full animate-spin" />
-              <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+              <div className="w-10 h-10 border-4 border-neutral-200 rounded-full animate-spin" style={{ borderTopColor: LIME }} />
+              <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">
                 Loading tickets...
               </p>
             </div>
           ) : tickets.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-gray-500 dark:text-gray-400">
+            <div className="flex flex-col items-center justify-center py-16 text-neutral-500 dark:text-neutral-400">
               <MessageSquare className="w-12 h-12 mb-3 opacity-40" />
               <p className="text-lg font-medium">No support tickets found</p>
               <p className="text-sm mt-1">Try adjusting your filters</p>
             </div>
           ) : (
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-800">
+            <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">
+              <thead className="bg-neutral-50 dark:bg-neutral-800">
                 <tr>
                   {['No', 'Ticket ID', 'Author Name', 'Support Title', 'Discussion Time', 'Date', 'Status', 'Actions'].map(
                     (header) => (
                       <th
                         key={header}
-                        className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                        className="px-4 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider"
                       >
                         {header}
                       </th>
@@ -544,28 +553,28 @@ const Support: React.FC = () => {
                   )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="divide-y divide-neutral-200 dark:divide-neutral-700">
                 {tickets.map((ticket, index) => (
                   <tr
                     key={ticket._id || ticket.ticketId}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                    className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
                   >
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                    <td className="px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300">
                       {(pagination.currentPage - 1) * pagination.limit + index + 1}
                     </td>
-                    <td className="px-4 py-3 text-sm font-medium text-purple-600 dark:text-purple-400">
+                    <td className="px-4 py-3 text-sm font-medium" style={{ color: LIME_DARK }}>
                       {ticket.ticketId}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                    <td className="px-4 py-3 text-sm text-neutral-900 dark:text-neutral-100">
                       {ticket.authorName}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 max-w-[200px] truncate">
+                    <td className="px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300 max-w-[200px] truncate">
                       {ticket.title}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                    <td className="px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400">
                       {formatDiscussionTime(ticket)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                    <td className="px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
                       {formatDate(ticket.createdAt)}
                     </td>
                     <td className="px-4 py-3 relative">
@@ -577,11 +586,11 @@ const Support: React.FC = () => {
                             await handleUpdateStatus(ticket, newStatus);
                           }
                         }}
-                        className={`text-xs font-medium px-2 py-1 rounded-full border-0 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:outline-none ${
+                        className={`text-xs font-medium px-2 py-1 rounded-full border-0 cursor-pointer focus:ring-2 focus:ring-lime-400/40 focus:outline-none ${
                           ticket.status === 'pending' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
                           : ticket.status === 'in_progress' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                           : ticket.status === 'resolved' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                          : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300'
+                          : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-900/30 dark:text-neutral-300'
                         }`}
                       >
                         <option value="pending">Pending</option>
@@ -595,20 +604,20 @@ const Support: React.FC = () => {
                         onClick={() =>
                           setActiveDropdown(activeDropdown === ticket._id ? null : ticket._id)
                         }
-                        className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
                       >
-                        <MoreVertical className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        <MoreVertical className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
                       </button>
 
                       {/* Dropdown Menu */}
                       {activeDropdown === ticket._id && (
-                        <div className="absolute right-4 top-10 z-20 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1">
+                        <div className="absolute right-4 top-10 z-20 w-48 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 py-1">
                           <button
                             onClick={() => {
                               handleViewTicket(ticket);
                               setActiveDropdown(null);
                             }}
-                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700"
                           >
                             <Eye className="w-4 h-4" />
                             View Details
@@ -618,7 +627,7 @@ const Support: React.FC = () => {
                           {ticket.status !== 'resolved' && (
                             <button
                               onClick={() => handleUpdateStatus(ticket, 'resolved')}
-                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-neutral-100 dark:hover:bg-neutral-700"
                             >
                               <RefreshCw className="w-4 h-4" />
                               Mark Resolved
@@ -627,7 +636,7 @@ const Support: React.FC = () => {
                           {ticket.status !== 'in_progress' && ticket.status !== 'resolved' && ticket.status !== 'closed' && (
                             <button
                               onClick={() => handleUpdateStatus(ticket, 'in_progress')}
-                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-neutral-100 dark:hover:bg-neutral-700"
                             >
                               <RefreshCw className="w-4 h-4" />
                               Mark In Progress
@@ -636,14 +645,14 @@ const Support: React.FC = () => {
                           {ticket.status !== 'closed' && (
                             <button
                               onClick={() => handleUpdateStatus(ticket, 'closed')}
-                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700"
                             >
                               <RefreshCw className="w-4 h-4" />
                               Mark Closed
                             </button>
                           )}
 
-                          <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
+                          <div className="border-t border-neutral-200 dark:border-neutral-700 my-1" />
                           <button
                             onClick={() => {
                               handleDeleteTicket(ticket);
@@ -666,8 +675,8 @@ const Support: React.FC = () => {
 
         {/* Pagination */}
         {!loading && tickets.length > 0 && pagination.totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50">
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">
               Showing{' '}
               <span className="font-medium">
                 {(pagination.currentPage - 1) * pagination.limit + 1}
@@ -682,14 +691,14 @@ const Support: React.FC = () => {
               <button
                 onClick={() => handlePageChange(pagination.currentPage - 1)}
                 disabled={pagination.currentPage === 1}
-                className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="p-2 rounded-lg border border-neutral-300 dark:border-neutral-600 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               {getPageNumbers().map((page, idx) => {
                 if (page === '...') {
                   return (
-                    <span key={`dots-${idx}`} className="px-2 text-gray-400">
+                    <span key={`dots-${idx}`} className="px-2 text-neutral-400">
                       ...
                     </span>
                   );
@@ -700,9 +709,10 @@ const Support: React.FC = () => {
                     onClick={() => handlePageChange(page as number)}
                     className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
                       pagination.currentPage === page
-                        ? 'bg-purple-600 text-white'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        ? 'text-white'
+                        : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700'
                     }`}
+                    style={pagination.currentPage === page ? { background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` } : undefined}
                   >
                     {page}
                   </button>
@@ -711,7 +721,7 @@ const Support: React.FC = () => {
               <button
                 onClick={() => handlePageChange(pagination.currentPage + 1)}
                 disabled={pagination.currentPage === pagination.totalPages}
-                className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="p-2 rounded-lg border border-neutral-300 dark:border-neutral-600 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
