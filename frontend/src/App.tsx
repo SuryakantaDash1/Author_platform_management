@@ -46,6 +46,7 @@ const AdminSettings = lazy(() => import('./pages/admin/Settings'));
 const AdminSelling = lazy(() => import('./pages/admin/Selling'));
 const AdminRoyalties = lazy(() => import('./pages/admin/Royalties'));
 const AdminCalculatorConfig = lazy(() => import('./pages/admin/CalculatorConfig'));
+const AdminSubAdmins = lazy(() => import('./pages/admin/SubAdmins'));
 
 // 404 Page
 const NotFoundPage = () => (
@@ -133,6 +134,7 @@ function App() {
                   <Route path="reviews" element={<AdminReviews />} />
                   <Route path="settings" element={<AdminSettings />} />
                   <Route path="calculator-config" element={<AdminCalculatorConfig />} />
+                  <Route path="sub-admins" element={<AdminSubAdmins />} />
                 </Route>
 
                 {/* 404 Route */}

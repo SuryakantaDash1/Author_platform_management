@@ -178,6 +178,14 @@ export const API_ENDPOINTS = {
     GET_BOOK_DETAIL: (bookId: string) => `/public/books/${bookId}`,
   },
 
+  // Sub-admin management (super_admin only)
+  SUB_ADMIN: {
+    GET_ALL: '/admin/sub-admins',
+    CREATE: '/admin/sub-admins',
+    UPDATE: (id: string) => `/admin/sub-admins/${id}`,
+    DELETE: (id: string) => `/admin/sub-admins/${id}`,
+  },
+
   // Royalty Calculator (Phase 5)
   CALCULATOR: {
     GET_PUBLIC_CONFIG: '/public/calculator-config',

@@ -3,6 +3,7 @@ import { AuthService } from '../services/auth.service';
 import { EmailService } from '../services/email.service';
 import ApiError from '../utils/ApiError';
 import { asyncHandler } from '../utils/asyncHandler';
+import { generateUniqueId } from '../utils/helpers';
 import User from '../models/User.model';
 import Author from '../models/Author.model';
 import Book from '../models/Book.model';
@@ -11,6 +12,7 @@ import BankAccount from '../models/BankAccount.model';
 import Ticket from '../models/Ticket.model';
 import PricingConfig from '../models/PricingConfig.model';
 import AuditLog from '../models/AuditLog.model';
+import { MODULES } from '../constants/permissions';
 
 // Helper to get author's email and name from authorId
 async function getAuthorUserInfo(authorId: string) {
@@ -1261,6 +1263,93 @@ export class AdminController {
         message: 'Due date extended successfully',
         data: { book },
       });
+    }
+  );
+
+  // ── Sub-admin management (super_admin only) ──
+
+  static getAllSubAdmins = asyncHandler(
+    async (_req: Request, res: Response, _next: NextFunction) => {
+      const subAdmins = await User.find({ role: 'sub_admin' }).select(
+        '-password -twoFactorSecret -backupCodes'
+      );
+      res.json({ success: true, data: { subAdmins } });
+    }
+  );
+
+  static createSubAdmin = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const { firstName, lastName, email, password, permissions = [] } = req.body;
+
+      if (!firstName || !lastName || !email || !password) {
+        throw new ApiError(400, 'firstName, lastName, email, and password are required');
+      }
+
+      const existing = await User.findOne({ email: email.toLowerCase().trim() });
+      if (existing) throw new ApiError(400, 'Email already in use');
+
+      const validModules = (permissions as string[]).filter((p) =>
+        (MODULES as readonly string[]).includes(p)
+      );
+
+      const userId = generateUniqueId('ADM');
+      const subAdmin = await User.create({
+        userId,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.toLowerCase().trim(),
+        password,
+        role: 'sub_admin',
+        tier: 'enterprise',
+        isActive: true,
+        permissions: validModules,
+      });
+
+      const result = subAdmin.toObject() as any;
+      delete result.password;
+      delete result.twoFactorSecret;
+      delete result.backupCodes;
+
+      res.status(201).json({ success: true, data: { subAdmin: result } });
+    }
+  );
+
+  static updateSubAdmin = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const { id } = req.params;
+      const { firstName, lastName, permissions, isActive, password } = req.body;
+
+      const subAdmin = await User.findOne({ userId: id, role: 'sub_admin' }).select('+password');
+      if (!subAdmin) throw new ApiError(404, 'Sub-admin not found');
+
+      if (firstName !== undefined) subAdmin.firstName = firstName.trim();
+      if (lastName !== undefined) subAdmin.lastName = lastName.trim();
+      if (isActive !== undefined) subAdmin.isActive = isActive;
+      if (permissions !== undefined) {
+        subAdmin.permissions = (permissions as string[]).filter((p) =>
+          (MODULES as readonly string[]).includes(p)
+        );
+      }
+      if (password) subAdmin.password = password;
+
+      await subAdmin.save();
+
+      const result = subAdmin.toObject() as any;
+      delete result.password;
+      delete result.twoFactorSecret;
+      delete result.backupCodes;
+
+      res.json({ success: true, data: { subAdmin: result } });
+    }
+  );
+
+  static deleteSubAdmin = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const { id } = req.params;
+      const subAdmin = await User.findOne({ userId: id, role: 'sub_admin' });
+      if (!subAdmin) throw new ApiError(404, 'Sub-admin not found');
+      await subAdmin.deleteOne();
+      res.json({ success: true, message: 'Sub-admin deleted successfully' });
     }
   );
 }

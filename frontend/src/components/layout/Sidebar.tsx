@@ -4,7 +4,9 @@ import type { LucideIcon } from 'lucide-react';
 import {
   LayoutDashboard, Book, Users, MessageSquare, Settings, X,
   DollarSign, CreditCard, Gift, Star, TrendingUp, BarChart3, Calculator,
+  ShieldCheck,
 } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 const LIME = '#84CC16';
 const LIME_DARK = '#65a30d';
@@ -13,6 +15,8 @@ interface NavItem {
   icon: LucideIcon;
   label: string;
   path: string;
+  module?: string;        // sub_admin needs this permission
+  superAdminOnly?: true;  // only super_admin sees it
 }
 
 interface SidebarProps {
@@ -25,37 +29,38 @@ const adminSections: { title: string; items: NavItem[] }[] = [
   {
     title: 'OVERVIEW',
     items: [
-      { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
-      { icon: Users,           label: 'Authors',   path: '/admin/authors' },
-      { icon: Book,            label: 'Books',     path: '/admin/books' },
-      { icon: BarChart3,       label: 'Selling',   path: '/admin/selling' },
-      { icon: TrendingUp,      label: 'Royalties', path: '/admin/royalties' },
+      { icon: LayoutDashboard, label: 'Dashboard',  path: '/admin/dashboard' },
+      { icon: Users,           label: 'Authors',    path: '/admin/authors',    module: 'authors' },
+      { icon: Book,            label: 'Books',      path: '/admin/books',      module: 'books' },
+      { icon: BarChart3,       label: 'Selling',    path: '/admin/selling',    module: 'selling' },
+      { icon: TrendingUp,      label: 'Royalties',  path: '/admin/royalties',  module: 'royalties' },
     ],
   },
   {
     title: 'CONFIGURE',
     items: [
-      { icon: DollarSign,    label: 'Pricing Config',     path: '/admin/payment-config' },
-      { icon: Calculator,    label: 'Calculator Config',  path: '/admin/calculator-config' },
-      { icon: MessageSquare, label: 'Help Center',         path: '/admin/support' },
-      { icon: Star,          label: 'Reviews',             path: '/admin/reviews' },
-      { icon: Settings,      label: 'Settings',            path: '/admin/settings' },
+      { icon: DollarSign,    label: 'Pricing Config',    path: '/admin/payment-config',    module: 'payments' },
+      { icon: Calculator,    label: 'Calculator Config', path: '/admin/calculator-config', module: 'calculator' },
+      { icon: MessageSquare, label: 'Help Center',       path: '/admin/support',           module: 'support' },
+      { icon: Star,          label: 'Reviews',           path: '/admin/reviews',           module: 'reviews' },
+      { icon: ShieldCheck,   label: 'Sub Admins',        path: '/admin/sub-admins',        superAdminOnly: true },
+      { icon: Settings,      label: 'Settings',          path: '/admin/settings' },
     ],
   },
 ];
 
 const authorItems: NavItem[] = [
-  { icon: LayoutDashboard, label: 'Dashboard',    path: '/author/dashboard' },
-  { icon: Book,            label: 'My Books',     path: '/author/books' },
-  { icon: TrendingUp,      label: 'Royalties',    path: '/author/royalties' },
-  { icon: CreditCard,      label: 'Bank Accounts',path: '/author/bank-accounts' },
-  { icon: Gift,            label: 'Referrals',    path: '/author/referrals' },
-  { icon: MessageSquare,   label: 'Help Desk',    path: '/author/tickets' },
-  { icon: Star,            label: 'Reviews',      path: '/author/reviews' },
-  { icon: Settings,        label: 'Settings',     path: '/author/settings' },
+  { icon: LayoutDashboard, label: 'Dashboard',     path: '/author/dashboard' },
+  { icon: Book,            label: 'My Books',      path: '/author/books' },
+  { icon: TrendingUp,      label: 'Royalties',     path: '/author/royalties' },
+  { icon: CreditCard,      label: 'Bank Accounts', path: '/author/bank-accounts' },
+  { icon: Gift,            label: 'Referrals',     path: '/author/referrals' },
+  { icon: MessageSquare,   label: 'Help Desk',     path: '/author/tickets' },
+  { icon: Star,            label: 'Reviews',       path: '/author/reviews' },
+  { icon: Settings,        label: 'Settings',      path: '/author/settings' },
 ];
 
-const NavItem: React.FC<{ item: NavItem; onClose?: () => void }> = ({ item, onClose }) => {
+const NavItemComp: React.FC<{ item: NavItem; onClose?: () => void }> = ({ item, onClose }) => {
   const Icon = item.icon;
   return (
     <NavLink
@@ -84,8 +89,18 @@ const NavItem: React.FC<{ item: NavItem; onClose?: () => void }> = ({ item, onCl
   );
 };
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, userRole = 'Author' }) => {
-  const isAdmin = userRole !== 'Author';
+function isItemVisible(item: NavItem, role: string, permissions: string[]): boolean {
+  if (item.superAdminOnly) return role === 'super_admin';
+  if (!item.module) return true; // always visible (Dashboard, Settings)
+  if (role === 'super_admin') return true;
+  return permissions.includes(item.module);
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'super_admin' || user?.role === 'sub_admin';
+  const userRole = user?.role ?? 'author';
+  const permissions = user?.permissions ?? [];
 
   return (
     <>
@@ -143,24 +158,30 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, userRole = 'Author' 
         <div className="flex flex-col h-[calc(100%-4rem)] overflow-y-auto">
           {isAdmin ? (
             <nav className="flex-1 px-3 py-4 space-y-5">
-              {adminSections.map(section => (
-                <div key={section.title}>
-                  <p className="px-3 mb-1.5 text-xs font-semibold tracking-widest text-neutral-400 dark:text-neutral-500 uppercase select-none">
-                    {section.title}
-                  </p>
-                  <div className="space-y-0.5">
-                    {section.items.map(item => (
-                      <NavItem key={item.path} item={item} onClose={onClose} />
-                    ))}
+              {adminSections.map(section => {
+                const visibleItems = section.items.filter(item =>
+                  isItemVisible(item, userRole, permissions)
+                );
+                if (visibleItems.length === 0) return null;
+                return (
+                  <div key={section.title}>
+                    <p className="px-3 mb-1.5 text-xs font-semibold tracking-widest text-neutral-400 dark:text-neutral-500 uppercase select-none">
+                      {section.title}
+                    </p>
+                    <div className="space-y-0.5">
+                      {visibleItems.map(item => (
+                        <NavItemComp key={item.path} item={item} onClose={onClose} />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </nav>
           ) : (
             <nav className="flex-1 px-3 py-4">
               <div className="space-y-0.5">
                 {authorItems.map(item => (
-                  <NavItem key={item.path} item={item} onClose={onClose} />
+                  <NavItemComp key={item.path} item={item} onClose={onClose} />
                 ))}
               </div>
             </nav>

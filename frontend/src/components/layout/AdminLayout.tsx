@@ -121,7 +121,6 @@ const AdminLayout: React.FC = () => {
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
-        userRole="Admin"
       />
       <div className="lg:pl-64">
         <AdminHeader onMenuClick={() => setIsSidebarOpen(v => !v)} />
