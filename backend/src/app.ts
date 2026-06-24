@@ -1,9 +1,12 @@
-import express, { Application, Request, Response } from 'express';
+import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import { errorHandler, notFound } from './middlewares/error.middleware';
+import './config/cloudinary'; // side-effect import: configures Cloudinary on load (needed on serverless)
+import connectDB from './config/db';
+import { CronService } from './services/cron.service';
 
 // Import routes
 import authRoutes from './routes/auth.routes';
@@ -57,6 +60,34 @@ app.get('/health', (_req: Request, res: Response) => {
     message: 'Server is running',
     timestamp: new Date().toISOString(),
   });
+});
+
+// Ensure a database connection before handling API requests. This is required on
+// serverless (no startup hook to open the connection) and is a cheap no-op locally
+// once the connection is already established.
+app.use((_req: Request, res: Response, next: NextFunction) => {
+  connectDB()
+    .then(() => next())
+    .catch(() => {
+      res.status(503).json({ success: false, message: 'Database connection failed' });
+    });
+});
+
+// Vercel Cron trigger — replaces node-cron in the serverless environment, where
+// background timers do not run. Configured in vercel.json to fire daily.
+// If CRON_SECRET is set, Vercel sends it as a Bearer token; we verify it.
+app.get('/api/cron/payment-reminders', async (req: Request, res: Response): Promise<void> => {
+  const secret = process.env.CRON_SECRET;
+  if (secret && req.headers.authorization !== `Bearer ${secret}`) {
+    res.status(401).json({ success: false, message: 'Unauthorized' });
+    return;
+  }
+  try {
+    await CronService.checkPayLaterReminders();
+    res.status(200).json({ success: true, message: 'Payment reminders processed' });
+  } catch {
+    res.status(500).json({ success: false, message: 'Cron job failed' });
+  }
 });
 
 // API routes

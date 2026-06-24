@@ -11,19 +11,22 @@ const logFormat = winston.format.combine(
   })
 );
 
-// Create logger
-const logger = winston.createLogger({
-  level: env.LOG_LEVEL,
-  format: logFormat,
-  transports: [
-    // Console transport with colors
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        logFormat
-      ),
-    }),
+// On serverless (Vercel) the filesystem is read-only, so file transports would
+// throw at startup. Log to the console only there; locally keep the log files.
+const isServerless = !!process.env.VERCEL;
 
+const transports: winston.transport[] = [
+  // Console transport with colors
+  new winston.transports.Console({
+    format: winston.format.combine(
+      winston.format.colorize(),
+      logFormat
+    ),
+  }),
+];
+
+if (!isServerless) {
+  transports.push(
     // File transport for errors
     new winston.transports.File({
       filename: path.join(env.LOG_FILE_PATH, 'error.log'),
@@ -31,24 +34,34 @@ const logger = winston.createLogger({
       maxsize: 5242880, // 5MB
       maxFiles: 5,
     }),
-
     // File transport for combined logs
     new winston.transports.File({
       filename: path.join(env.LOG_FILE_PATH, 'combined.log'),
       maxsize: 5242880, // 5MB
       maxFiles: 5,
-    }),
-  ],
-  exceptionHandlers: [
-    new winston.transports.File({
-      filename: path.join(env.LOG_FILE_PATH, 'exceptions.log'),
-    }),
-  ],
-  rejectionHandlers: [
-    new winston.transports.File({
-      filename: path.join(env.LOG_FILE_PATH, 'rejections.log'),
-    }),
-  ],
+    })
+  );
+}
+
+// Create logger
+const logger = winston.createLogger({
+  level: env.LOG_LEVEL,
+  format: logFormat,
+  transports,
+  exceptionHandlers: isServerless
+    ? []
+    : [
+        new winston.transports.File({
+          filename: path.join(env.LOG_FILE_PATH, 'exceptions.log'),
+        }),
+      ],
+  rejectionHandlers: isServerless
+    ? []
+    : [
+        new winston.transports.File({
+          filename: path.join(env.LOG_FILE_PATH, 'rejections.log'),
+        }),
+      ],
 });
 
 // If not in production, also log to console
