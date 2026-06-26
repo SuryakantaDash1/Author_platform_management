@@ -5,7 +5,7 @@ import { motion, AnimatePresence, useInView } from 'framer-motion';
 import {
   BookOpen, Users, Award, Globe, TrendingUp, Building2,
   Star, ShoppingCart, MapPin, Calendar, Plus, X as XIcon,
-  ArrowRight, ChevronLeft, ChevronRight, Check, Send, MessageSquare, Calculator,
+  ArrowRight, ChevronLeft, ChevronRight, Check, Send, Calculator,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -204,46 +204,6 @@ const BookCarousel: React.FC = () => {
   );
 };
 
-/* ------------------------------------------------------------------ */
-/*  TestimonialCarousel                                                */
-/* ------------------------------------------------------------------ */
-const TestimonialCarousel: React.FC = () => {
-  const [active, setActive] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setActive(i => (i + 1) % testimonials.length), 4500);
-    return () => clearInterval(t);
-  }, []);
-  const t = testimonials[active];
-
-  return (
-    <div className="rounded-2xl p-8 bg-white dark:bg-neutral-800 shadow-sm border border-lime-100 dark:border-neutral-700">
-      <AnimatePresence mode="wait">
-        <motion.div key={active}
-          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.4 }}>
-          <div className="flex items-center gap-4 mb-5">
-            <div className="w-14 h-14 rounded-full flex items-center justify-center shrink-0 text-xl font-bold text-white"
-              style={{ background: `linear-gradient(135deg, ${LIME}, ${LIME_DARK})` }}>
-              {t.name.charAt(0)}
-            </div>
-            <div>
-              <h4 className="font-bold text-neutral-900 dark:text-white">{t.name}</h4>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{t.role} · {t.date}</p>
-            </div>
-          </div>
-          <StarRating rating={t.rating} size="md" />
-          <p className="mt-4 text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed italic">"{t.quote}"</p>
-        </motion.div>
-      </AnimatePresence>
-      <div className="flex items-center justify-center gap-2 mt-6">
-        {testimonials.map((_, i) => (
-          <button key={i} onClick={() => setActive(i)} className="rounded-full transition-all"
-            style={{ width: i === active ? 28 : 10, height: 10, background: i === active ? LIME : '#e5e7eb' }} />
-        ))}
-      </div>
-    </div>
-  );
-};
 
 /* ------------------------------------------------------------------ */
 /*  FAQItem                                                            */

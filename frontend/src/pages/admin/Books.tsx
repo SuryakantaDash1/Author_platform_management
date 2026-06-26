@@ -227,8 +227,7 @@ const LimeBtn: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { loadin
   </button>
 );
 
-const inputCls = (err?: boolean) =>
-  `w-full px-3 py-2.5 text-sm border rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400 transition-colors ${err ? 'border-red-400' : 'border-neutral-300 dark:border-neutral-600'}`;
+
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;

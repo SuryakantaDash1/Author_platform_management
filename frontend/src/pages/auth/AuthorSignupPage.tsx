@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, Phone, User, Gift, ChevronRight, Eye, EyeOff, ArrowLeft, Check, TrendingUp, Star } from 'lucide-react';
+import { Mail, Lock, Phone, User, Gift, ChevronRight, Eye, EyeOff, ArrowLeft, Check, Star } from 'lucide-react';
 import axiosInstance from '../../api/axios.config';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
