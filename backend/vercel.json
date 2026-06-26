@@ -3,8 +3,8 @@
   "builds": [
     { "src": "api/bundle.js", "use": "@vercel/node" }
   ],
-  "routes": [
-    { "src": "/(.*)", "dest": "api/bundle.js" }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/bundle" }
   ],
   "crons": [
     { "path": "/api/cron/payment-reminders", "schedule": "30 3 * * *" }
