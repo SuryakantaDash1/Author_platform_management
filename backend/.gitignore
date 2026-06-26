@@ -17,8 +17,6 @@ dist/
 build/
 *.tsbuildinfo
 
-# Vercel esbuild bundle (generated during vercel-build)
-api/bundle.js
 
 # Logs
 logs/
